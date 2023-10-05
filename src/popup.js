@@ -1,8 +1,14 @@
-'use strict';
+/*
+Removed from manifest
+  "background": {
+    "service_worker": "background.js"
+  },
 
+*/
 import './popup.css';
+import { testSetup } from './storage-helper.js';
 
-(function() {
+(async function() {
   // We will make use of Storage API to get and store `count` value
   // More information on Storage API can we found at
   // https://developer.chrome.com/extensions/storage
@@ -83,6 +89,7 @@ import './popup.css';
 
   function restoreCounter() {
     // Restore count value
+    return;
     counterStorage.get(count => {
       if (typeof count === 'undefined') {
         // Set counter value as 0
@@ -95,18 +102,20 @@ import './popup.css';
     });
   }
 
+  testSetup();
+
   document.addEventListener('DOMContentLoaded', restoreCounter);
 
   // Communicate with background file by sending a message
-  chrome.runtime.sendMessage(
-    {
-      type: 'GREETINGS',
-      payload: {
-        message: 'Hello, my name is Pop. I am from Popup.',
-      },
-    },
-    response => {
-      console.log(response.message);
-    }
-  );
+  // chrome.runtime.sendMessage(
+  //   {
+  //     type: 'GREETINGS',
+  //     payload: {
+  //       message: 'Hello, my name is Pop. I am from Popup.',
+  //     },
+  //   },
+  //   response => {
+  //     console.log(response.message);
+  //   }
+  // );
 })();

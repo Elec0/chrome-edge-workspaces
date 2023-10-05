@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <title>My Chrome Extension</title>
     <link rel="stylesheet" href="popup.css" />
-</head>
+    <script src="storage-helper.js" type="module"></script>
+    <script src="popup.js" type="module"></script>
+  </head>
 <body>
   <div class="app">
     <p class="counter-label">Counter</p>
@@ -19,8 +21,6 @@
     <p class="title">Chrome Extension is Ready!</p>
     <p class="subtitle">Start by updating <code>popup.html</code></p>
   </div>
-
-  <script src="popup.js"></script>
 
   <!--
     This HTML file opens when you click on icon from the toolbar.
