@@ -18,6 +18,7 @@
     "webpack-merge": "^5.9.0"
   },
   "dependencies": {
+    "@types/chrome": "^0.0.248",
     "@types/node": "^20.8.3",
     "ts-loader": "^9.5.0",
     "typescript": "^5.2.2"

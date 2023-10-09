@@ -1,4 +1,5 @@
 'use strict';
+import { StorageHelper } from "./storage-helper";
 
 // With background scripts you can communicate with popup
 // and contentScript files.
@@ -18,4 +19,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       message,
     });
   }
+});
+
+chrome.runtime.onInstalled.addListener((details) => {
+  if(details.reason !== "install" && details.reason !== "update") return;
+  // chrome.contextMenus.create({
+  //   "id": "sampleContextMenu",
+  //   "title": "Sample Context Menu",
+  //   "contexts": ["selection"]
+  // });
+});
+
+chrome.windows.onCreated.addListener(async (window) => {
+  console.log("onCreated, from the background");
+  console.log(window);
+  let isWorkspace = await StorageHelper.isWindowWorkspace(window.id);
+  console.log(`${window.id} isWorkspace=${isWorkspace}`);
+});
+
+chrome.windows.onRemoved.addListener((window) => {
+  console.log("onRemoved, from the background");
+  console.log(window);
 });
