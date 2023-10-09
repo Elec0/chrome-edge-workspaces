@@ -13,6 +13,9 @@
     "default_title": "Threshold Tabs",
     "default_popup": "popup.html"
   },
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "permissions": [
     "storage",
     "tabGroups"

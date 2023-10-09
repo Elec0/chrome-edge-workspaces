@@ -88,17 +88,15 @@ import { testSetup } from './storage-helper.js';
   }
 
   function restoreCounter() {
-    // Restore count value
-    return;
-    counterStorage.get(count => {
-      if (typeof count === 'undefined') {
-        // Set counter value as 0
-        counterStorage.set(0, () => {
-          setupCounter(0);
-        });
-      } else {
-        setupCounter(count);
-      }
+    console.log("restoreCounter");
+    chrome.tabs.query({}, tabs => {
+      console.log(tabs);
+    });
+    chrome.tabGroups.query({}, tabGroups => {
+      console.log(tabGroups);
+    });
+    chrome.windows.getAll({}, windows => {
+      console.log(windows);
     });
   }
 
