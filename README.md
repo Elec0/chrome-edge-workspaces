@@ -1,4 +1,4 @@
-# <img src="public/icons/icon_48.png" width="45" align="left"> Threshold Tabs
+# <img src="public/icons/icon_48.png" width="45" align="left">Edge Workspaces
 
 My Chrome Extension
 
