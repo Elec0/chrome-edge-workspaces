@@ -16,12 +16,16 @@ const common = {
     path: PATHS.build,
     // the filename template for entry chunks
     filename: '[name].js',
+    clean: true,
   },
   devtool: 'source-map',
   stats: {
     all: false,
     errors: true,
     builtAt: true,
+  },
+  resolve: {
+    extensions: ['.js', '.ts'],
   },
   module: {
     rules: [
@@ -42,6 +46,17 @@ const common = {
             },
           },
         ],
+        exclude: /node_modules/,
+      },
+      {
+        test: /\.ts$/,
+        use: {
+          loader: "ts-loader",
+          options: {
+            configFile: "tsconfig.json",
+          },
+        },
+        exclude: ["/node_modules/", "/test/"]
       },
     ],
   },

@@ -6,7 +6,8 @@ Removed from manifest
 
 */
 import './popup.css';
-import { testSetup } from './storage-helper.js';
+import { testSetup } from './storage-example.js';
+import { StorageHelper } from "./storage-helper";
 
 (async function() {
   // We will make use of Storage API to get and store `count` value
@@ -103,6 +104,10 @@ import { testSetup } from './storage-helper.js';
   testSetup();
 
   document.addEventListener('DOMContentLoaded', restoreCounter);
+
+  StorageHelper.setValue("test", "testValue");
+  
+  console.log(StorageHelper.getValue("test"));
 
   // Communicate with background file by sending a message
   // chrome.runtime.sendMessage(
