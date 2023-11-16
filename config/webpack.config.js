@@ -13,6 +13,18 @@ const config = merge(common, {
     background: PATHS.src + '/background.js',
     // storageHelper: PATHS.src + '/storage-helper.js',
   },
+  plugins: [
+    {
+      apply(compiler) {
+        compiler.hooks.assetEmitted.tap(
+          'MyPlugin',
+          (file, { content, source, outputPath, compilation, targetPath }) => {
+            // console.log(content); // <Buffer 66 6f 6f 62 61 72>
+          }
+        );
+      }
+    }
+  ],
 });
 
 module.exports = config;

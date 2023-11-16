@@ -15,7 +15,12 @@
             "request": "launch",
             "name": "Launch Chrome against localhost",
             "url": "chrome-extension://laobpiaijpjcdllfnphlmjoaofilopmi/popup.html",
-            "webRoot": "${workspaceFolder}"
+            //chrome://extensions/
+            "webRoot": "${workspaceFolder}",
+            // "userDataDir": "${workspaceRoot}.vscode/chrome",
+            "runtimeArgs": [
+                "--disable-infobars --disable-session-crashed-bubble"
+            ],
         }
     ]
 }

@@ -1,15 +1,16 @@
 /*
-Removed from manifest
-  "background": {
-    "service_worker": "background.js"
-  },
+Removed from manifest  
+
 
 */
 import './popup.css';
-import { testSetup } from './storage-example.js';
+// import { testSetup } from './storage-example.js';
 import { StorageHelper } from "./storage-helper";
 
 (async function () {
+
+   // Tell the background script to inject our logic script
+   // chrome.runtime.sendMessage({ pageLoaded: true });
 
    chrome.windows.onCreated.addListener(function (window) {
       console.log("window created");
@@ -59,6 +60,17 @@ import { StorageHelper } from "./storage-helper";
          await chrome.windows.create({
          }).then((window) => {
             console.log(`window created, adding to workspace ${workspaceName}`);
+
+            chrome.runtime.sendMessage({
+               type: 'NEW_WORKSPACE',
+               payload: {
+                  workspaceName,
+                  windowId: window.id,
+               },
+            }, response => {
+               console.log("popup response: ", response);
+            });
+
             console.log(window);
             StorageHelper.addWindowToWorkspace(window.id, workspaceName);
          });
