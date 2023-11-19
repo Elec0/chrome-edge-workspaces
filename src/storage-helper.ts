@@ -66,6 +66,9 @@ export class StorageHelper {
         this.setValue("workspaceWindows", JSON.stringify(workspaceWindows));
     }
 
+    public static async addWorkspace(workspaceName: string, windowId: number) {
+    }
+
     public static async isWindowWorkspace(windowId: number): Promise<boolean> {
         let workspaceWindows = JSON.parse(await this.getValue("workspaceWindows", "{}"));
         return windowId in workspaceWindows;

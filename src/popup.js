@@ -4,23 +4,23 @@ Removed from manifest
 
 */
 import './popup.css';
-// import { testSetup } from './storage-example.js';
 import { StorageHelper } from "./storage-helper";
+import { Constants } from "./constants";
 
 (async function () {
 
    // Tell the background script to inject our logic script
    // chrome.runtime.sendMessage({ pageLoaded: true });
 
-   chrome.windows.onCreated.addListener(function (window) {
-      console.log("window created");
-      console.log(window);
-   });
+   // chrome.windows.onCreated.addListener(function (window) {
+   //    console.log("window created");
+   //    console.log(window);
+   // });
 
-   chrome.windows.onRemoved.addListener(function (windowId) {
-      console.log("window removed");
-      console.log(windowId);
-   });
+   // chrome.windows.onRemoved.addListener(function (windowId) {
+   //    console.log("window removed");
+   //    console.log(windowId);
+   // });
 
 
    // We will make use of Storage API to get and store `count` value
@@ -62,7 +62,7 @@ import { StorageHelper } from "./storage-helper";
             console.log(`window created, adding to workspace ${workspaceName}`);
 
             chrome.runtime.sendMessage({
-               type: 'NEW_WORKSPACE',
+               type: Constants.MSG_NEW_WORKSPACE,
                payload: {
                   workspaceName,
                   windowId: window.id,

@@ -1,15 +1,16 @@
 import { StorageHelper } from "./storage-helper";
+import { Constants } from "./constants";
 // With background scripts you can communicate with popup
 // and contentScript files.
 // For more information on background script,
 // See https://developer.chrome.com/extensions/background_pages
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.type === 'NEW_WORKSPACE') {
-      console.log("NEW_WORKSPACE");
+    if (request.type === Constants.MSG_NEW_WORKSPACE) {
+      console.log("New workspace");
       console.log(request);
   
-      // StorageHelper.addWorkspace(request.payload.workspaceName, request.payload.windowId);
+      StorageHelper.addWorkspace(request.payload.workspaceName, request.payload.windowId);
       // const message = `Hi ${
       //   sender.tab ? 'Con' : 'Pop'
       // }, my name is Bac. I am from Background. It's great to hear from you.`;
@@ -18,7 +19,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       // console.log(request.payload.message); 
       // Send a response message
       sendResponse({
-        "message": "cool"
+        "message": "success"
       });
     }
   });
