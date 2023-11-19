@@ -53,11 +53,12 @@ export class StorageHelper {
     //         });
     //     });
     // }
-    public static async addWindowToWorkspace(windowId: number, workspaceName: string) {
+    public static async addWindowToWorkspace(windowId: number, workspaceName: string): Promise<boolean> {
         let workspaceWindows = JSON.parse(await this.getValue("workspaceWindows", "{}"));
         workspaceWindows[windowId] = workspaceName;
         
         this.setValue("workspaceWindows", JSON.stringify(workspaceWindows));
+        return Promise.resolve(true);
     }
     
     public static async removeWindowFromWorkspace(windowId: number) {

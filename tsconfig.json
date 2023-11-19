@@ -1,11 +1,25 @@
 {
-    "compilerOptions": {
-      "target": "es5",
-      "module": "commonjs",
+  "compilerOptions": {
       "strict": true,
+      // "target": "es6",
+      // "moduleResolution": "bundler",
+      // "module": "ES6",
       "esModuleInterop": true,
-      "skipLibCheck": true,
-      "forceConsistentCasingInFileNames": true
-    },
-    "include": ["src/**/*"]
-  }
+      "rootDir": "src",
+      "allowJs": true,
+      "outDir": "build",
+      "noEmitOnError": true,
+      "typeRoots": [ "node_modules/@types" ]
+  },
+  "include": [
+      "src/**/*"
+  ],
+}
+
+// {
+//   "compilerOptions": {
+//       "esModuleInterop": true,
+//       "allowJs": true,
+//       "outDir": "build",
+//   }
+// }

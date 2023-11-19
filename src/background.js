@@ -16,7 +16,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       // }, my name is Bac. I am from Background. It's great to hear from you.`;
   
       // Log message coming from the `request` parameter
-      // console.log(request.payload.message); 
+      // console.log(request.payload.message);
       // Send a response message
       sendResponse({
         "message": "success"

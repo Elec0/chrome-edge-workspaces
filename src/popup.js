@@ -1,7 +1,5 @@
 /*
 Removed from manifest  
-
-
 */
 import './popup.css';
 import { StorageHelper } from "./storage-helper";

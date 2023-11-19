@@ -56,7 +56,7 @@ const common = {
             configFile: "tsconfig.json",
           },
         },
-        exclude: ["/node_modules/", "/test/"]
+        exclude: ["/node_modules/", "/src/test/"]
       },
     ],
   },
