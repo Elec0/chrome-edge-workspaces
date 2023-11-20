@@ -1,7 +1,10 @@
+import { plainToClass } from "class-transformer";
+import { Workspace } from "./obj/workspace";
 
 export class StorageHelper {
 
-    // private static _storage = window.localStorage;
+    private static _storage = chrome.storage.local;
+    private static _loadedWorkspaces: Map<number, Workspace> = new Map();
 
     public static init() {
 
@@ -14,16 +17,14 @@ export class StorageHelper {
      * @returns {string} The value of the key, or the default value if the key does not exist.
      */
     public static async getValue(key: string, defaultValue: string = ""): Promise<string> {
-        let result = await chrome.storage.local.get([key]);
-        console.log(`Get ${key}=`);
-        console.log(result, result[key]);
+        let result = await this._storage.get([key]);
+        // console.log(`Get ${ key }=`);
+        // console.log(result, result[key]);
         return result[key] || defaultValue;
     }
 
-    public static setValue(key: string, val: string) {
-        chrome.storage.local.set({ key: val }).then((val) => {
-            console.log(`Set ${key}=${val}`);
-        });
+    public static setValue(key: string, val: string): Promise<void> {
+        return this._storage.set({ [key]: val });
     }
 
     public static getSyncValue(key: string, callback: Function): void {
@@ -34,44 +35,47 @@ export class StorageHelper {
 
     public static setSyncValue(key: string, val: string) {
         chrome.storage.sync.set({ key: val }, function () {
-            console.log(`Set ${key}=${val}`);
+            console.log(`Set ${ key }=${ val }`);
         });
     }
 
-    // export function addWindowToWorkspace(windowId, workspaceName) {
-    //     chrome.storage.sync.get(['workspaceWindows'], function (result) {
-    //         console.log('Value currently is ' + result.workspaceWindows);
-    
-    //         if (result.workspaceWindows) {
-    //             result.workspaceWindows[windowId] = workspaceName;
-    //         } else {
-    //             result.workspaceWindows = {windowId: workspaceName};          
-    //         }
-    
-    //         chrome.storage.sync.set({ workspaceWindows: result.workspaceWindows }, function () {
-    //             console.log('Value is set to ' + result.workspaceWindows);
-    //         });
-    //     });
-    // }
-    public static async addWindowToWorkspace(windowId: number, workspaceName: string): Promise<boolean> {
-        let workspaceWindows = JSON.parse(await this.getValue("workspaceWindows", "{}"));
-        workspaceWindows[windowId] = workspaceName;
-        
-        this.setValue("workspaceWindows", JSON.stringify(workspaceWindows));
+    private static async getWorkspaces(): Promise<Map<number, Workspace>> {
+        let workspaces: Map<number, any> = JSON.parse(await this.getValue("workspaces", "{}"));
+        return workspaces;
+    }
+
+    private static async setWorkspaces(workspaces: Map<number, Workspace>) {
+        this.setValue("workspaces", JSON.stringify(workspaces));
+    }
+
+    public static async addWorkspace(workspaceName: string, window: chrome.windows.Window): Promise<boolean> {
+        let windowId = window.id;
+        if (windowId == null || windowId == undefined) {
+            return Promise.reject("Window id is null or undefined");
+        }
+
+        let workspaces = await this.getWorkspaces();
+        workspaces.set(windowId, new Workspace(windowId, workspaceName, window.tabs ?? []));
+        this.setWorkspaces(workspaces);
+
         return Promise.resolve(true);
     }
-    
-    public static async removeWindowFromWorkspace(windowId: number) {
-        let workspaceWindows = JSON.parse(await this.getValue("workspaceWindows", "{}"));
-        delete workspaceWindows[windowId];
-        this.setValue("workspaceWindows", JSON.stringify(workspaceWindows));
+
+    public static async removeWorkspace(windowId: number): Promise<boolean> {
+        let workspaces = await this.getWorkspaces();
+        if (workspaces.delete(windowId)) {
+            this.setWorkspaces(workspaces);
+            return Promise.resolve(true);
+        }
+        return Promise.reject("Workspace does not exist");
+
     }
 
-    public static async addWorkspace(workspaceName: string, windowId: number) {
-    }
-
+    /**
+     * Determine if a window is a workspace, meaning a workspace's window id is equal to the window id.
+     */
     public static async isWindowWorkspace(windowId: number): Promise<boolean> {
-        let workspaceWindows = JSON.parse(await this.getValue("workspaceWindows", "{}"));
+        let workspaceWindows = await this.getWorkspaces();
         return windowId in workspaceWindows;
     }
 
