@@ -10,11 +10,11 @@ export class TabStub {
     public pinned: boolean;
     public windowId: number;
 
-    constructor(id: number, title: string | undefined, url: string, favIconUrl: string, pinned: boolean, windowId: number) {
+    constructor(id: number, title: string | undefined, url: string, favIconUrl: string | undefined, pinned: boolean, windowId: number) {
         this.id = id;
-        this.title = title;
+        this.title = title ?? "";
         this.url = url;
-        this.favIconUrl = favIconUrl;
+        this.favIconUrl = favIconUrl ?? "";
         this.pinned = pinned;
         this.windowId = windowId;
     }

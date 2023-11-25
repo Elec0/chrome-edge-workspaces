@@ -4,11 +4,18 @@ export class Workspace {
     public id: number;
     public name: string;
     public tabs: TabStub[];
-  
-    constructor(id: number, name: string, tabs: TabStub[]) {
-      this.id = id;
-      this.name = name;
-      this.tabs = tabs;
+
+    constructor(id: number, name: string, tabs: chrome.tabs.Tab[] | null = null, tabStubs: TabStub[] | null = null) {
+        this.id = id;
+        this.name = name;
+        if (tabs != null) {
+            this.tabs = [];
+            tabs.forEach((tab: chrome.tabs.Tab) => {
+                this.tabs.push(TabStub.fromTab(tab));
+            });
+        } else {
+            this.tabs = tabStubs ?? [];
+        }
     }
 
     public static fromJson(json: any): Workspace {

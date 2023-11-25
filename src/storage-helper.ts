@@ -1,4 +1,3 @@
-import { plainToClass } from "class-transformer";
 import { Workspace } from "./obj/workspace";
 
 export class StorageHelper {
@@ -39,15 +38,33 @@ export class StorageHelper {
         });
     }
 
+    /**
+     * Get the workspaces from storage.
+     * @returns A promise that resolves to a map of workspaces, or an empty object if no workspaces exist.
+     */
     private static async getWorkspaces(): Promise<Map<number, Workspace>> {
-        let workspaces: Map<number, any> = JSON.parse(await this.getValue("workspaces", "{}"));
+        let workspacesJson: any = JSON.parse(await this.getValue("workspaces", "{}"));
+        let workspaces: Map<number, Workspace> = new Map();
+        for (let key in workspacesJson) {
+            workspaces.set(parseInt(key), Workspace.fromJson(workspacesJson[key]));
+        }
         return workspaces;
     }
 
+    /**
+     * Set the workspaces in storage. Used for saving the entire workspace map.
+     * @param workspaces The workspaces to save.
+     */
     private static async setWorkspaces(workspaces: Map<number, Workspace>) {
         this.setValue("workspaces", JSON.stringify(workspaces));
     }
 
+    /**
+     * Add a new workspace to storage.
+     * @param workspaceName User provided name for the workspace.
+     * @param window Chrome window object.
+     * @returns A promise that resolves to true if the workspace was added successfully, or rejects if the workspace could not be added.
+     */
     public static async addWorkspace(workspaceName: string, window: chrome.windows.Window): Promise<boolean> {
         let windowId = window.id;
         if (windowId == null || windowId == undefined) {
@@ -55,7 +72,7 @@ export class StorageHelper {
         }
 
         let workspaces = await this.getWorkspaces();
-        workspaces.set(windowId, new Workspace(windowId, workspaceName, window.tabs ?? []));
+        workspaces.set(windowId, new Workspace(windowId, workspaceName, window.tabs));
         this.setWorkspaces(workspaces);
 
         return Promise.resolve(true);
