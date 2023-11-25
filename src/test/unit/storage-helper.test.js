@@ -5,19 +5,43 @@ beforeEach(() => {
     jest.clearAllMocks();
 });
 
-test("getActiveTabId returns active tab ID", async () => {
-    // jest.spyOn(chrome.tabs, "query").mockResolvedValue([{
-    //     id: 3,
-    //     active: true,
-    //     currentWindow: true
-    // }]);
-    jest.spyOn(chrome.storage.local, "get").mockResolvedValue(3);
-    jest.spyOn(chrome.storage.local, "set").mockResolvedValue("success");
-    const window = {
-        id: 1,
-        focused: true
-    };
-    expect(await StorageHelper.addWorkspace("name", window)).toBe(true);
+describe("addWorkspace", () => {
+    test("getActiveTabId returns active tab ID", async () => {
+        // jest.spyOn(chrome.tabs, "query").mockResolvedValue([{
+        //     id: 3,
+        //     active: true,
+        //     currentWindow: true
+        // }]);
+        jest.spyOn(chrome.storage.local, "get").mockResolvedValue(3);
+        jest.spyOn(chrome.storage.local, "set").mockResolvedValue("success");
+        const window = {
+            id: 1,
+            focused: true
+        };
+        expect(await StorageHelper.addWorkspace("name", window)).toBe(true);
+    });
+
+    it('should reject when window id is null or undefined', async () => {
+        let mockWindow = { id: null, tabs: [] };
+
+        await expect(StorageHelper.addWorkspace('testWorkspace', mockWindow))
+            .rejects.toEqual("Window id is null or undefined");
+    });
+
+    it('should add workspace', async () => {
+        // Mock the get and setWorkspace methods
+        jest.spyOn(StorageHelper, "getWorkspaces").mockResolvedValue(new Map());
+        jest.spyOn(StorageHelper, "setValue");
+
+        let mockWindow = { id: 1, tabs: [] };
+        let workspaces = new Map();
+        workspaces.set(mockWindow.id, new Workspace(mockWindow.id, "testWorkspace", mockWindow.tabs));
+        const result = await StorageHelper.addWorkspace("testWorkspace", mockWindow);
+
+        expect(result).toBe(true);
+        expect(StorageHelper.getWorkspaces).toHaveBeenCalledTimes(1);
+        expect(StorageHelper.setValue).toHaveBeenCalledWith("workspaces", JSON.stringify(workspaces));
+    });
 });
 
 describe("chrome local storage", () => {
