@@ -1,4 +1,9 @@
-import { StorageHelper} from "../../storage-helper";
+import { Workspace } from "../../obj/workspace";
+import { StorageHelper } from "../../storage-helper";
+
+beforeEach(() => {
+    jest.clearAllMocks();
+});
 
 test("getActiveTabId returns active tab ID", async () => {
     // jest.spyOn(chrome.tabs, "query").mockResolvedValue([{
@@ -15,32 +20,42 @@ test("getActiveTabId returns active tab ID", async () => {
     expect(await StorageHelper.addWorkspace("name", window)).toBe(true);
 });
 
-describe('StorageHelper', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+describe("chrome local storage", () => {
+    it('should get value', async () => {
+        const key = 'testKey';
+        const defaultValue = 'defaultValue';
+        const value = 'testValue';
 
-  it('should get value from local storage', async () => {
-    const key = 'testKey';
-    const defaultValue = 'defaultValue';
-    const value = 'testValue';
+        jest.spyOn(chrome.storage.local, "get").mockResolvedValue({ [key]: value });
 
-    jest.spyOn(chrome.storage.local, "get").mockResolvedValue({ [key]: value });
+        const result = await StorageHelper.getValue(key, defaultValue);
+        expect(result).toBe(value);
+        expect(chrome.storage.local.get).toHaveBeenCalledWith([key]);
+    });
 
-    const result = await StorageHelper.getValue(key, defaultValue);
-    expect(result).toBe(value);
-    expect(chrome.storage.local.get).toHaveBeenCalledWith([key], expect.any(Function));
-  });
+    it('should set value', () => {
+        const key = 'testKey';
+        const value = 'testValue';
 
-  it('should set value to local storage', () => {
-    const key = 'testKey';
-    const value = 'testValue';
+        jest.spyOn(chrome.storage.local, "set").mockResolvedValue("success");
 
-    jest.spyOn(chrome.storage.local, "set").mockResolvedValue("success");
-    
-    StorageHelper.setValue(key, value);
-    expect(chrome.storage.local.set).toHaveBeenCalledWith({ [key]: value });
-  });
+        StorageHelper.setValue(key, value);
+        expect(chrome.storage.local.set).toHaveBeenCalledWith({ [key]: value });
+    });
+});
 
-  // Add more tests for other methods in the StorageHelper class
+describe('setWorkspaces', () => {
+    it('should call setValue with correct parameters', async () => {
+        // Arrange
+        const workspaces = new Map();
+        let workspace = new Workspace(2, 'testWorkspace');
+        workspaces.set(workspace.id, workspace);
+        const setValueSpy = jest.spyOn(StorageHelper, 'setValue');
+
+        // Act
+        await StorageHelper.setWorkspaces(workspaces);
+
+        // Assert
+        expect(setValueSpy).toHaveBeenCalledWith('workspaces', JSON.stringify(workspaces));
+    });
 });
