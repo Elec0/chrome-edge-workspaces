@@ -1,3 +1,4 @@
+import { Constants } from "./constants";
 import { Workspace } from "./obj/workspace";
 
 export class StorageHelper {
@@ -5,8 +6,12 @@ export class StorageHelper {
     private static _storage = chrome.storage.local;
     private static _loadedWorkspaces: Map<number, Workspace> = new Map();
 
-    public static init() {
+    public static async init() {
+        console.log("StorageHelper init");
+        console.debug(await this.getWorkspaces());
 
+        console.debug("_storage dump:")
+        console.debug(await this._storage.get(null));
     }
 
     /** 
@@ -16,9 +21,9 @@ export class StorageHelper {
      * @returns {string} The value of the key, or the default value if the key does not exist.
      */
     public static async getValue(key: string, defaultValue: string = ""): Promise<string> {
-        let result = await this._storage.get([key]);
-        // console.log(`Get ${ key }=`);
-        // console.log(result, result[key]);
+        let result = await this._storage.get(key);
+        console.debug(`Get ${ key }=`);
+        console.debug(result);
         return result[key] || defaultValue;
     }
 
@@ -27,13 +32,13 @@ export class StorageHelper {
     }
 
     public static getSyncValue(key: string, callback: Function): void {
-        chrome.storage.sync.get([key], function (result) {
+        chrome.storage.sync.get(key, function (result) {
             callback(result[key]);
         });
     }
 
     public static setSyncValue(key: string, val: string) {
-        chrome.storage.sync.set({ key: val }, function () {
+        chrome.storage.sync.set({ [key]: val }, function () {
             console.log(`Set ${ key }=${ val }`);
         });
     }
@@ -43,7 +48,7 @@ export class StorageHelper {
      * @returns A promise that resolves to a map of workspaces, or an empty object if no workspaces exist.
      */
     private static async getWorkspaces(): Promise<Map<number, Workspace>> {
-        let workspacesJson: any = JSON.parse(await this.getValue("workspaces", "{}"));
+        let workspacesJson: any = JSON.parse(await this.getValue(Constants.KEY_STORAGE_WORKSPACES, "{}"));
         let workspaces: Map<number, Workspace> = new Map();
         for (let key in workspacesJson) {
             workspaces.set(parseInt(key), Workspace.fromJson(workspacesJson[key]));
@@ -56,24 +61,27 @@ export class StorageHelper {
      * @param workspaces The workspaces to save.
      */
     private static async setWorkspaces(workspaces: Map<number, Workspace>) {
-        this.setValue("workspaces", JSON.stringify(workspaces));
+        // Stringify can't handle Maps, so we convert to an array of key-value pairs.
+        await this.setValue(Constants.KEY_STORAGE_WORKSPACES, JSON.stringify(Array.from(workspaces.entries())));
     }
 
     /**
      * Add a new workspace to storage.
+     * We assume the window has no tabs, since it was just created.
+     * 
      * @param workspaceName User provided name for the workspace.
      * @param window Chrome window object.
      * @returns A promise that resolves to true if the workspace was added successfully, or rejects if the workspace could not be added.
      */
-    public static async addWorkspace(workspaceName: string, window: chrome.windows.Window): Promise<boolean> {
-        let windowId = window.id;
+    public static async addWorkspace(workspaceName: string, windowId: number): Promise<boolean> {
+        console.debug("addWorkspace: ", workspaceName, windowId);
         if (windowId == null || windowId == undefined) {
-            return Promise.reject("Window id is null or undefined");
+            return Promise.resolve(false) // reject("Window id is null or undefined");
         }
 
         let workspaces = await this.getWorkspaces();
-        workspaces.set(windowId, new Workspace(windowId, workspaceName, window.tabs));
-        this.setWorkspaces(workspaces);
+        workspaces.set(windowId, new Workspace(windowId, workspaceName, []));
+        await this.setWorkspaces(workspaces);
 
         return Promise.resolve(true);
     }
@@ -81,7 +89,7 @@ export class StorageHelper {
     public static async removeWorkspace(windowId: number): Promise<boolean> {
         let workspaces = await this.getWorkspaces();
         if (workspaces.delete(windowId)) {
-            this.setWorkspaces(workspaces);
+            await this.setWorkspaces(workspaces);
             return Promise.resolve(true);
         }
         return Promise.reject("Workspace does not exist");

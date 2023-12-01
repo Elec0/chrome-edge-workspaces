@@ -5,8 +5,9 @@ beforeEach(() => {
     jest.clearAllMocks();
 });
 
+
 describe("addWorkspace", () => {
-    test("getActiveTabId returns active tab ID", async () => {
+    it("should successfully add a workspace", async () => {
         // jest.spyOn(chrome.tabs, "query").mockResolvedValue([{
         //     id: 3,
         //     active: true,
@@ -18,13 +19,13 @@ describe("addWorkspace", () => {
             id: 1,
             focused: true
         };
-        expect(await StorageHelper.addWorkspace("name", window)).toBe(true);
+        expect(await StorageHelper.addWorkspace("name", window.id)).toBe(true);
     });
 
     it('should reject when window id is null or undefined', async () => {
         let mockWindow = { id: null, tabs: [] };
 
-        await expect(StorageHelper.addWorkspace('testWorkspace', mockWindow))
+        await expect(StorageHelper.addWorkspace('testWorkspace', mockWindow.id))
             .rejects.toEqual("Window id is null or undefined");
     });
 
@@ -36,7 +37,7 @@ describe("addWorkspace", () => {
         let mockWindow = { id: 1, tabs: [] };
         let workspaces = new Map();
         workspaces.set(mockWindow.id, new Workspace(mockWindow.id, "testWorkspace", mockWindow.tabs));
-        const result = await StorageHelper.addWorkspace("testWorkspace", mockWindow);
+        const result = await StorageHelper.addWorkspace("testWorkspace", mockWindow.id);
 
         expect(result).toBe(true);
         expect(StorageHelper.getWorkspaces).toHaveBeenCalledTimes(1);

@@ -7,85 +7,67 @@ import { Constants } from "./constants";
 
 (async function () {
 
-   // Tell the background script to inject our logic script
-   // chrome.runtime.sendMessage({ pageLoaded: true });
-
-   // chrome.windows.onCreated.addListener(function (window) {
-   //    console.log("window created");
-   //    console.log(window);
-   // });
-
-   // chrome.windows.onRemoved.addListener(function (windowId) {
-   //    console.log("window removed");
-   //    console.log(windowId);
-   // });
-
-
-   // We will make use of Storage API to get and store `count` value
-   // More information on Storage API can we found at
-   // https://developer.chrome.com/extensions/storage
-
-   // To get storage access, we have to mention it in `permissions` property of manifest.json file
-   // More information on Permissions can we found at
-   // https://developer.chrome.com/extensions/declare_permissions
-   const counterStorage = {
-      get: cb => {
-         chrome.storage.sync.get(['count'], result => {
-            cb(result.count);
-         });
-      },
-      set: (value, cb) => {
-         chrome.storage.sync.set(
-            {
-               count: value,
-            },
-            () => {
-               cb();
-            }
-         );
-      },
-   };
-
    /**
     * This function is called when the popup is opened.
     * Setup the listeners for the buttons
     */
    async function documentLoaded() {
-      document.getElementById('addBtn').addEventListener('click', async () => {
-         // Present popup asking for workspace name
-         const workspaceName = prompt('What is the name of your workspace?');
+      document.getElementById('addBtn').addEventListener('click', addWorkspaceButtonClicked);
+   
+      // TODO: For some reason we're getting workspaces={0: {key: 0, value: {id: undefined, name: undefined, tabs: []}}}
+      let workspaces = await StorageHelper.getWorkspaces(); 
+      listWorkspaces(workspaces);
 
-         await chrome.windows.create({
-         }).then((window) => {
-            console.log(`window created, adding to workspace ${workspaceName}`);
+   }
+   
+   /**
+    * Create a span element for each workspace in the list, inside the div with id="workspaces"
+    * @param {*} workspaces 
+    */
+   async function listWorkspaces(workspaces) {
+      console.log("listWorkspaces: ", workspaces);
+      let workspaceDiv = document.getElementById("workspaces");
+      workspaceDiv.innerHTML = "";
+      for (let workspace of workspaces) {
+         let workspaceSpan = document.createElement("span");
+         workspaceSpan.innerHTML = workspace.name;
+         workspaceDiv.appendChild(workspaceSpan);
+      }
 
-            chrome.runtime.sendMessage({
-               type: Constants.MSG_NEW_WORKSPACE,
-               payload: {
-                  workspaceName,
-                  windowId: window.id,
-               },
-            }, response => {
-               console.log("popup response: ", response);
-            });
+   }
+   async function addWorkspaceButtonClicked() {
+      // Present popup asking for workspace name
+      const workspaceName = prompt('What is the name of your workspace?');
 
-            console.log(window);
-            StorageHelper.addWindowToWorkspace(window.id, workspaceName);
+      await chrome.windows.create({
+      }).then((window) => {
+         console.log(`window created, adding to workspace ${workspaceName}`);
+
+         chrome.runtime.sendMessage({
+            type: Constants.MSG_NEW_WORKSPACE,
+            payload: {
+               workspaceName,
+               windowId: window.id,
+            },
+         }, response => {
+            console.log("background response: ", response);
          });
-         // Create new window, passing in the workspaceName as a custom property
-         // chrome.windows.create({
-         //    url: 'https://www.google.com',
-         //    type: 'popup',
-         //    width: 800,
-         //    height: 600,
-         //    focused: true,
-         //    state: 'normal',
-         //    incognito: false,
-         //    tabId: 1,
-         //    workspaceName,
-         // });
 
+         console.log(window);
+         
       });
+      // Create new window, passing in the workspaceName as a custom property
+      // chrome.windows.create({
+      //    url: 'https://www.google.com',
+      //    type: 'popup',
+      //    width: 800,
+      //    height: 600,
+      //    focused: true,
+      //    state: 'normal',
+      //    incognito: false,
+      //    tabId: 1,
+      //    workspaceName,
+      // });
    }
 
    function updateCounter({ type }) {
