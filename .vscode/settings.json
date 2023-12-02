@@ -1,3 +1,5 @@
 {
+    "jest.autoRun": "on-save",
+    "jest.jestCommandLine": "npm run test-unit --"
     
 }

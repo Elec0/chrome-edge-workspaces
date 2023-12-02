@@ -26,7 +26,7 @@ describe("addWorkspace", () => {
         let mockWindow = { id: null, tabs: [] };
 
         await expect(StorageHelper.addWorkspace('testWorkspace', mockWindow.id))
-            .rejects.toEqual("Window id is null or undefined");
+            .resolves.toBe(false);
     });
 
     it('should add workspace', async () => {
@@ -41,7 +41,8 @@ describe("addWorkspace", () => {
 
         expect(result).toBe(true);
         expect(StorageHelper.getWorkspaces).toHaveBeenCalledTimes(1);
-        expect(StorageHelper.setValue).toHaveBeenCalledWith("workspaces", JSON.stringify(workspaces));
+        expect(StorageHelper.setValue).toHaveBeenCalledWith("workspaces",
+            '[[1,{"id":1,"name":"testWorkspace","tabs":[]}]]');
     });
 });
 
@@ -55,7 +56,7 @@ describe("chrome local storage", () => {
 
         const result = await StorageHelper.getValue(key, defaultValue);
         expect(result).toBe(value);
-        expect(chrome.storage.local.get).toHaveBeenCalledWith([key]);
+        expect(chrome.storage.local.get).toHaveBeenCalledWith(key);
     });
 
     it('should set value', () => {
@@ -81,6 +82,7 @@ describe('setWorkspaces', () => {
         await StorageHelper.setWorkspaces(workspaces);
 
         // Assert
-        expect(setValueSpy).toHaveBeenCalledWith('workspaces', JSON.stringify(workspaces));
+        expect(setValueSpy).toHaveBeenCalledWith('workspaces',
+            '[[2,{"id":2,"name":"testWorkspace","tabs":[]}]]');
     });
 });

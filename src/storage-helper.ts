@@ -1,5 +1,6 @@
 import { Constants } from "./constants";
 import { Workspace } from "./obj/workspace";
+import { Utils } from "./utils";
 
 export class StorageHelper {
 
@@ -7,6 +8,9 @@ export class StorageHelper {
     private static _loadedWorkspaces: Map<number, Workspace> = new Map();
 
     public static async init() {
+        if (Utils.areWeTestingWithJest())
+            return;
+
         console.log("StorageHelper init");
         console.debug(await this.getWorkspaces());
 
