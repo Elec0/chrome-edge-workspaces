@@ -1,9 +1,10 @@
 /*
 Removed from manifest  
 */
-import './popup.css';
+import "./popup.css";
 import { StorageHelper } from "./storage-helper";
 import { Constants } from "./constants";
+import { Workspace } from "./obj/workspace";
 
 (async function () {
 
@@ -12,32 +13,52 @@ import { Constants } from "./constants";
     * Setup the listeners for the buttons
     */
    async function documentLoaded() {
-      document.getElementById('addBtn').addEventListener('click', addWorkspaceButtonClicked);
-   
-      // TODO: For some reason we're getting workspaces={0: {key: 0, value: {id: undefined, name: undefined, tabs: []}}}
-      let workspaces = await StorageHelper.getWorkspaces(); 
+      document.getElementById("addBtn").addEventListener("click", addWorkspaceButtonClicked);
+      document.getElementById("clearStorage").addEventListener("click", clearStorageButtonClicked);
+
+      let workspaces = await StorageHelper.getWorkspaces();
       listWorkspaces(workspaces);
 
    }
-   
+
    /**
-    * Create a span element for each workspace in the list, inside the div with id="workspaces"
-    * @param {*} workspaces 
-    */
+       * Renders a list of workspaces on the webpage.
+       * @param {Map<Number, Workspace>} workspaces - A Map object containing the workspaces.
+       * @throws {Error} If the workspaces parameter is not a Map object.
+       */
    async function listWorkspaces(workspaces) {
-      console.log("listWorkspaces: ", workspaces);
       let workspaceDiv = document.getElementById("workspaces");
       workspaceDiv.innerHTML = "";
-      for (let workspace of workspaces) {
-         let workspaceSpan = document.createElement("span");
+
+      // Create an unordered list and put it in the workspaceDiv
+      let workspaceContainer = document.createElement("ul");
+      workspaceDiv.appendChild(workspaceContainer);
+
+      /**
+       * Adds a workspace to the parent node.
+       * @param {HTMLElement} parentNode - The parent node to which the workspace will be added.
+       * @param {Object} workspace - The workspace object.
+       * @param {string} workspace.name - The name of the workspace.
+       */
+      let _addWorkspace = (parentNode, workspace) => {
+         let workspaceSpan = document.createElement("li");
          workspaceSpan.innerHTML = workspace.name;
-         workspaceDiv.appendChild(workspaceSpan);
+         parentNode.appendChild(workspaceSpan)
+      }
+
+      for (let workspace of workspaces.values()) {
+         console.debug(workspace);
+         _addWorkspace(workspaceContainer, workspace);
       }
 
    }
+
+   async function clearStorageButtonClicked() {
+      await StorageHelper.clearAllData();
+   }
    async function addWorkspaceButtonClicked() {
       // Present popup asking for workspace name
-      const workspaceName = prompt('What is the name of your workspace?');
+      const workspaceName = prompt("What is the name of your workspace?");
 
       await chrome.windows.create({
       }).then((window) => {
@@ -54,16 +75,16 @@ import { Constants } from "./constants";
          });
 
          console.log(window);
-         
+
       });
       // Create new window, passing in the workspaceName as a custom property
       // chrome.windows.create({
-      //    url: 'https://www.google.com',
-      //    type: 'popup',
+      //    url: "https://www.google.com",
+      //    type: "popup",
       //    width: 800,
       //    height: 600,
       //    focused: true,
-      //    state: 'normal',
+      //    state: "normal",
       //    incognito: false,
       //    tabId: 1,
       //    workspaceName,
@@ -74,16 +95,16 @@ import { Constants } from "./constants";
       counterStorage.get(count => {
          let newCount;
 
-         if (type === 'INCREMENT') {
+         if (type === "INCREMENT") {
             newCount = count + 1;
-         } else if (type === 'DECREMENT') {
+         } else if (type === "DECREMENT") {
             newCount = count - 1;
          } else {
             newCount = count;
          }
 
          counterStorage.set(newCount, () => {
-            document.getElementById('counter').innerHTML = newCount;
+            document.getElementById("counter").innerHTML = newCount;
 
             // Communicate with content script of
             // active tab by sending a message
@@ -93,13 +114,13 @@ import { Constants } from "./constants";
                chrome.tabs.sendMessage(
                   tab.id,
                   {
-                     type: 'COUNT',
+                     type: "COUNT",
                      payload: {
                         count: newCount,
                      },
                   },
                   response => {
-                     console.log('Current count value passed to contentScript file');
+                     console.log("Current count value passed to contentScript file");
                   }
                );
             });
@@ -122,7 +143,7 @@ import { Constants } from "./constants";
 
    // testSetup();
 
-   document.addEventListener('DOMContentLoaded', documentLoaded);
+   document.addEventListener("DOMContentLoaded", documentLoaded);
 
    // StorageHelper.setValue("test", "testValue");
 
@@ -131,9 +152,9 @@ import { Constants } from "./constants";
    // Communicate with background file by sending a message
    // chrome.runtime.sendMessage(
    //   {
-   //     type: 'GREETINGS',
+   //     type: "GREETINGS",
    //     payload: {
-   //       message: 'Hello, my name is Pop. I am from Popup.',
+   //       message: "Hello, my name is Pop. I am from Popup.",
    //     },
    //   },
    //   response => {

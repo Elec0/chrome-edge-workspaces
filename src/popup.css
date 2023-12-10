@@ -90,3 +90,8 @@ code {
     border: .5px dashed #000;
     opacity: .1;
 }
+
+.workspaces span {
+    font-weight: bold;
+    font-size: large;
+}
