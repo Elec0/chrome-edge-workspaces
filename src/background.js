@@ -9,7 +9,6 @@ import { Constants, MessageResponses } from "./constants";
 // Listeners
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     if (request.type === Constants.MSG_NEW_WORKSPACE) {
-        console.log("New workspace");
 
         if (!await StorageHelper.addWorkspace(request.payload.workspaceName, request.payload.windowId)) {
             sendResponse({
@@ -17,7 +16,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
             });
         }
         // const message = `Hi ${
-        //   sender.tab ? 'Con' : 'Pop'
+        //   sender.tab ? "Con" : "Pop"
         // }, my name is Bac. I am from Background. It's great to hear from you.`;
 
         // Log message coming from the `request` parameter
@@ -39,14 +38,9 @@ chrome.runtime.onInstalled.addListener((details) => {
 });
 
 chrome.windows.onCreated.addListener(async (window) => {
-    console.log("onCreated, from the background");
-    console.log(window);
     let isWorkspace = await StorageHelper.isWindowWorkspace(window.id);
-    console.log(`${window.id} isWorkspace=${isWorkspace}`);
 });
 
 chrome.windows.onRemoved.addListener((window) => {
-    console.log("onRemoved, from the background");
-    console.log(window);
 });
 

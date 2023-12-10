@@ -11,11 +11,11 @@ export class StorageHelper {
         if (Utils.areWeTestingWithJest())
             return;
 
-        console.log("StorageHelper init");
-        console.debug(await this.getWorkspaces());
+        // console.log("StorageHelper init");
+        // console.debug(await this.getWorkspaces());
 
-        console.debug("_storage dump:")
-        console.debug(await this._storage.get(null));
+        // console.debug("_storage dump:")
+        // console.debug(await this._storage.get(null));
     }
 
     /** 
@@ -26,8 +26,7 @@ export class StorageHelper {
      */
     public static async getValue(key: string, defaultValue: string = ""): Promise<string> {
         let result = await this._storage.get(key);
-        console.debug(`Get ${ key }=`);
-        console.debug(result);
+        console.debug(`Get ${ key }=`, result);
         return result[key] || defaultValue;
     }
 
@@ -116,10 +115,11 @@ export class StorageHelper {
     //     return this._storage.getItem("started") == null;
     // }
 
-    // /** Delete everything we have in storage. */
-    // public static clearAllData() {
-    //     this._storage.clear();
-    // }
+    /** Delete everything we have in storage. */
+    public static clearAllData() {
+        this._storage.clear();
+        console.log("Cleared all data");
+    }
 
     /** Generate hash from string. 
      * From: https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript */

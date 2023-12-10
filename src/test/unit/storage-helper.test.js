@@ -31,18 +31,17 @@ describe("addWorkspace", () => {
         expect(await StorageHelper.addWorkspace("name", window.id)).toBe(true);
     });
 
-    it('should reject when window id is null or undefined', async () => {
+    it("should reject when window id is null or undefined", async () => {
         let mockWindow = { id: null, tabs: [] };
 
-        await expect(StorageHelper.addWorkspace('testWorkspaceFail', mockWindow.id))
+        await expect(StorageHelper.addWorkspace("testWorkspaceFail", mockWindow.id))
             .resolves.toBe(false);
     });
 
-    it('should add workspace', async () => {
+    it("should add workspace", async () => {
         // Mock the get and setWorkspace methods
         jest.spyOn(StorageHelper, "getWorkspaces").mockResolvedValue(new Map());
         jest.spyOn(StorageHelper, "setValue").mockImplementation(() => { return true; });
-        // jest.mock(StorageHelper, "setValue");
 
         let mockWindow = { id: 1, tabs: [] };
         let workspaces = new Map();
@@ -53,14 +52,40 @@ describe("addWorkspace", () => {
         expect(StorageHelper.getWorkspaces).toHaveBeenCalledTimes(1);
         expect(StorageHelper.setValue).toHaveBeenCalledWith("workspaces",
             '[[1,{"id":1,"name":"testWorkspaceAdd","tabs":[]}]]');
+
+    });
+
+    it("should add two workspaces and get them", async () => {
+        let map = new Map();
+
+        // Mock chrome.storage.local get and set to use our map local variable
+        jest.spyOn(StorageHelper, "getValue").mockImplementation((key, defaultValue) => {
+            return map.get(key) || defaultValue;
+        });
+
+        // jest.spyOn(chrome.storage.local, "set").mockImplementation(({[key]: value}) => {
+        //     map.set(key, value);
+        // }).mockResolvedValue("success");
+        jest.spyOn(StorageHelper, "setValue").mockImplementation((key, value) => {
+            map.set(key, value);
+            return true;
+        });
+
+        await StorageHelper.addWorkspace("testWorkspaceAddOne", 1);
+        await StorageHelper.addWorkspace("testWorkspaceAddTwo", 2);
+
+        let workspaces = await StorageHelper.getWorkspaces();
+        
+        expect(workspaces.size).toBe(2);
+
     });
 });
 
 describe("chrome local storage", () => {
-    it('should get value', async () => {
-        const key = 'testKey';
-        const defaultValue = 'defaultValue';
-        const value = 'testValue';
+    it("should get value", async () => {
+        const key = "testKey";
+        const defaultValue = "defaultValue";
+        const value = "testValue";
 
         jest.spyOn(chrome.storage.local, "get").mockResolvedValue({ [key]: value });
 
@@ -69,9 +94,9 @@ describe("chrome local storage", () => {
         expect(chrome.storage.local.get).toHaveBeenCalledWith(key);
     });
 
-    it('should set value', () => {
-        const key = 'testKey';
-        const value = 'testValue';
+    it("should set value", () => {
+        const key = "testKey";
+        const value = "testValue";
 
         jest.spyOn(chrome.storage.local, "set").mockResolvedValue("success");
 
@@ -80,13 +105,13 @@ describe("chrome local storage", () => {
     });
 });
 
-describe('setWorkspaces', () => {
-    it('should call setValue with correct parameters', async () => {
+describe("setWorkspaces", () => {
+    it("should call setValue with correct parameters", async () => {
         // Arrange
         const workspaces = new Map();
-        let workspace = new Workspace(2, 'testWorkspaceSet');
+        let workspace = new Workspace(2, "testWorkspaceSet");
         workspaces.set(workspace.id, workspace);
-        const setValueSpy = jest.spyOn(StorageHelper, 'setValue');
+        const setValueSpy = jest.spyOn(StorageHelper, "setValue");
         setValueSpy.mockResolvedValue(true);
 
         // Act
@@ -98,11 +123,11 @@ describe('setWorkspaces', () => {
     });
 });
 
-describe('getWorkspaces', () => {
-    it('should call getValue with correct parameters', async () => {
+describe("getWorkspaces", () => {
+    it("should call getValue with correct parameters", async () => {
         // Arrange
         const workspaces = new Map();
-        let workspace = new Workspace(3, 'toGet');
+        let workspace = new Workspace(3, "toGet");
         workspaces.set(workspace.id, workspace);
         const stringValue = JSON.stringify(Array.from(workspaces));
 
@@ -110,10 +135,8 @@ describe('getWorkspaces', () => {
 
         // Act
         let value = await StorageHelper.getWorkspaces();
-        console.log(value)
 
         // Assert
-        // expect(getValueSpy).toHaveBeenCalledWith('workspaces');
         expect(value).toEqual(workspaces);
 
     });
