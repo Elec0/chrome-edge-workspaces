@@ -55,7 +55,8 @@ export class StorageHelper {
         let workspacesJson: any = JSON.parse(await this.getValue(Constants.KEY_STORAGE_WORKSPACES, "{}"));
         let workspaces: Map<number, Workspace> = new Map();
         for (let key in workspacesJson) {
-            workspaces.set(parseInt(key), Workspace.fromJson(workspacesJson[key]));
+            let decomposedMap = workspacesJson[key];
+            workspaces.set(parseInt(decomposedMap[0]), Workspace.fromJson(decomposedMap[1]));
         }
         return workspaces;
     }

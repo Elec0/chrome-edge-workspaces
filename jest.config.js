@@ -4,7 +4,8 @@ module.exports = {
     // roots: [
     //     "<rootDir>/src",
     // ],
-    setupFiles: ['<rootDir>/src/test/mock-extension-apis.js'],
+    setupFiles: ['<rootDir>/src/test/jest/mock-extension-apis.js'],
+    setupFilesAfterEnv: ['<rootDir>/src/test/jest/setup-jest.js'],
     // testMatch: [
     //     "**/test/unit/*.test.[tj]s"
     // ],
@@ -13,4 +14,8 @@ module.exports = {
     transform: {
         "^.+\\.ts$": ["ts-jest", { tsconfig: "tsconfig.test.json" }]
     },
+    // Without the following, the tests share mocks between them, for *some* reason
+    restoreMocks: true,
+    clearMocks: true,
+    resetMocks: true,
 };

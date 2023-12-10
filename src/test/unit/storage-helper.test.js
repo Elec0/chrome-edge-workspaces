@@ -1,7 +1,16 @@
+import { Constants } from "../../constants";
 import { Workspace } from "../../obj/workspace";
 import { StorageHelper } from "../../storage-helper";
 
-beforeEach(() => {
+/** Jest does not clear any mock state between tests (which is baffling). So doing this and/or putting 
+ *  restoreMocks: true,
+ *  clearMocks: true,
+ *  resetMocks: true,
+ * In jest.config.js is necessary to prevent tests from sharing mock state between them.
+ */
+afterEach(() => {
+    jest.restoreAllMocks();
+    jest.resetAllMocks();
     jest.clearAllMocks();
 });
 
@@ -25,24 +34,25 @@ describe("addWorkspace", () => {
     it('should reject when window id is null or undefined', async () => {
         let mockWindow = { id: null, tabs: [] };
 
-        await expect(StorageHelper.addWorkspace('testWorkspace', mockWindow.id))
+        await expect(StorageHelper.addWorkspace('testWorkspaceFail', mockWindow.id))
             .resolves.toBe(false);
     });
 
     it('should add workspace', async () => {
         // Mock the get and setWorkspace methods
         jest.spyOn(StorageHelper, "getWorkspaces").mockResolvedValue(new Map());
-        jest.spyOn(StorageHelper, "setValue");
+        jest.spyOn(StorageHelper, "setValue").mockImplementation(() => { return true; });
+        // jest.mock(StorageHelper, "setValue");
 
         let mockWindow = { id: 1, tabs: [] };
         let workspaces = new Map();
-        workspaces.set(mockWindow.id, new Workspace(mockWindow.id, "testWorkspace", mockWindow.tabs));
-        const result = await StorageHelper.addWorkspace("testWorkspace", mockWindow.id);
+        workspaces.set(mockWindow.id, new Workspace(mockWindow.id, "testWorkspaceAdd", mockWindow.tabs));
+        const result = await StorageHelper.addWorkspace("testWorkspaceAdd", mockWindow.id);
 
         expect(result).toBe(true);
         expect(StorageHelper.getWorkspaces).toHaveBeenCalledTimes(1);
         expect(StorageHelper.setValue).toHaveBeenCalledWith("workspaces",
-            '[[1,{"id":1,"name":"testWorkspace","tabs":[]}]]');
+            '[[1,{"id":1,"name":"testWorkspaceAdd","tabs":[]}]]');
     });
 });
 
@@ -74,15 +84,37 @@ describe('setWorkspaces', () => {
     it('should call setValue with correct parameters', async () => {
         // Arrange
         const workspaces = new Map();
-        let workspace = new Workspace(2, 'testWorkspace');
+        let workspace = new Workspace(2, 'testWorkspaceSet');
         workspaces.set(workspace.id, workspace);
         const setValueSpy = jest.spyOn(StorageHelper, 'setValue');
+        setValueSpy.mockResolvedValue(true);
 
         // Act
         await StorageHelper.setWorkspaces(workspaces);
 
         // Assert
         expect(setValueSpy).toHaveBeenCalledWith('workspaces',
-            '[[2,{"id":2,"name":"testWorkspace","tabs":[]}]]');
+            '[[2,{"id":2,"name":"testWorkspaceSet","tabs":[]}]]');
+    });
+});
+
+describe('getWorkspaces', () => {
+    it('should call getValue with correct parameters', async () => {
+        // Arrange
+        const workspaces = new Map();
+        let workspace = new Workspace(3, 'toGet');
+        workspaces.set(workspace.id, workspace);
+        const stringValue = JSON.stringify(Array.from(workspaces));
+
+        jest.spyOn(chrome.storage.local, "get").mockResolvedValue({ [Constants.KEY_STORAGE_WORKSPACES]: stringValue });
+
+        // Act
+        let value = await StorageHelper.getWorkspaces();
+        console.log(value)
+
+        // Assert
+        // expect(getValueSpy).toHaveBeenCalledWith('workspaces');
+        expect(value).toEqual(workspaces);
+
     });
 });
