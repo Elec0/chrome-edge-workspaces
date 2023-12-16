@@ -3,7 +3,7 @@ Removed from manifest
 */
 import "./popup.css";
 import { StorageHelper } from "./storage-helper";
-import { Constants } from "./constants";
+import { Constants } from "./constants/constants";
 import { Workspace } from "./obj/workspace";
 
 (async function () {
@@ -16,8 +16,7 @@ import { Workspace } from "./obj/workspace";
       document.getElementById("addBtn").addEventListener("click", addWorkspaceButtonClicked);
       document.getElementById("clearStorage").addEventListener("click", clearStorageButtonClicked);
 
-      let workspaces = await StorageHelper.getWorkspaces();
-      listWorkspaces(workspaces);
+      listWorkspaces(await StorageHelper.getWorkspaces());
 
    }
 
@@ -26,7 +25,11 @@ import { Workspace } from "./obj/workspace";
        * @param {Map<Number, Workspace>} workspaces - A Map object containing the workspaces.
        * @throws {Error} If the workspaces parameter is not a Map object.
        */
-   async function listWorkspaces(workspaces) {
+   function listWorkspaces(workspaces) {
+      if (!(workspaces instanceof Map)) {
+         throw new Error("workspaces parameter must be a Map object");
+      }
+      console.debug("listWorkspaces", workspaces)
       let workspaceDiv = document.getElementById("workspaces");
       workspaceDiv.innerHTML = "";
 
@@ -55,28 +58,32 @@ import { Workspace } from "./obj/workspace";
 
    async function clearStorageButtonClicked() {
       await StorageHelper.clearAllData();
+      listWorkspaces(await StorageHelper.getWorkspaces());
    }
-   async function addWorkspaceButtonClicked() {
+
+   function addWorkspaceButtonClicked() {
       // Present popup asking for workspace name
       const workspaceName = prompt("What is the name of your workspace?");
 
-      await chrome.windows.create({
-      }).then((window) => {
-         console.log(`window created, adding to workspace ${workspaceName}`);
+      chrome.windows.create({})
+         .then(async (window) => {
+            console.log(`window created, adding to workspace ${workspaceName}`);
 
-         chrome.runtime.sendMessage({
-            type: Constants.MSG_NEW_WORKSPACE,
-            payload: {
-               workspaceName,
-               windowId: window.id,
-            },
-         }, response => {
+            let response = await chrome.runtime.sendMessage({
+               type: Constants.MSG_NEW_WORKSPACE,
+               payload: {
+                  workspaceName,
+                  windowId: window.id,
+               }
+            })
+               // .then(async response => {
+
+               //    console.log("background response: ", response);
+               //    listWorkspaces(await StorageHelper.getWorkspaces());
+               
+               // });
             console.log("background response: ", response);
          });
-
-         console.log(window);
-
-      });
       // Create new window, passing in the workspaceName as a custom property
       // chrome.windows.create({
       //    url: "https://www.google.com",
@@ -91,42 +98,6 @@ import { Workspace } from "./obj/workspace";
       // });
    }
 
-   function updateCounter({ type }) {
-      counterStorage.get(count => {
-         let newCount;
-
-         if (type === "INCREMENT") {
-            newCount = count + 1;
-         } else if (type === "DECREMENT") {
-            newCount = count - 1;
-         } else {
-            newCount = count;
-         }
-
-         counterStorage.set(newCount, () => {
-            document.getElementById("counter").innerHTML = newCount;
-
-            // Communicate with content script of
-            // active tab by sending a message
-            chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-               const tab = tabs[0];
-
-               chrome.tabs.sendMessage(
-                  tab.id,
-                  {
-                     type: "COUNT",
-                     payload: {
-                        count: newCount,
-                     },
-                  },
-                  response => {
-                     console.log("Current count value passed to contentScript file");
-                  }
-               );
-            });
-         });
-      });
-   }
 
    function restoreCounter() {
       console.log("restoreCounter");
@@ -141,13 +112,7 @@ import { Workspace } from "./obj/workspace";
       });
    }
 
-   // testSetup();
-
    document.addEventListener("DOMContentLoaded", documentLoaded);
-
-   // StorageHelper.setValue("test", "testValue");
-
-   // console.log(StorageHelper.getValue("test"));
 
    // Communicate with background file by sending a message
    // chrome.runtime.sendMessage(
