@@ -1,4 +1,4 @@
-import { Constants } from "../../constants";
+import { Constants } from "../../constants/constants";
 import { Workspace } from "../../obj/workspace";
 import { StorageHelper } from "../../storage-helper";
 
