@@ -1,6 +1,7 @@
 import { TabStub } from "./tab-stub";
 
 export class Workspace {
+    
     public id: number;
     public name: string;
     public tabs: TabStub[];

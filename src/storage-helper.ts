@@ -31,6 +31,7 @@ export class StorageHelper {
     }
 
     public static setValue(key: string, val: string): Promise<void> {
+        console.log(`Set ${ key }: ${ val }`);
         return this._storage.set({ [key]: val });
     }
 
@@ -58,6 +59,31 @@ export class StorageHelper {
             workspaces.set(parseInt(decomposedMap[0]), Workspace.fromJson(decomposedMap[1]));
         }
         return workspaces;
+    }
+
+    /**
+     * Get a single workspace from the `workspaces` map.
+     * The workspace *must* exist in the map, otherwise an error will be thrown.
+     * @param windowId The window id of the workspace to get.
+     * @returns A promise that resolves to the workspace, or rejects if the workspace does not exist.
+     */
+    public static async getWorkspace(windowId: number): Promise<Workspace> {
+        let workspaces = await this.getWorkspaces();
+        if (workspaces.has(windowId)) {
+            return Promise.resolve(workspaces.get(windowId) as Workspace);
+        }
+        return Promise.reject("Workspace does not exist");
+    }
+
+    /**
+     * Set a single workspace in the `workspaces` map.
+     * Will overwrite the workspace if it already exists, and add it if it does not.
+     * @param workspace The workspace to set.
+     */
+    public static async setWorkspace(workspace: Workspace): Promise<void> {
+        let workspaces = await this.getWorkspaces();
+        workspaces.set(workspace.id, workspace);
+        await this.setWorkspaces(workspaces);
     }
 
     /**
@@ -105,7 +131,7 @@ export class StorageHelper {
      */
     public static async isWindowWorkspace(windowId: number): Promise<boolean> {
         let workspaceWindows = await this.getWorkspaces();
-        return windowId in workspaceWindows;
+        return workspaceWindows.has(windowId);
     }
 
     /**
