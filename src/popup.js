@@ -5,6 +5,7 @@ import "./popup.css";
 import { StorageHelper } from "./storage-helper";
 import { Constants } from "./constants/constants";
 import { Workspace } from "./obj/workspace";
+import { MessageResponses } from "./constants/message-responses";
 
 (async function () {
 
@@ -17,7 +18,6 @@ import { Workspace } from "./obj/workspace";
       document.getElementById("clearStorage").addEventListener("click", clearStorageButtonClicked);
 
       listWorkspaces(await StorageHelper.getWorkspaces());
-
    }
 
    /**
@@ -61,7 +61,7 @@ import { Workspace } from "./obj/workspace";
       listWorkspaces(await StorageHelper.getWorkspaces());
    }
 
-   function addWorkspaceButtonClicked() {
+   async function addWorkspaceButtonClicked() {
       // Present popup asking for workspace name
       const workspaceName = prompt("What is the name of your workspace?");
 
@@ -75,15 +75,15 @@ import { Workspace } from "./obj/workspace";
                   workspaceName,
                   windowId: window.id,
                }
-            })
-               // .then(async response => {
-
-               //    console.log("background response: ", response);
-               //    listWorkspaces(await StorageHelper.getWorkspaces());
-               
-               // });
-            console.log("background response: ", response);
+            });
+            
+            console.debug("await response:", response);
+            if (response.message === MessageResponses.SUCCESS.message) {
+               console.debug("Workspace added successfully, refreshing list");
+               listWorkspaces(await StorageHelper.getWorkspaces());
+            }
          });
+
       // Create new window, passing in the workspaceName as a custom property
       // chrome.windows.create({
       //    url: "https://www.google.com",

@@ -24,4 +24,6 @@ export class MessageResponses {
      * Represents a FAILURE response.
      */
     public static readonly FAILURE = { [MessageResponses._key]: "FAILURE" }
+
+    public static readonly UNKNOWN_MSG = { [MessageResponses._key]: "UNKNOWN message" }
 }

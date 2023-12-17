@@ -26,7 +26,7 @@ export class StorageHelper {
      */
     public static async getValue(key: string, defaultValue: string = ""): Promise<string> {
         let result = await this._storage.get(key);
-        console.debug(`Get ${ key }=`, result);
+        console.debug(`Get ${ key }:`, result);
         return result[key] || defaultValue;
     }
 
@@ -42,7 +42,7 @@ export class StorageHelper {
 
     public static setSyncValue(key: string, val: string) {
         chrome.storage.sync.set({ [key]: val }, function () {
-            console.log(`Set ${ key }=${ val }`);
+            console.log(`Set ${ key }: ${ val }`);
         });
     }
 
