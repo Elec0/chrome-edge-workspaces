@@ -9,7 +9,8 @@
       "allowJs": true,
       "outDir": "build",
       "noEmitOnError": true,
-      "typeRoots": [ "node_modules/@types" ]
+      "typeRoots": [ "node_modules/@types" ],
+      "sourceMap": true,
   },
   "include": [
       "src/**/*"
