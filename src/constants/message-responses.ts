@@ -1,4 +1,5 @@
 
+export type MessageResponse = { [key: string]: string };
 /**
  * Represents a collection of message responses.
  */

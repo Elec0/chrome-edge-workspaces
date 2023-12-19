@@ -19,6 +19,17 @@ export class Workspace {
         }
     }
 
+    public addTab(tab: chrome.tabs.Tab): void {
+        this.tabs.push(TabStub.fromTab(tab));
+    }
+
+    public removeTab(tabId: number): void {
+        let index = this.tabs.findIndex((tab: TabStub) => tab.id == tabId);
+        if (index != -1) {
+            this.tabs.splice(index, 1);
+        }
+    }
+
     public static fromJson(json: any): Workspace {
         let tabs: TabStub[] = [];
         if (json.tabs != null && json.tabs instanceof Array) {

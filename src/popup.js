@@ -75,7 +75,11 @@ async function addWorkspaceButtonClicked() {
       type: Constants.MSG_NEW_WORKSPACE,
       payload: { workspaceName, windowId: window.id }
    });
-
+   if (response === undefined) {
+      console.error("Response was undefined");
+      return;
+   }
+   
    if (response.message === MessageResponses.SUCCESS.message) {
       console.debug("Workspace added successfully, refreshing list");
       listWorkspaces(await StorageHelper.getWorkspaces());
