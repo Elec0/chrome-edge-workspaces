@@ -33,5 +33,26 @@ describe('background', () => {
         });
     });
 
+
+    describe('windowRemoved', () => {
+        it('should return early when the window is not a workspace', async () => {
+            StorageHelper.isWindowWorkspace.mockResolvedValue(false);
+            const consoleSpy = jest.spyOn(console, 'debug').mockImplementation();
+            await Background.windowRemoved(1);
+            expect(consoleSpy).not.toHaveBeenCalled();
+            consoleSpy.mockRestore();
+        });
+
+        it('should log a debug message when the window is a workspace', async () => {
+            StorageHelper.isWindowWorkspace.mockResolvedValue(true);
+            const consoleSpy = jest.spyOn(console, 'debug').mockImplementation();
+            await Background.windowRemoved(1);
+            expect(consoleSpy).toHaveBeenCalledWith('Window 1 is a workspace, saving tabs...');
+            consoleSpy.mockRestore();
+        });
+
+        // TODO: Add a test for the sync storage update once that functionality is implemented
+    });
     
 });
+ 

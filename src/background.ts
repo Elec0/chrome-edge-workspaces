@@ -31,8 +31,8 @@ export class Background {
      * @param windowId 
      * @returns 
      */
-    public static windowRemoved(windowId: number) {
-        if (!StorageHelper.isWindowWorkspace(windowId)) return;
+    public static async windowRemoved(windowId: number) {
+        if (!await StorageHelper.isWindowWorkspace(windowId)) return;
 
         console.debug(`Window ${ windowId } is a workspace, saving tabs...`);
 
