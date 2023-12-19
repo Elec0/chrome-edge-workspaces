@@ -8,4 +8,25 @@ global.chrome = {
             set: async () => { throw new Error("Unimplemented.") }
         }
     },
+    windows: {
+        onRemoved: {
+            addListener: () => { jest.fn(); }
+        },
+        onCreated: {
+            addListener: () => { jest.fn(); }
+        }
+    },
+    tabs: {
+        onRemoved: {
+            addListener: () => { jest.fn(); }
+        },
+        onCreated: {
+            addListener: () => { jest.fn(); }
+        }
+    },
+    runtime: {
+        onMessage: {
+            addListener: () => { jest.fn(); }
+        }
+    }
 };
