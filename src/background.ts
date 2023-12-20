@@ -36,15 +36,16 @@ export class Background {
 
         console.debug(`Window ${ windowId } is a workspace, saving tabs...`);
 
+        console.log("Will save tabs to sync storage here.")
         // TODO: Update the sync storage with the new workspace.
     }
 
     public static async tabRemoved(tabId: number, removeInfo: chrome.tabs.TabRemoveInfo) {
-        console.debug(`Tab ${ tabId } removed`);
         if (removeInfo.isWindowClosing) {
             // Window is closing, not saving tabs; they've already been saved.
             return;
         }
+        console.debug(`Tab ${ tabId } removed`);
 
         // Tab is being closed normally, update the workspace that the tab has closed.
         let workspace = await StorageHelper.getWorkspace(removeInfo.windowId);

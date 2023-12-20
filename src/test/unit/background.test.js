@@ -1,6 +1,7 @@
 import { StorageHelper } from "../../storage-helper";
 import { MessageResponses } from "../../constants/message-responses";
 import { Background } from "../../background";
+import { Workspace } from "../../obj/workspace";
 
 
 // Mock the storage helper, can't be done in beforeEach
@@ -54,5 +55,26 @@ describe('background', () => {
         // TODO: Add a test for the sync storage update once that functionality is implemented
     });
     
+    describe('tabRemoved', () => {
+        it('should return early when the window is closing', async () => {
+            const workspace = new Workspace('test', 1);
+            workspace.removeTab = jest.fn();
+
+            await Background.tabRemoved(1, { isWindowClosing: true, windowId: 1 });
+            expect(workspace.removeTab).not.toHaveBeenCalled();
+        });
+
+        it('should log a debug message and update the workspace when the window is not closing', async () => {
+            const workspace = new Workspace('test', 1);
+            workspace.removeTab = jest.fn();
+            StorageHelper.getWorkspace.mockResolvedValue(workspace);
+            StorageHelper.setWorkspace.mockResolvedValue(true);
+            
+            await Background.tabRemoved(1, { isWindowClosing: false, windowId: 1 });
+            
+            expect(workspace.removeTab).toHaveBeenCalledWith(1);
+            expect(StorageHelper.setWorkspace).toHaveBeenCalledWith(workspace);
+            
+        });
+    });
 });
- 
