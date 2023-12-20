@@ -2,6 +2,7 @@ import { StorageHelper } from "../../storage-helper";
 import { MessageResponses } from "../../constants/message-responses";
 import { Background } from "../../background";
 import { Workspace } from "../../obj/workspace";
+import { Constants } from "../../constants/constants";
 
 
 // Mock the storage helper, can't be done in beforeEach
@@ -77,4 +78,29 @@ describe('background', () => {
             
         });
     });
+
+    describe('messageListener', () => {
+        it('should process new workspace and send response when request type is MSG_NEW_WORKSPACE', async () => {
+            const sendResponse = jest.fn();
+            const request = { type: Constants.MSG_NEW_WORKSPACE };
+            
+            jest.spyOn(Background, 'processNewWorkspace').mockResolvedValue(MessageResponses.SUCCESS);
+            
+            const result = Background.messageListener(request, {}, sendResponse);
+            
+            expect(result).toBe(true);
+            await Promise.resolve(); // wait for promises to resolve
+            expect(sendResponse).toHaveBeenCalledWith(MessageResponses.SUCCESS);
+        });
+
+        it('should log unknown message and send response when request type is unknown', () => {
+            const sendResponse = jest.fn();
+            const request = { type: 'UNKNOWN' };
+            const result = Background.messageListener(request, {}, sendResponse);
+
+            expect(result).toBe(false);
+            expect(sendResponse).toHaveBeenCalledWith(MessageResponses.UNKNOWN_MSG);
+        });
+    });
+
 });
