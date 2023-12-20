@@ -27,29 +27,45 @@ function listWorkspaces(workspaces) {
    let workspaceContainer = document.createElement("ul");
    workspaceDiv.appendChild(workspaceContainer);
 
-   /**
-    * Adds a workspace to the parent node.
-    * @param {HTMLElement} parentNode - The parent node to which the workspace will be added.
-    * @param {Object} workspace - The workspace object.
-    * @param {string} workspace.name - The name of the workspace.
-    */
-   let _addWorkspace = (parentNode, workspace) => {
-      const res = Utils.interpolateTemplate(workspaceTemplate, { workspaceName: workspace.name, workspaceId: workspace.id });
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = res;
-      const workspaceElement = tempDiv.firstChild;
-      if (parentNode instanceof Node) {
-         parentNode.appendChild(workspaceElement);
-      } else {
-         throw new Error("parentNode must be a valid DOM node");
-      }
-   }
-
    for (let workspace of workspaces.values()) {
-      console.debug(workspace);
-      _addWorkspace(workspaceContainer, workspace);
-   }
+      const workspaceElement = _addWorkspace(workspaceContainer, workspace);
+      const openWorkspace = workspaceElement.querySelector('.workspace-button');
+      const settingsWorkspace = workspaceElement.querySelector('.settings-button');
 
+      openWorkspace.addEventListener('click', (event) => {
+         console.log('Workspace clicked:', workspace.id);
+      });
+
+      settingsWorkspace.addEventListener('click', (event) => {
+         console.log('Settings clicked:', workspace.id);
+      });
+   }
+}
+
+/**
+ * Adds a workspace list item to the parent node.
+ * @param {HTMLElement} parentNode - The parent node to which the workspace will be added.
+ * @param {Workspace} workspace - The workspace object.
+ * @param {string} workspace.name - The name of the workspace.
+ * @param {number} workspace.id - The window id of the workspace.
+ * @returns {HTMLElement} The workspace element that was added to the parent node.
+ */
+function _addWorkspace(parentNode, workspace) {
+   const res = Utils.interpolateTemplate(workspaceTemplate, {
+      workspaceName: workspace.name, workspaceId: workspace.id,
+      tabsCount: workspace.tabs.length
+   });
+   const tempDiv = document.createElement('div');
+   tempDiv.innerHTML = res;
+   const workspaceElement = tempDiv.firstChild;
+
+   if (parentNode instanceof Node) {
+      parentNode.appendChild(workspaceElement);
+      return workspaceElement;
+   }
+   else {
+      throw new Error("parentNode must be a valid DOM node");
+   }
 }
 
 /**
@@ -88,7 +104,7 @@ async function addWorkspaceButtonClicked() {
       console.error("Response was undefined");
       return;
    }
-   
+
    if (response.message === MessageResponses.SUCCESS.message) {
       console.debug("Workspace added successfully, refreshing list");
       listWorkspaces(await StorageHelper.getWorkspaces());
