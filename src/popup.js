@@ -6,6 +6,8 @@ import { StorageHelper } from "./storage-helper";
 import { Constants } from "./constants/constants";
 import { Workspace } from "./obj/workspace";
 import { MessageResponses } from "./constants/message-responses";
+import workspaceTemplate from "./templates/workspaceElemTemplate.html";
+import { Utils } from "./utils";
 
 /**
  * Renders a list of workspaces on the webpage.
@@ -17,6 +19,7 @@ function listWorkspaces(workspaces) {
       throw new Error("workspaces parameter must be a Map object");
    }
    console.debug("listWorkspaces", workspaces)
+
    let workspaceDiv = document.getElementById("workspaces");
    workspaceDiv.innerHTML = "";
 
@@ -31,9 +34,15 @@ function listWorkspaces(workspaces) {
     * @param {string} workspace.name - The name of the workspace.
     */
    let _addWorkspace = (parentNode, workspace) => {
-      let workspaceSpan = document.createElement("li");
-      workspaceSpan.innerHTML = workspace.name;
-      parentNode.appendChild(workspaceSpan)
+      const res = Utils.interpolateTemplate(workspaceTemplate, { workspaceName: workspace.name, workspaceId: workspace.id });
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = res;
+      const workspaceElement = tempDiv.firstChild;
+      if (parentNode instanceof Node) {
+         parentNode.appendChild(workspaceElement);
+      } else {
+         throw new Error("parentNode must be a valid DOM node");
+      }
    }
 
    for (let workspace of workspaces.values()) {
