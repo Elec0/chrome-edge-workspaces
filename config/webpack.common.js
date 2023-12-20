@@ -58,6 +58,10 @@ const common = {
         },
         exclude: ["/node_modules/", "/src/test/"]
       },
+      {
+        test: /\.html$/,
+        use: ['html-loader']
+      }
     ],
   },
   plugins: [
