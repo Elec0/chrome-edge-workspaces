@@ -37,6 +37,6 @@ export class Workspace {
                 tabs.push(TabStub.fromJson(tab));
             });
         }
-        return new Workspace(json.id, json.name, json.tabs);
+        return new Workspace(json.id, json.name, null, json.tabs);
     }
 }

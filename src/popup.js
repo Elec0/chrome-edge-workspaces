@@ -108,12 +108,26 @@ async function addWorkspaceButtonClicked() {
 
    if (response.message === MessageResponses.SUCCESS.message) {
       console.debug("Workspace added successfully, refreshing list");
-      listWorkspaces(await StorageHelper.getWorkspaces());
+      listWorkspaces(await getWorkspaces());
    }
    else {
       console.error("Workspace could not be added");
       console.error(response.message);
    }
+}
+
+async function getWorkspaces() {
+   let response = await chrome.runtime.sendMessage({ type: Messages.MSG_GET_WORKSPACES });
+   if (response === undefined) {
+      console.error("Response was undefined");
+      return;
+   }
+   if (response.data == null || response.data === undefined) {
+      console.error("Response data was undefined");
+      return;
+   }
+   console.debug("getWorkspaces response", response);
+   return StorageHelper.workspacesFromJson(response.data);
 }
 
 /**

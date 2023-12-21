@@ -51,12 +51,22 @@ export class StorageHelper {
      * Get the workspaces from storage.
      * @returns A promise that resolves to a map of workspaces, or an empty object if no workspaces exist.
      */
-    private static async getWorkspaces(): Promise<Map<number, Workspace>> {
+    public static async getWorkspaces(): Promise<Map<number, Workspace>> {
         if (true) return this._loadedWorkspaces;
 
         let workspacesJson: any = JSON.parse(await this.getValue(Constants.KEY_STORAGE_WORKSPACES, "{}"));
         let workspaces: Map<number, Workspace> = new Map();
 
+        for (let key in workspacesJson) {
+            let decomposedMap = workspacesJson[key];
+            workspaces.set(parseInt(decomposedMap[0]), Workspace.fromJson(decomposedMap[1]));
+        }
+        return workspaces;
+    }
+
+    public static workspacesFromJson(json: any): Map<number, Workspace> {
+        let workspaces: Map<number, Workspace> = new Map();
+        const workspacesJson = JSON.parse(json);
         for (let key in workspacesJson) {
             let decomposedMap = workspacesJson[key];
             workspaces.set(parseInt(decomposedMap[0]), Workspace.fromJson(decomposedMap[1]));

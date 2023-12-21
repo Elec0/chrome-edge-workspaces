@@ -17,6 +17,11 @@ export class MessageResponses {
     public static readonly ERROR = { [MessageResponses._key]: "ERROR" };
 
     /**
+     * Represents a DATA response, with the data being the value of the key.
+     */
+    public static readonly DATA = { [MessageResponses._key]: "" };
+
+    /**
      * Represents a SUCCESS response.
      */
     public static readonly SUCCESS = { [MessageResponses._key]: "SUCCESS"}
@@ -27,4 +32,5 @@ export class MessageResponses {
     public static readonly FAILURE = { [MessageResponses._key]: "FAILURE" }
 
     public static readonly UNKNOWN_MSG = { [MessageResponses._key]: "UNKNOWN message" }
+
 }

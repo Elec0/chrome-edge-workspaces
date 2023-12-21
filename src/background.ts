@@ -18,11 +18,22 @@ export class Background {
         return MessageResponses.SUCCESS;
     }
 
+    public static async processGetWorkspaces(request: any): Promise<MessageResponse> {
+        let workspaces = await StorageHelper.getWorkspaces();
+        return { "data": JSON.stringify(Array.from(workspaces.entries())) };
+    }
+
     public static messageListener(request: any, sender: any, sendResponse: any): boolean {
-        if (request.type === Messages.MSG_NEW_WORKSPACE) {
-            Background.processNewWorkspace(request).then(sendResponse);
-            return true;
+        switch (request.type) {
+            case Messages.MSG_GET_WORKSPACES:
+                Background.processGetWorkspaces(request).then(sendResponse);
+                return true;
+
+            case Messages.MSG_NEW_WORKSPACE:
+                Background.processNewWorkspace(request).then(sendResponse);
+                return true;    
         }
+
         console.log(MessageResponses.UNKNOWN_MSG.message, request);
         sendResponse(MessageResponses.UNKNOWN_MSG);
         return false;
