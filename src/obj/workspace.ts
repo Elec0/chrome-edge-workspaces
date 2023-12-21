@@ -4,12 +4,12 @@ import { v4 as uuidv4 } from "uuid";
 export class Workspace {
     
     public uuid: string = "";
-    public id: number;
+    public windowId: number;
     public name: string;
     public tabs: TabStub[];
 
     constructor(id: number, name: string, tabs: chrome.tabs.Tab[] | null = null, tabStubs: TabStub[] | null = null, uuid: string | undefined = "") {
-        this.id = id;
+        this.windowId = id;
         this.name = name;
 
         this.handleUUID(uuid);

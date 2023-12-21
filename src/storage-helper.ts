@@ -88,7 +88,7 @@ export class StorageHelper {
      */
     public static async setWorkspace(workspace: Workspace): Promise<void> {
         let workspaces = await this.getWorkspaces();
-        workspaces.set(workspace.id, workspace);
+        workspaces.set(workspace.windowId, workspace);
         await this.setWorkspaces(workspaces);
     }
 

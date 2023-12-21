@@ -109,7 +109,7 @@ describe("setWorkspaces", () => {
         // Arrange
         const workspaces = new Map();
         let workspace = new Workspace(2, "testWorkspaceSet");
-        workspaces.set(workspace.id, workspace);
+        workspaces.set(workspace.windowId, workspace);
         const setValueSpy = jest.spyOn(StorageHelper, "setValue");
         setValueSpy.mockResolvedValue(true);
 
@@ -127,7 +127,7 @@ describe("getWorkspaces", () => {
         // Arrange
         const workspaces = new Map();
         let workspace = new Workspace(3, "toGet");
-        workspaces.set(workspace.id, workspace);
+        workspaces.set(workspace.windowId, workspace);
         const stringValue = JSON.stringify(Array.from(workspaces));
 
         jest.spyOn(chrome.storage.local, "get").mockResolvedValue({ [Constants.KEY_STORAGE_WORKSPACES]: stringValue });

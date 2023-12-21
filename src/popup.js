@@ -53,7 +53,7 @@ function listWorkspaces(workspaces) {
  */
 function _addWorkspace(parentNode, workspace) {
    const res = Utils.interpolateTemplate(workspaceTemplate, {
-      workspaceName: workspace.name, workspaceId: workspace.id,
+      workspaceName: workspace.name, workspaceId: workspace.windowId,
       tabsCount: workspace.tabs.length
    });
    const tempDiv = document.createElement('div');
