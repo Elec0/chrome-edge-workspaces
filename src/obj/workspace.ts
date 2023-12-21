@@ -1,14 +1,19 @@
 import { TabStub } from "./tab-stub";
+import { v4 as uuidv4 } from "uuid";
 
 export class Workspace {
     
+    public uuid: string = "";
     public id: number;
     public name: string;
     public tabs: TabStub[];
 
-    constructor(id: number, name: string, tabs: chrome.tabs.Tab[] | null = null, tabStubs: TabStub[] | null = null) {
+    constructor(id: number, name: string, tabs: chrome.tabs.Tab[] | null = null, tabStubs: TabStub[] | null = null, uuid: string | undefined = "") {
         this.id = id;
         this.name = name;
+
+        this.handleUUID(uuid);
+
         if (tabs != null) {
             this.tabs = [];
             tabs.forEach((tab: chrome.tabs.Tab) => {
@@ -16,6 +21,16 @@ export class Workspace {
             });
         } else {
             this.tabs = tabStubs ?? [];
+        }
+    }
+    
+    /** Generate a UUID if one is not provided. */
+    private handleUUID(uuid: string | undefined): void {
+        if (uuid == undefined || uuid == "") {
+            this.uuid = uuidv4();
+        } 
+        else {
+            this.uuid = uuid;
         }
     }
 
