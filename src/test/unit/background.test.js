@@ -4,6 +4,7 @@ import { Background } from "../../background";
 import { Workspace } from "../../obj/workspace";
 import { Constants } from "../../constants/constants";
 import { TabStub } from "../../obj/tab-stub";
+import { Messages } from "../../constants/messages";
 
 
 // Mock the storage helper, can't be done in beforeEach
@@ -83,7 +84,7 @@ describe('background', () => {
     describe('messageListener', () => {
         it('should process new workspace and send response when request type is MSG_NEW_WORKSPACE', async () => {
             const sendResponse = jest.fn();
-            const request = { type: Constants.MSG_NEW_WORKSPACE };
+            const request = { type: Messages.MSG_NEW_WORKSPACE };
             
             jest.spyOn(Background, 'processNewWorkspace').mockResolvedValue(MessageResponses.SUCCESS);
             
@@ -110,7 +111,7 @@ describe('background', () => {
             const workspace = new Workspace('test', 1);
             workspace.tabs.push = jest.fn();
 
-            await Background.tabCreated({ id: 1, windowId: 1 });
+            await Background.tabUpdated({ id: 1, windowId: 1 });
 
             expect(workspace.tabs.push).not.toHaveBeenCalled();
         });
@@ -122,7 +123,7 @@ describe('background', () => {
             StorageHelper.getWorkspace.mockResolvedValue(workspace);
             StorageHelper.setWorkspace.mockResolvedValue(true);
 
-            await Background.tabCreated({ id: 1, windowId: 1 });
+            await Background.tabUpdated({ id: 1, windowId: 1 });
 
             expect(workspace.tabs.push).toHaveBeenCalledWith(TabStub.fromTab({ id: 1, windowId: 1 }));
             expect(StorageHelper.setWorkspace).toHaveBeenCalledWith(workspace);

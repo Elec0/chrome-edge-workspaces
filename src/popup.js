@@ -8,6 +8,7 @@ import { Workspace } from "./obj/workspace";
 import { MessageResponses } from "./constants/message-responses";
 import workspaceTemplate from "./templates/workspaceElemTemplate.html";
 import { Utils } from "./utils";
+import { Messages } from "./constants/messages";
 
 /**
  * Renders a list of workspaces on the webpage.
@@ -97,7 +98,7 @@ async function addWorkspaceButtonClicked() {
    console.log(`window created, adding to workspace ${workspaceName}`);
 
    let response = await chrome.runtime.sendMessage({
-      type: Constants.MSG_NEW_WORKSPACE,
+      type: Messages.MSG_NEW_WORKSPACE,
       payload: { workspaceName, windowId: window.id }
    });
    if (response === undefined) {

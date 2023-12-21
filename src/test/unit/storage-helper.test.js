@@ -41,7 +41,7 @@ describe("addWorkspace", () => {
     it("should add workspace", async () => {
         // Mock the get and setWorkspace methods
         jest.spyOn(StorageHelper, "getWorkspaces").mockResolvedValue(new Map());
-        jest.spyOn(StorageHelper, "setValue").mockImplementation(() => { return true; });
+        jest.spyOn(StorageHelper, "setWorkspaces").mockImplementation(() => { return true; });
 
         let mockWindow = { id: 1, tabs: [] };
         let workspaces = new Map();
@@ -50,8 +50,7 @@ describe("addWorkspace", () => {
 
         expect(result).toBe(true);
         expect(StorageHelper.getWorkspaces).toHaveBeenCalledTimes(1);
-        expect(StorageHelper.setValue).toHaveBeenCalledWith("workspaces",
-            '[[1,{"id":1,"name":"testWorkspaceAdd","tabs":[]}]]');
+        expect(StorageHelper.setWorkspaces).toHaveBeenCalledWith(workspaces);
 
     });
 

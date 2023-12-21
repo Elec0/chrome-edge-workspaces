@@ -2,6 +2,8 @@ import { StorageHelper } from "./storage-helper";
 import { Constants } from "./constants/constants";
 import { MessageResponse, MessageResponses } from "./constants/message-responses";
 import { TabStub } from "./obj/tab-stub";
+import { Messages } from "./constants/messages";
+
 
 
 
@@ -17,7 +19,7 @@ export class Background {
     }
 
     public static messageListener(request: any, sender: any, sendResponse: any): boolean {
-        if (request.type === Constants.MSG_NEW_WORKSPACE) {
+        if (request.type === Messages.MSG_NEW_WORKSPACE) {
             Background.processNewWorkspace(request).then(sendResponse);
             return true;
         }
@@ -54,17 +56,17 @@ export class Background {
 
     }
 
-    public static async tabCreated(tab: chrome.tabs.Tab) {
-        let isWorkspace = await StorageHelper.isWindowWorkspace(tab.windowId);
-        if (!isWorkspace) {
-            return;
-        }
-        console.log(`Tab ${ tab.id } created in workspace ${ tab.windowId }`);
-        console.debug(tab);
+    public static async tabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) {
+        // Then's first callback is the success callback, second is the error callback.
+        // We don't need the error callback, so we ignore it.
+        StorageHelper.getWorkspace(tab.windowId).then(async (workspace) => {
+            console.log(`Tab ${ tab.id } updated in workspace ${ tab.windowId }`);
+            console.debug(tab);
 
-        let workspace = await StorageHelper.getWorkspace(tab.windowId);
-        workspace.tabs.push(TabStub.fromTab(tab));
-        await StorageHelper.setWorkspace(workspace);
+            workspace.tabs.push(TabStub.fromTab(tab));
+            await StorageHelper.setWorkspace(workspace);
+        },
+            (error) => { });
     }
 }
 
@@ -73,4 +75,5 @@ export class Background {
 chrome.runtime.onMessage.addListener(Background.messageListener);
 chrome.windows.onRemoved.addListener(Background.windowRemoved);
 chrome.tabs.onRemoved.addListener(Background.tabRemoved);
-chrome.tabs.onCreated.addListener(Background.tabCreated);
+chrome.tabs.onUpdated.addListener(Background.tabUpdated);
+// chrome.tabs.onReplaced.addListener(Background.tabUpdated);

@@ -52,8 +52,11 @@ export class StorageHelper {
      * @returns A promise that resolves to a map of workspaces, or an empty object if no workspaces exist.
      */
     private static async getWorkspaces(): Promise<Map<number, Workspace>> {
+        if (true) return this._loadedWorkspaces;
+
         let workspacesJson: any = JSON.parse(await this.getValue(Constants.KEY_STORAGE_WORKSPACES, "{}"));
         let workspaces: Map<number, Workspace> = new Map();
+
         for (let key in workspacesJson) {
             let decomposedMap = workspacesJson[key];
             workspaces.set(parseInt(decomposedMap[0]), Workspace.fromJson(decomposedMap[1]));
@@ -63,7 +66,7 @@ export class StorageHelper {
 
     /**
      * Get a single workspace from the `workspaces` map.
-     * The workspace *must* exist in the map, otherwise an error will be thrown.
+     * The workspace must exist in the map or the promise will reject.
      * @param windowId The window id of the workspace to get.
      * @returns A promise that resolves to the workspace, or rejects if the workspace does not exist.
      */
@@ -92,7 +95,8 @@ export class StorageHelper {
      */
     private static async setWorkspaces(workspaces: Map<number, Workspace>) {
         // Stringify can't handle Maps, so we convert to an array of key-value pairs.
-        await this.setValue(Constants.KEY_STORAGE_WORKSPACES, JSON.stringify(Array.from(workspaces.entries())));
+        // await this.setValue(Constants.KEY_STORAGE_WORKSPACES, JSON.stringify(Array.from(workspaces.entries())));
+        this._loadedWorkspaces = workspaces;
     }
 
     /**
