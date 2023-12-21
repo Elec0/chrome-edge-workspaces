@@ -3,38 +3,43 @@
  * properties we need.
  */
 export class TabStub {
-    public id: number;
-    public title: string;
-    public url: string;
-    public favIconUrl: string;
-    public pinned: boolean;
-    public windowId: number;
+    public id: number = -1;
+    public index: number = -1;;
+    public title: string = "";
+    public url: string = "";
+    public favIconUrl: string = "";
+    public pinned: boolean = false;
+    public windowId: number = -1;
 
-    constructor(id: number, title: string | undefined, url: string | undefined, favIconUrl: string | undefined, pinned: boolean, windowId: number) {
-        this.id = id;
-        this.title = title ?? "";
-        this.url = url ?? "";
-        this.favIconUrl = favIconUrl ?? "";
-        this.pinned = pinned ?? false;
-        this.windowId = windowId;
+    [key: string]: any;
+
+    private static propertiesToExtract: string[] = [
+        "id",
+        "index",
+        "title",
+        "url",
+        "favIconUrl",
+        "pinned",
+        "windowId",
+    ];
+
+    private constructor(tab: Partial<chrome.tabs.Tab>) {
+        for (const prop of TabStub.propertiesToExtract) {
+            if (tab[prop as keyof chrome.tabs.Tab] !== undefined) {
+                this[prop] = tab[prop as keyof chrome.tabs.Tab];
+            }
+        }
     }
 
     public static fromTab(tab: chrome.tabs.Tab): TabStub {
-        if (tab.id == null || tab.id == undefined) {
-            throw new Error("Tab id is null or undefined");
-        }
-        return new TabStub(tab.id, tab?.title, tab?.url, tab?.favIconUrl, tab.pinned, tab.windowId);
+        return new TabStub(tab);
     }
 
     public static fromJson(json: any): TabStub {
-        return new TabStub(json.id, json.title, json.url, json.favIconUrl, json.pinned, json.windowId);
+        return new TabStub(json);
     }
 
     public static fromTabs(tabs: chrome.tabs.Tab[]): TabStub[] {
-        let tabStubs: TabStub[] = [];
-        tabs.forEach((tab: chrome.tabs.Tab) => {
-            tabStubs.push(TabStub.fromTab(tab));
-        });
-        return tabStubs;
+        return tabs.map(tab => new TabStub(tab));
     }
 }
