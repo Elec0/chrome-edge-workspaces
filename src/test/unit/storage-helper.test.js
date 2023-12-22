@@ -104,19 +104,17 @@ describe("chrome local storage", () => {
     });
 });
 
-describe("setWorkspaces", () => {
-    it("should call setValue with correct parameters", async () => {
+describe("setWorkspace", () => {
+    it("should update workspaces", async () => {
         // Arrange
-        const workspaces = new Map();
         let workspace = new Workspace(2, "testWorkspaceSet");
-        workspaces.set(workspace.uuid, workspace);
-
-        // Act
-        await StorageHelper.setWorkspaces(workspaces);
+        StorageHelper.setWorkspace(workspace);
 
         // Assert
-        expect(await StorageHelper.getWorkspaces()).toEqual(workspaces);
+        let workspaces = await StorageHelper.getWorkspaces();
+        expect(workspaces.get(workspace.windowId)).toEqual(workspace);
     });
+
 });
 
 describe("getWorkspaces", () => {
@@ -139,16 +137,13 @@ describe("getWorkspaces", () => {
     
     it("should return the workspaces from storage", async () => {
         // Arrange
-        const workspaces = new Map();
         let workspace = new Workspace(3, "toGet");
-        workspaces.set(workspace.windowId, workspace);
-
-        await StorageHelper.setWorkspaces(workspaces);
+        await StorageHelper.setWorkspace(workspace);
 
         // Act
         let value = await StorageHelper.getWorkspaces();
 
         // Assert
-        expect(value).toEqual(workspaces);
+        expect(value.get(workspace.uuid)).toEqual(workspace);
     });
 });
