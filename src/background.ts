@@ -3,6 +3,7 @@ import { Constants } from "./constants/constants";
 import { MessageResponse, MessageResponses } from "./constants/message-responses";
 import { TabStub } from "./obj/tab-stub";
 import { Messages } from "./constants/messages";
+import { Utils } from "./utils";
 
 
 
@@ -81,10 +82,13 @@ export class Background {
     }
 }
 
+function setupListeners() {
+    if (Utils.areWeTestingWithJest()) return;
 
-// Listeners
-chrome.runtime.onMessage.addListener(Background.messageListener);
-chrome.windows.onRemoved.addListener(Background.windowRemoved);
-chrome.tabs.onRemoved.addListener(Background.tabRemoved);
-chrome.tabs.onUpdated.addListener(Background.tabUpdated);
-// chrome.tabs.onReplaced.addListener(Background.tabUpdated);
+    chrome.runtime.onMessage.addListener(Background.messageListener);
+    chrome.windows.onRemoved.addListener(Background.windowRemoved);
+    chrome.tabs.onRemoved.addListener(Background.tabRemoved);
+    chrome.tabs.onUpdated.addListener(Background.tabUpdated);
+    // chrome.tabs.onReplaced.addListener(Background.tabUpdated);
+}
+setupListeners();

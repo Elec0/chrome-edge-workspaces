@@ -108,10 +108,13 @@ describe('background', () => {
     describe('tabCreated', () => {
         it('should return early when the window is not a workspace', async () => {
             StorageHelper.isWindowWorkspace.mockResolvedValue(false);
+            // Mock the getWorkspaces to reject the promise
+            StorageHelper.getWorkspace.mockRejectedValue(false);
+            
             const workspace = new Workspace('test', 1);
             workspace.tabs.push = jest.fn();
 
-            await Background.tabUpdated({ id: 1, windowId: 1 });
+            await Background.tabUpdated(1, {}, { id: 1, windowId: 1 });
 
             expect(workspace.tabs.push).not.toHaveBeenCalled();
         });
@@ -119,11 +122,10 @@ describe('background', () => {
         it('should log a message and update the workspace when the window is a workspace', async () => {
             const workspace = new Workspace('test', 1);
             workspace.tabs.push = jest.fn();
-            StorageHelper.isWindowWorkspace.mockResolvedValue(true);
             StorageHelper.getWorkspace.mockResolvedValue(workspace);
             StorageHelper.setWorkspace.mockResolvedValue(true);
 
-            await Background.tabUpdated({ id: 1, windowId: 1 });
+            await Background.tabUpdated(1, {}, { id: 1, windowId: 1 });
 
             expect(workspace.tabs.push).toHaveBeenCalledWith(TabStub.fromTab({ id: 1, windowId: 1 }));
             expect(StorageHelper.setWorkspace).toHaveBeenCalledWith(workspace);
