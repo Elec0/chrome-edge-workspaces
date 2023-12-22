@@ -1,3 +1,4 @@
+import { TabStub } from "../../obj/tab-stub";
 import { Workspace } from "../../obj/workspace";
 import { WorkspaceStorage } from "../../workspace-storage";
 
@@ -92,4 +93,29 @@ describe('WorkspaceStorage', () => {
         expect(workspaceStorage.get(workspace.uuid)).toBe(workspace);
     });
 
+    test('should serialize and deserialize correctly', () => {
+        const uuid = '123e4567-e89b-12d3-a456-426614174000';
+        workspace.uuid = uuid;
+        workspace.windowId = 1;
+        workspace.tabs = [new TabStub({ url: 'https://example.com', id: 12, index: 0})]
+        workspaceStorage.set(uuid, workspace);
+
+        const serialized = workspaceStorage.serialize();
+        const newWorkspaceStorage = new WorkspaceStorage();
+        newWorkspaceStorage.deserialize(serialized);
+
+        expect(newWorkspaceStorage.get(uuid)).toEqual(workspace);
+        expect(newWorkspaceStorage.get(workspace.windowId)).toEqual(workspace);
+        expect(newWorkspaceStorage.size).toBe(1);
+        expect(newWorkspaceStorage.get(uuid).tabs[0].url).toBe('https://example.com');
+        expect(newWorkspaceStorage.get(uuid).tabs[0].id).toBe(12);
+    });
+
+    test('should handle serialization and deserialization of empty storage', () => {
+        const serialized = workspaceStorage.serialize();
+        const newWorkspaceStorage = new WorkspaceStorage();
+        newWorkspaceStorage.deserialize(serialized);
+
+        expect(newWorkspaceStorage.size).toBe(0);
+    });
 });

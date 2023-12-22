@@ -10,7 +10,7 @@ export class WorkspaceStorage implements Map<string | number, Workspace> {
         this.workspaces = new Map();
         this.windowIdToUuid = new Map();
     }
-    
+
     // #region Map implementation
     get size(): number {
         return this.workspaces.size;
@@ -96,6 +96,20 @@ export class WorkspaceStorage implements Map<string | number, Workspace> {
 
     values(): IterableIterator<Workspace> {
         return this.workspaces.values();
+    }
+    // #endregion
+
+    // #region Serialization
+    serialize(): string {
+        const workspacesArray = Array.from(this.workspaces.entries());
+        const windowIdToUuidArray = Array.from(this.windowIdToUuid.entries());
+        return JSON.stringify({ workspaces: workspacesArray, windowIdToUuid: windowIdToUuidArray });
+    }
+
+    deserialize(serialized: string): void {
+        const data = JSON.parse(serialized);
+        this.workspaces = new Map(data.workspaces);
+        this.windowIdToUuid = new Map(data.windowIdToUuid);
     }
     // #endregion
 
