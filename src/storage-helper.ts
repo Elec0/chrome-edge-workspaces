@@ -1,11 +1,12 @@
 import { Constants } from "./constants/constants";
 import { Workspace } from "./obj/workspace";
 import { Utils } from "./utils";
+import { WorkspaceStorage } from "./workspace-storage";
 
 export class StorageHelper {
 
     private static _storage = chrome.storage.local;
-    private static _loadedWorkspaces: Map<string, Workspace> = new Map();
+    private static _loadedWorkspaces: WorkspaceStorage = new WorkspaceStorage();
 
     public static async init() {
         if (Utils.areWeTestingWithJest())
@@ -51,10 +52,10 @@ export class StorageHelper {
      * Get the workspaces from storage.
      * @returns A promise that resolves to a map of workspaces, or an empty object if no workspaces exist.
      */
-    public static async getWorkspaces(): Promise<Map<string, Workspace>> {
-        if (true) return this._loadedWorkspaces;
+    public static async getWorkspaces(): Promise<WorkspaceStorage> {
+        return this._loadedWorkspaces;
 
-        return this.workspacesFromJson(await this.getValue(Constants.KEY_STORAGE_WORKSPACES, "{}"));
+        // return this.workspacesFromJson(await this.getValue(Constants.KEY_STORAGE_WORKSPACES, "{}"));
     }
 
     public static workspacesFromJson(json: any): Map<string, Workspace> {
@@ -70,13 +71,13 @@ export class StorageHelper {
     /**
      * Get a single workspace from the `workspaces` map.
      * The workspace must exist in the map or the promise will reject.
-     * @param windowId The window id of the workspace to get.
+     * @param id The id of the workspace to get.
      * @returns A promise that resolves to the workspace, or rejects if the workspace does not exist.
      */
-    public static async getWorkspace(uuid: string): Promise<Workspace> {
+    public static async getWorkspace(id: string | number): Promise<Workspace> {
         let workspaces = await this.getWorkspaces();
-        if (workspaces.has(uuid)) {
-            return Promise.resolve(workspaces.get(uuid) as Workspace);
+        if (workspaces.has(id)) {
+            return Promise.resolve(workspaces.get(id) as Workspace);
         }
         return Promise.reject("Workspace does not exist");
     }
@@ -89,17 +90,7 @@ export class StorageHelper {
     public static async setWorkspace(workspace: Workspace): Promise<void> {
         let workspaces = await this.getWorkspaces();
         workspaces.set(workspace.uuid, workspace);
-        await this.setWorkspaces(workspaces);
-    }
-
-    /**
-     * Set the workspaces in storage. Used for saving the entire workspace map.
-     * @param workspaces The workspaces to save.
-     */
-    private static async setWorkspaces(workspaces: Map<string, Workspace>) {
-        // Stringify can't handle Maps, so we convert to an array of key-value pairs.
-        // await this.setValue(Constants.KEY_STORAGE_WORKSPACES, JSON.stringify(Array.from(workspaces.entries())));
-        this._loadedWorkspaces = workspaces;
+        // await this.setWorkspaces(workspaces);
     }
 
     /**
@@ -119,7 +110,7 @@ export class StorageHelper {
         let workspaces = await this.getWorkspaces();
         let newWorkspace = new Workspace(windowId, workspaceName, []);
         workspaces.set(newWorkspace.uuid, newWorkspace);
-        await this.setWorkspaces(workspaces);
+        // await this.setWorkspaces(workspaces);
 
         return Promise.resolve(true);
     }
@@ -127,7 +118,7 @@ export class StorageHelper {
     public static async removeWorkspace(uuid: string): Promise<boolean> {
         let workspaces = await this.getWorkspaces();
         if (workspaces.delete(uuid)) {
-            await this.setWorkspaces(workspaces);
+            // await this.setWorkspaces(workspaces);
             return Promise.resolve(true);
         }
         return Promise.reject("Workspace does not exist");
