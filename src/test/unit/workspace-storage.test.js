@@ -61,4 +61,35 @@ describe('WorkspaceStorage', () => {
         const values = [...workspaceStorage.values()];
         expect(values).toEqual([workspace]);
     });
+
+    test('should get a workspace by UUID', () => {
+        const uuid = '123e4567-e89b-12d3-a456-426614174000'; // replace with actual UUID
+        workspace.uuid = uuid;
+        workspaceStorage.set(uuid, workspace);
+        expect(workspaceStorage.get(uuid)).toBe(workspace);
+    });
+
+    test('should get a workspace by windowId', () => {
+        const windowId = 1; // replace with actual windowId
+        workspace.windowId = windowId;
+        workspaceStorage.set('test', workspace);
+        expect(workspaceStorage.get(windowId)).toBe(workspace);
+    });
+
+    test('should set workspace by UUID and get by windowId', () => {
+        const uuid = '123e4567-e89b-12d3-a456-426614174000'; // replace with actual UUID
+        workspace.uuid = uuid;
+        workspaceStorage.set(uuid, workspace);
+        expect(workspaceStorage.get(uuid)).toBe(workspace);
+        expect(workspaceStorage.get(workspace.windowId)).toBe(workspace);
+    });
+
+    test('should set workspace by windowId and get by UUID', () => {
+        const windowId = 1; // replace with actual windowId
+        workspace.windowId = windowId;
+        workspaceStorage.set(windowId, workspace);
+        expect(workspaceStorage.get(windowId)).toBe(workspace);
+        expect(workspaceStorage.get(workspace.uuid)).toBe(workspace);
+    });
+
 });
