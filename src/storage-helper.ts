@@ -5,7 +5,7 @@ import { Utils } from "./utils";
 export class StorageHelper {
 
     private static _storage = chrome.storage.local;
-    private static _loadedWorkspaces: Map<number, Workspace> = new Map();
+    private static _loadedWorkspaces: Map<string, Workspace> = new Map();
 
     public static async init() {
         if (Utils.areWeTestingWithJest())
@@ -51,18 +51,18 @@ export class StorageHelper {
      * Get the workspaces from storage.
      * @returns A promise that resolves to a map of workspaces, or an empty object if no workspaces exist.
      */
-    public static async getWorkspaces(): Promise<Map<number, Workspace>> {
+    public static async getWorkspaces(): Promise<Map<string, Workspace>> {
         if (true) return this._loadedWorkspaces;
 
         return this.workspacesFromJson(await this.getValue(Constants.KEY_STORAGE_WORKSPACES, "{}"));
     }
 
-    public static workspacesFromJson(json: any): Map<number, Workspace> {
-        let workspaces: Map<number, Workspace> = new Map();
+    public static workspacesFromJson(json: any): Map<string, Workspace> {
+        let workspaces: Map<string, Workspace> = new Map();
         const workspacesJson = JSON.parse(json);
         for (let key in workspacesJson) {
             let decomposedMap = workspacesJson[key];
-            workspaces.set(parseInt(decomposedMap[0]), Workspace.fromJson(decomposedMap[1]));
+            workspaces.set(decomposedMap[0], Workspace.fromJson(decomposedMap[1]));
         }
         return workspaces;
     }
@@ -73,10 +73,10 @@ export class StorageHelper {
      * @param windowId The window id of the workspace to get.
      * @returns A promise that resolves to the workspace, or rejects if the workspace does not exist.
      */
-    public static async getWorkspace(windowId: number): Promise<Workspace> {
+    public static async getWorkspace(uuid: string): Promise<Workspace> {
         let workspaces = await this.getWorkspaces();
-        if (workspaces.has(windowId)) {
-            return Promise.resolve(workspaces.get(windowId) as Workspace);
+        if (workspaces.has(uuid)) {
+            return Promise.resolve(workspaces.get(uuid) as Workspace);
         }
         return Promise.reject("Workspace does not exist");
     }
@@ -88,7 +88,7 @@ export class StorageHelper {
      */
     public static async setWorkspace(workspace: Workspace): Promise<void> {
         let workspaces = await this.getWorkspaces();
-        workspaces.set(workspace.windowId, workspace);
+        workspaces.set(workspace.uuid, workspace);
         await this.setWorkspaces(workspaces);
     }
 
@@ -96,7 +96,7 @@ export class StorageHelper {
      * Set the workspaces in storage. Used for saving the entire workspace map.
      * @param workspaces The workspaces to save.
      */
-    private static async setWorkspaces(workspaces: Map<number, Workspace>) {
+    private static async setWorkspaces(workspaces: Map<string, Workspace>) {
         // Stringify can't handle Maps, so we convert to an array of key-value pairs.
         // await this.setValue(Constants.KEY_STORAGE_WORKSPACES, JSON.stringify(Array.from(workspaces.entries())));
         this._loadedWorkspaces = workspaces;
@@ -117,15 +117,16 @@ export class StorageHelper {
         }
 
         let workspaces = await this.getWorkspaces();
-        workspaces.set(windowId, new Workspace(windowId, workspaceName, []));
+        let newWorkspace = new Workspace(windowId, workspaceName, []);
+        workspaces.set(newWorkspace.uuid, newWorkspace);
         await this.setWorkspaces(workspaces);
 
         return Promise.resolve(true);
     }
 
-    public static async removeWorkspace(windowId: number): Promise<boolean> {
+    public static async removeWorkspace(uuid: string): Promise<boolean> {
         let workspaces = await this.getWorkspaces();
-        if (workspaces.delete(windowId)) {
+        if (workspaces.delete(uuid)) {
             await this.setWorkspaces(workspaces);
             return Promise.resolve(true);
         }
@@ -134,11 +135,16 @@ export class StorageHelper {
     }
 
     /**
-     * Determine if a window is a workspace, meaning a workspace's window id is equal to the window id.
+     * Determine if a window is in a workspace, meaning a workspace's window id is equal to the window id.
      */
     public static async isWindowWorkspace(windowId: number): Promise<boolean> {
         let workspaceWindows = await this.getWorkspaces();
-        return workspaceWindows.has(windowId);
+        for (const workspace of Array.from(workspaceWindows.values())) {
+            if (workspace.windowId === windowId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
