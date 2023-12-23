@@ -58,14 +58,10 @@ export class StorageHelper {
         // return this.workspacesFromJson(await this.getValue(Constants.KEY_STORAGE_WORKSPACES, "{}"));
     }
 
-    public static workspacesFromJson(json: any): Map<string, Workspace> {
-        let workspaces: Map<string, Workspace> = new Map();
-        const workspacesJson = JSON.parse(json);
-        for (let key in workspacesJson) {
-            let decomposedMap = workspacesJson[key];
-            workspaces.set(decomposedMap[0], Workspace.fromJson(decomposedMap[1]));
-        }
-        return workspaces;
+    public static workspacesFromJson(json: any): WorkspaceStorage {
+        let workspaceStorage = new WorkspaceStorage();
+        workspaceStorage.deserialize(json);
+        return workspaceStorage;
     }
 
     /**
@@ -79,7 +75,7 @@ export class StorageHelper {
         if (workspaces.has(id)) {
             return Promise.resolve(workspaces.get(id) as Workspace);
         }
-        return Promise.reject("Workspace does not exist");
+        return Promise.reject(`getWorkspace: Workspace does not exist with id ${ id }`);
     }
 
     /**
@@ -137,13 +133,6 @@ export class StorageHelper {
         }
         return false;
     }
-
-    /**
-     * Check if this is the user's first load into our page
-     */
-    // public static isFirstLoad(): boolean {
-    //     return this._storage.getItem("started") == null;
-    // }
 
     /** Delete everything we have in storage. */
     public static clearAllData() {

@@ -21,7 +21,7 @@ export class Background {
 
     public static async processGetWorkspaces(request: any): Promise<MessageResponse> {
         let workspaces = await StorageHelper.getWorkspaces();
-        return { "data": JSON.stringify(Array.from(workspaces.entries())) };
+        return { "data": workspaces.serialize() };
     }
 
     public static messageListener(request: any, sender: any, sendResponse: any): boolean {
@@ -32,7 +32,7 @@ export class Background {
 
             case Messages.MSG_NEW_WORKSPACE:
                 Background.processNewWorkspace(request).then(sendResponse);
-                return true;    
+                return true;
         }
 
         console.log(MessageResponses.UNKNOWN_MSG.message, request);
@@ -54,8 +54,19 @@ export class Background {
         // TODO: Update the sync storage with the new workspace.
     }
 
+    /**
+     * A tab is closing. Check to see if it's a workspace, and if so, push an update to storage.
+     * If the window is closing, we don't need to save the tabs, since they've already been saved,
+     * but if the tab is being closed normally, we need to update the workspace.
+     * 
+     * Additionally, if the tab is being closed normally, but it is the only tab in the window,
+     * we treat it as if the window is closing.
+     * @param tabId 
+     * @param removeInfo 
+     * @returns 
+     */
     public static async tabRemoved(tabId: number, removeInfo: chrome.tabs.TabRemoveInfo) {
-        if (removeInfo.isWindowClosing) {
+        if (removeInfo.isWindowClosing || removeInfo.windowId == null || removeInfo.windowId == undefined) {
             // Window is closing, not saving tabs; they've already been saved.
             return;
         }
@@ -78,7 +89,10 @@ export class Background {
             workspace.tabs.push(TabStub.fromTab(tab));
             await StorageHelper.setWorkspace(workspace);
         },
-            (error) => { });
+            (error) => { 
+                console.error(error);
+            }
+        );
     }
 }
 
