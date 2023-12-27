@@ -6,42 +6,57 @@ export class Workspace {
     public uuid: string;
     public windowId: number;
     public name: string;
-    public tabs: TabStub[];
+    private tabs: Map<number, TabStub>;
 
     constructor(windowId: number, name: string, tabs: chrome.tabs.Tab[] | undefined = undefined,
         tabStubs: TabStub[] | undefined = undefined, uuid: string | undefined = uuidv4()) {
         this.windowId = windowId;
         this.name = name;
         this.uuid = uuid;
+        this.tabs = new Map<number, TabStub>();
 
         if (tabs != undefined) {
-            this.tabs = [];
             tabs.forEach((tab: chrome.tabs.Tab) => {
-                this.tabs.push(TabStub.fromTab(tab));
+                this.addTab(undefined, tab);
             });
-        } else {
-            this.tabs = tabStubs ?? [];
+        } else if (tabStubs != undefined) {
+            tabStubs.forEach((tabStub: TabStub) => {
+                this.tabs.set(tabStub.id, tabStub);
+            });
         }
     }
 
-    public addTab(tab: chrome.tabs.Tab): void {
-        this.tabs.push(TabStub.fromTab(tab));
+    public addTab(tabStub?: TabStub, chromeTab?: chrome.tabs.Tab): void {
+        let tabStubToAdd: TabStub;
+        if (tabStub != undefined) {
+            tabStubToAdd = tabStub;
+        } else if (chromeTab != undefined) {
+            tabStubToAdd = TabStub.fromTab(chromeTab);
+        } else {
+            throw new Error("Either tabStub or tab must be defined.");
+        }
+        this.tabs.set(tabStubToAdd.id, tabStubToAdd);
     }
 
     public removeTab(tabId: number): void {
-        let index = this.tabs.findIndex((tab: TabStub) => tab.id == tabId);
-        if (index != -1) {
-            this.tabs.splice(index, 1);
-        }
+        this.tabs.delete(tabId);
+    }
+
+    public getTab(tabId: number): TabStub | undefined {
+        return this.tabs.get(tabId);
+    }
+
+    public getTabs(): TabStub[] {
+        return Array.from(this.tabs.values());
     }
 
     public static fromJson(json: any): Workspace {
-        let tabs: TabStub[] = [];
+        let workspace = new Workspace(json.id, json.name, undefined, undefined, json.uuid);
         if (json.tabs != null && json.tabs instanceof Array) {
             json.tabs.forEach((tab: any) => {
-                tabs.push(TabStub.fromJson(tab));
+                workspace.addTab(TabStub.fromJson(tab));
             });
         }
-        return new Workspace(json.id, json.name, undefined, json.tabs);
-      }
+        return workspace;
+    }
 }

@@ -86,7 +86,7 @@ export class Background {
             console.log(`Tab ${ tab.id } updated in workspace ${ tab.windowId }`);
             console.debug(tab);
 
-            workspace.tabs.push(TabStub.fromTab(tab));
+            workspace.addTab(TabStub.fromTab(tab));
             await StorageHelper.setWorkspace(workspace);
         },
             (error) => { 

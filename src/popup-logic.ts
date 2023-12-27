@@ -43,7 +43,7 @@ export class Popup {
     private static addWorkspace(parentNode: HTMLElement, workspace: Workspace): HTMLElement {
         const res = Utils.interpolateTemplate(WORKSPACE_TEMPLATE, {
             workspaceName: workspace.name, workspaceId: workspace.windowId,
-            tabsCount: workspace.tabs.length
+            tabsCount: workspace.getTabs().length
         });
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = res;

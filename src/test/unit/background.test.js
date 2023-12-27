@@ -121,13 +121,13 @@ describe('background', () => {
 
         it('should log a message and update the workspace when the window is a workspace', async () => {
             const workspace = new Workspace('test', 1);
-            workspace.tabs.push = jest.fn();
+            workspace.addTab = jest.fn();
             StorageHelper.getWorkspace.mockResolvedValue(workspace);
             StorageHelper.setWorkspace.mockResolvedValue(true);
 
             await Background.tabUpdated(1, {}, { id: 1, windowId: 1 });
 
-            expect(workspace.tabs.push).toHaveBeenCalledWith(TabStub.fromTab({ id: 1, windowId: 1 }));
+            expect(workspace.addTab).toHaveBeenCalledWith(TabStub.fromTab({ id: 1, windowId: 1 }));
             expect(StorageHelper.setWorkspace).toHaveBeenCalledWith(workspace);
         });
     });
