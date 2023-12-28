@@ -31,6 +31,10 @@ export class TabStub {
         }
     }
 
+    public toJson(): any {
+        return JSON.stringify(this);
+    }
+
     public static fromTab(tab: chrome.tabs.Tab): TabStub {
         return new TabStub(tab);
     }

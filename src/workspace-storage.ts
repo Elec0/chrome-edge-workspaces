@@ -1,5 +1,10 @@
 import { Workspace } from './obj/workspace';
 
+/**
+ * Represents a storage for workspaces, implementing the Map interface.
+ * 
+ * The keys are either the workspace uuid or the workspace's windowId.
+ */
 export class WorkspaceStorage implements Map<string | number, Workspace> {
     private workspaces: Map<string, Workspace>;
     private windowIdToUuid: Map<number, string>;
@@ -61,6 +66,13 @@ export class WorkspaceStorage implements Map<string | number, Workspace> {
         }
     }
 
+    /**
+     * Sets a workspace in the storage.
+     * 
+     * @param key - The key to associate with the workspace. Can be either the workspace uuid or the workspace's windowId.
+     * @param value - The workspace to be stored.
+     * @returns The updated instance of the workspace storage.
+     */
     set(key: string | number, value: Workspace): this {
         if (typeof key === 'string') {
             this.workspaces.set(key, value);
@@ -101,15 +113,24 @@ export class WorkspaceStorage implements Map<string | number, Workspace> {
 
     // #region Serialization
     serialize(): string {
-        const workspacesArray = Array.from(this.workspaces.entries());
+        let workspacesArray: [string, any][] = [];
+        this.workspaces.forEach((workspace, uuid) => {
+            workspacesArray.push([uuid, workspace.toJsonObject()]);
+        });
         const windowIdToUuidArray = Array.from(this.windowIdToUuid.entries());
         return JSON.stringify({ workspaces: workspacesArray, windowIdToUuid: windowIdToUuidArray });
     }
 
     deserialize(serialized: string): void {
         const data = JSON.parse(serialized);
-        this.workspaces = new Map(data.workspaces);
-        this.windowIdToUuid = new Map(data.windowIdToUuid);
+        // This turns them into maps, but they're still just data objects, not Workspace objects.
+        let workspaces = new Map(data.workspaces);
+
+        // Convert the workspaces to Workspace objects, and set them in the storage.
+        // This also sets the windowIdToUuid map.
+        workspaces.forEach((workspace, uuid) => {
+            this.set(uuid as string | number, Workspace.fromJson(workspace));
+        });
     }
     // #endregion
 

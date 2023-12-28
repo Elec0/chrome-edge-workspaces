@@ -1,6 +1,9 @@
 import { TabStub } from "./tab-stub";
 import { v4 as uuidv4 } from "uuid";
 
+/**
+ * Represents a workspace.
+ */
 export class Workspace {
 
     public uuid: string;
@@ -26,6 +29,13 @@ export class Workspace {
         }
     }
 
+    
+    /**
+     * Adds a tab to the workspace.
+     * @param tabStub - The tab stub to add. If not provided, it will be created from the chrome tab.
+     * @param chromeTab - The chrome tab to create the tab stub from. If not provided, it will be created from the tab stub.
+     * @throws Error if either tabStub or chromeTab is not defined.
+     */
     public addTab(tabStub?: TabStub, chromeTab?: chrome.tabs.Tab): void {
         let tabStubToAdd: TabStub;
         if (tabStub != undefined) {
@@ -50,6 +60,21 @@ export class Workspace {
         return Array.from(this.tabs.values());
     }
 
+    public toJsonObject(): any {
+        let json = {
+            id: this.windowId,
+            name: this.name,
+            uuid: this.uuid,
+            tabs: this.getTabs().map((tab: TabStub) => tab.toJson())
+        };
+        return json;
+    }
+
+    /**
+     * Creates a Workspace object from a JSON representation.
+     * @param json - The JSON object representing the Workspace.
+     * @returns A new Workspace object.
+     */
     public static fromJson(json: any): Workspace {
         let workspace = new Workspace(json.id, json.name, undefined, undefined, json.uuid);
         if (json.tabs != null && json.tabs instanceof Array) {
