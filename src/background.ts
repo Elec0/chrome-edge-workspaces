@@ -86,11 +86,11 @@ export class Background {
             console.log(`Tab ${ tab.id } updated in workspace ${ tab.windowId }`);
             console.debug(tab);
 
-            workspace.addTab(TabStub.fromTab(tab));
+            workspace.addTab(undefined, tab);
             await StorageHelper.setWorkspace(workspace);
         },
             (error) => { 
-                console.error(error);
+                // console.error(error);
             }
         );
     }

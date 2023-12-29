@@ -10,6 +10,7 @@ export class Workspace {
     public windowId: number;
     public name: string;
     private tabs: Map<number, TabStub>;
+    // Future: May need a tab index => tab id map.
 
     constructor(windowId: number, name: string, tabs: chrome.tabs.Tab[] | undefined = undefined,
         tabStubs: TabStub[] | undefined = undefined, uuid: string | undefined = uuidv4()) {
@@ -52,10 +53,21 @@ export class Workspace {
         this.tabs.delete(tabId);
     }
 
+
+    /**
+     * Retrieves a tab by its ID.
+     * @param tabId The ID of the tab to retrieve.
+     * @returns The tab with the specified ID, or undefined if not found.
+     */
     public getTab(tabId: number): TabStub | undefined {
         return this.tabs.get(tabId);
     }
 
+    /**
+     * Retrieves an array of TabStub objects representing the tabs in the workspace.
+     * 
+     * @returns An array of TabStub objects.
+     */
     public getTabs(): TabStub[] {
         return Array.from(this.tabs.values());
     }
