@@ -27,6 +27,7 @@
     "ts-jest": "^29.1.1",
     "ts-loader": "^9.5.0",
     "typescript": "^5.2.2",
+    "util": "^0.12.5",
     "uuid": "^9.0.1",
     "webpack": "^5.88.2",
     "webpack-cli": "^4.10.0",
