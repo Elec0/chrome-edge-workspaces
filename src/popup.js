@@ -14,6 +14,7 @@ import { Popup } from "./popup-logic";
 async function documentLoaded() {
    chrome.tabs.onRemoved.addListener(Popup.tabRemoved);
    chrome.tabs.onUpdated.addListener(Popup.tabUpdated);
+   chrome.windows.onRemoved.addListener(windowRemoved);
 
    document.getElementById("addBtn").addEventListener("click", addWorkspaceButtonClicked);
    document.getElementById("clearStorage").addEventListener("click", clearStorageButtonClicked);
@@ -55,6 +56,15 @@ async function addWorkspaceButtonClicked() {
       console.error("Workspace could not be added");
       console.error(response.message);
    }
+}
+
+/**
+ * 
+ * @param {chrome.windows.window} window 
+ */
+async function windowRemoved(window) {
+   console.debug("windowRemoved", window);
+   Popup.listWorkspaces(await getWorkspaces());
 }
 
 /**
