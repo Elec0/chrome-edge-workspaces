@@ -40,7 +40,7 @@ export class TabStub {
     }
 
     public static fromJson(json: any): TabStub {
-        return new TabStub(json);
+        return new TabStub(JSON.parse(json));
     }
 
     public static fromTabs(tabs: chrome.tabs.Tab[]): TabStub[] {
