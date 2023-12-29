@@ -129,7 +129,7 @@ export class WorkspaceStorage implements Map<string | number, Workspace> {
         // Convert the workspaces to Workspace objects, and set them in the storage.
         // This also sets the windowIdToUuid map.
         workspaces.forEach((workspace, uuid) => {
-            this.set(uuid as string | number, Workspace.fromJson(workspace));
+            this.set(uuid as string, Workspace.fromJson(workspace));
         });
     }
     // #endregion

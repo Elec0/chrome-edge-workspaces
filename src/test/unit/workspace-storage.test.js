@@ -3,7 +3,13 @@ import { Workspace } from "../../obj/workspace";
 import { WorkspaceStorage } from "../../workspace-storage";
 
 describe('WorkspaceStorage', () => {
+    /**
+     * @type {WorkspaceStorage}
+     */
     let workspaceStorage;
+    /**
+     * @type {Workspace}
+     */
     let workspace;
 
     beforeEach(() => {
@@ -97,7 +103,7 @@ describe('WorkspaceStorage', () => {
         const uuid = '123e4567-e89b-12d3-a456-426614174000';
         workspace.uuid = uuid;
         workspace.windowId = 1;
-        workspace.tabs = [new TabStub({ url: 'https://example.com', id: 12, index: 0})]
+        workspace.addTab(new TabStub({ url: 'https://example.com', id: 12, index: 0}));
         workspaceStorage.set(uuid, workspace);
 
         const serialized = workspaceStorage.serialize();
@@ -107,8 +113,9 @@ describe('WorkspaceStorage', () => {
         expect(newWorkspaceStorage.get(uuid)).toEqual(workspace);
         expect(newWorkspaceStorage.get(workspace.windowId)).toEqual(workspace);
         expect(newWorkspaceStorage.size).toBe(1);
-        expect(newWorkspaceStorage.get(uuid).tabs[0].url).toBe('https://example.com');
-        expect(newWorkspaceStorage.get(uuid).tabs[0].id).toBe(12);
+        expect(newWorkspaceStorage.get(uuid).getTab(12).url).toBe('https://example.com');
+        expect(newWorkspaceStorage.get(uuid).getTab(12).id).toBe(12);
+        expect(newWorkspaceStorage.get(uuid).getTab(12).index).toBe(0);
     });
 
     test('should handle serialization and deserialization of empty storage', () => {
