@@ -6,6 +6,7 @@ import { MessageResponses } from "./constants/message-responses";
 import { Messages } from "./constants/messages";
 import { WorkspaceStorage } from "./workspace-storage";
 import { Popup } from "./popup-logic";
+import { MessageHelper } from "./message-helper";
 
 /**
  * This function is called when the popup is opened.
@@ -39,14 +40,7 @@ async function addWorkspaceButtonClicked() {
 
    console.log(`window created, adding to workspace ${workspaceName}`);
 
-   let response = await chrome.runtime.sendMessage({
-      type: Messages.MSG_NEW_WORKSPACE,
-      payload: { workspaceName, windowId: window.id }
-   });
-   if (response === undefined) {
-      console.error("Response was undefined");
-      return;
-   }
+   let response = await MessageHelper.sendAddNewWorkspace(workspaceName, window.id);
 
    if (response.message === MessageResponses.SUCCESS.message) {
       console.debug("Workspace added successfully, refreshing list");
@@ -55,6 +49,9 @@ async function addWorkspaceButtonClicked() {
    else {
       console.error("Workspace could not be added");
       console.error(response.message);
+      // Close the window
+      chrome.windows.remove(window.id);
+      alert("Workspace could not be added\n" + response.message);
    }
 }
 
