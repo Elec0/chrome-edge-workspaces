@@ -6,7 +6,7 @@ import { MessageResponses } from "./constants/message-responses";
 import { Messages } from "./constants/messages";
 import { WorkspaceStorage } from "./workspace-storage";
 import { Popup } from "./popup-logic";
-import { MessageHelper } from "./message-helper";
+import { PopupMessageHelper } from "./message-helper";
 import { LogHelper } from "./log-helper";
 
 /**
@@ -41,7 +41,7 @@ async function addWorkspaceButtonClicked() {
 
    console.log(`window created, adding to workspace ${workspaceName}`);
 
-   let response = await MessageHelper.sendAddNewWorkspace(workspaceName, window.id);
+   let response = await PopupMessageHelper.sendAddNewWorkspace(workspaceName, window.id);
 
    if (response.message === MessageResponses.SUCCESS.message) {
       console.debug("Workspace added successfully, refreshing list");
