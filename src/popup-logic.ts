@@ -2,7 +2,7 @@ import { Workspace } from "./obj/workspace";
 import { Utils } from "./utils";
 import { WorkspaceStorage } from "./workspace-storage";
 import WORKSPACE_TEMPLATE from "./templates/workspaceElemTemplate.html";
-import { Actions } from "./actions";
+import { PopupActions } from "./actions";
 
 export class Popup {
 
@@ -63,7 +63,7 @@ export class Popup {
      * @param workspaceId 
      */
     public static workspaceClicked(workspace: Workspace) {
-        Actions.openWorkspace(workspace);
+        PopupActions.openWorkspace(workspace);
     }
 
     /**
