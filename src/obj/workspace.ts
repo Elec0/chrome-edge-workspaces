@@ -53,6 +53,9 @@ export class Workspace {
         this.tabs.delete(tabId);
     }
 
+    public clearTabs(): void {
+        this.tabs.clear();
+    }
 
     /**
      * Retrieves a tab by its ID.
@@ -95,5 +98,13 @@ export class Workspace {
             });
         }
         return workspace;
+    }
+
+    public serialize(): string {
+        return JSON.stringify(this.toJsonObject());
+    }
+
+    public static deserialize(serialized: string): Workspace {
+        return Workspace.fromJson(JSON.parse(serialized));
     }
 }
