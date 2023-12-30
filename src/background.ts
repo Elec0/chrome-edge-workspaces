@@ -1,8 +1,6 @@
-import { StorageHelper } from "./storage-helper";
-import { Constants } from "./constants/constants";
 import { MessageResponse, MessageResponses } from "./constants/message-responses";
-import { TabStub } from "./obj/tab-stub";
 import { Messages } from "./constants/messages";
+import { StorageHelper } from "./storage-helper";
 import { Utils } from "./utils";
 
 
@@ -69,8 +67,35 @@ export class Background {
 
 /**
  * Class representing the message handlers for background operations.
+ * 
+ * @VisibleForTesting
  */
-class BackgroundMessageHandlers {
+export class BackgroundMessageHandlers {
+    /**
+     * We're being informed that a workspace is being opened in a new window.\
+     * We need to update the workspace with the new window ID.\
+     * Then we need to send a message back to the content script with the updated workspace.
+     * @param request {Object{data: { uuid: string, windowId: number}}}
+     */
+    public static async processOpenWorkspace(request: any): Promise<MessageResponse> {
+        if (!request?.payload?.data?.uuid || !request?.payload?.data?.windowId) {
+            return MessageResponses.ERROR;
+        }
+        
+        let workspace = await StorageHelper.getWorkspace(request.payload.data.uuid);
+        workspace.windowId = request.payload.data.windowId;
+        // Serialize the workspace before we make any other changes
+        let data = workspace.serialize();
+
+        // The workspace is just about to get a bunch of tabs opened.
+        // The tabs are going to have unique IDs again, so we need to clear the tabs map
+        // so that we don't have duplicate tabs.
+        workspace.clearTabs();
+        await StorageHelper.setWorkspace(workspace);
+
+        return { "data": data };
+    }
+
     /**
      * Processes a new workspace request.
      * @param request - The request object containing the workspace name and window ID.
