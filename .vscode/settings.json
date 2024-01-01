@@ -1,5 +1,25 @@
 {
     "jest.autoRun": "on-save",
-    "jest.jestCommandLine": "npm run test-unit --"
+    "jest.jestCommandLine": "npm run test-unit --",
+    "workbench.colorCustomizations": {
+        "activityBar.activeBackground": "#23114e",
+        "activityBar.background": "#23114e",
+        "activityBar.foreground": "#e7e7e7",
+        "activityBar.inactiveForeground": "#e7e7e799",
+        "activityBarBadge.background": "#833b1d",
+        "activityBarBadge.foreground": "#e7e7e7",
+        "commandCenter.border": "#e7e7e799",
+        "sash.hoverBorder": "#23114e",
+        "statusBar.background": "#100824",
+        "statusBar.foreground": "#e7e7e7",
+        "statusBarItem.hoverBackground": "#23114e",
+        "statusBarItem.remoteBackground": "#100824",
+        "statusBarItem.remoteForeground": "#e7e7e7",
+        "titleBar.activeBackground": "#100824",
+        "titleBar.activeForeground": "#e7e7e7",
+        "titleBar.inactiveBackground": "#10082499",
+        "titleBar.inactiveForeground": "#e7e7e799"
+    },
+    "peacock.color": "#100824"
     
 }
