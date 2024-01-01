@@ -21,6 +21,7 @@
     "@typescript-eslint/parser": "^6.16.0",
     "copy-webpack-plugin": "^6.4.1",
     "css-loader": "^6.8.1",
+    "eslint": "^8.56.0",
     "eslint-plugin-tsdoc": "^0.2.17",
     "file-loader": "^6.2.0",
     "html-loader": "^4.2.0",
