@@ -1,12 +1,11 @@
 import { MessageResponse, MessageResponses } from "./constants/message-responses";
 import { Messages } from "./constants/messages";
 import { LogHelper } from "./log-helper";
-import { StorageHelper } from "./storage-helper";
 
 export class PopupMessageHelper {
 
     public static async sendAddNewWorkspace(workspaceName: string, windowId: number): Promise<MessageResponse> {
-        let response = await chrome.runtime.sendMessage({
+        const response = await chrome.runtime.sendMessage({
             type: Messages.MSG_NEW_WORKSPACE,
             payload: { workspaceName, windowId: windowId }
         });
@@ -20,7 +19,7 @@ export class PopupMessageHelper {
     }
 
     public static async sendOpenWorkspace(workspaceUuid: string, windowId: number): Promise<MessageResponse> {
-        let response = await chrome.runtime.sendMessage({
+        const response = await chrome.runtime.sendMessage({
             type: Messages.MSG_OPEN_WORKSPACE,
             payload: { "data": { uuid: workspaceUuid, windowId: windowId } }
         });
@@ -38,7 +37,7 @@ export class PopupMessageHelper {
      * @returns A Promise that resolves to a MessageResponse object.
      */
     public static async sendGetWorkspaces(): Promise<MessageResponse> {
-        let response = await chrome.runtime.sendMessage({
+        const response = await chrome.runtime.sendMessage({
             type: Messages.MSG_GET_WORKSPACES,
             payload: {}
         });
