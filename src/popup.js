@@ -1,13 +1,12 @@
 "use strict";
 
-import "./popup.css";
-import { StorageHelper } from "./storage-helper";
 import { MessageResponses } from "./constants/message-responses";
-import { Messages } from "./constants/messages";
-import { WorkspaceStorage } from "./workspace-storage";
+import { LogHelper } from "./log-helper";
 import { PopupLogic } from "./popup-logic";
 import { PopupMessageHelper } from "./popup-message-helper";
-import { LogHelper } from "./log-helper";
+import "./popup.css";
+import { StorageHelper } from "./storage-helper";
+import { WorkspaceStorage } from "./workspace-storage";
 
 /**
  * This function is called when the popup is opened.
