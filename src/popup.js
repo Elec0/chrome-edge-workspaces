@@ -6,7 +6,7 @@ import { MessageResponses } from "./constants/message-responses";
 import { Messages } from "./constants/messages";
 import { WorkspaceStorage } from "./workspace-storage";
 import { Popup } from "./popup-logic";
-import { PopupMessageHelper } from "./message-helper";
+import { PopupMessageHelper } from "./popup-message-helper";
 import { LogHelper } from "./log-helper";
 
 /**
@@ -21,7 +21,7 @@ async function documentLoaded() {
    document.getElementById("addBtn").addEventListener("click", addWorkspaceButtonClicked);
    document.getElementById("clearStorage").addEventListener("click", clearStorageButtonClicked);
 
-   Popup.listWorkspaces(await StorageHelper.getWorkspaces());
+   Popup.listWorkspaces(await getWorkspaces());
 }
 
 async function clearStorageButtonClicked() {
@@ -68,17 +68,7 @@ async function windowRemoved(window) {
  * @returns {Promise<WorkspaceStorage>}
  */
 async function getWorkspaces() {
-   let response = await chrome.runtime.sendMessage({ type: Messages.MSG_GET_WORKSPACES });
-   if (response === undefined) {
-      console.error("Response was undefined");
-      return;
-   }
-   if (response.data == null || response.data === undefined) {
-      console.error("Response data was undefined");
-      return;
-   }
-   console.debug("getWorkspaces response", response);
-   return StorageHelper.workspacesFromJson(response.data);
+   return StorageHelper.workspacesFromJson(await PopupMessageHelper.sendGetWorkspaces());
 }
 
 /**
