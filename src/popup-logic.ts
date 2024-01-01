@@ -9,7 +9,7 @@ export class PopupLogic {
     public static listWorkspaces(workspaces: WorkspaceStorage) {
         console.debug("listWorkspaces", workspaces)
 
-        let workspaceDiv = document.getElementById("workspaces");
+        const workspaceDiv = document.getElementById("workspaces");
         if (!workspaceDiv) {
             console.error("Could not find workspace div");
             return;
@@ -17,10 +17,10 @@ export class PopupLogic {
         workspaceDiv.innerHTML = "";
 
         // Create an unordered list and put it in the workspaceDiv
-        let workspaceContainer = document.createElement("ul");
+        const workspaceContainer = document.createElement("ul");
         workspaceDiv.appendChild(workspaceContainer);
 
-        for (let workspace of Array.from(workspaces.values())) {
+        for (const workspace of Array.from(workspaces.values())) {
             const workspaceElement = this.addWorkspace(workspaceContainer, workspace);
             const openWorkspace = workspaceElement.querySelector('.workspace-button');
             const settingsWorkspace = workspaceElement.querySelector('.settings-button');
@@ -64,7 +64,7 @@ export class PopupLogic {
 
     /**
      * Called when a workspace is clicked.
-     * @param workspaceId 
+     * @param workspaceId -
      */
     public static workspaceClicked(workspace: Workspace) {
         PopupActions.openWorkspace(workspace);
@@ -72,7 +72,7 @@ export class PopupLogic {
 
     /**
      * Called when a workspace's settings button is clicked.
-     * @param workspaceId 
+     * @param workspaceId -
      */
     public static workspaceSettingsClicked(workspace: Workspace) {
         // Actions.openWorkspaceSettings(workspace.uuid);
