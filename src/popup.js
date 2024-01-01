@@ -5,7 +5,7 @@ import { StorageHelper } from "./storage-helper";
 import { MessageResponses } from "./constants/message-responses";
 import { Messages } from "./constants/messages";
 import { WorkspaceStorage } from "./workspace-storage";
-import { Popup } from "./popup-logic";
+import { PopupLogic } from "./popup-logic";
 import { PopupMessageHelper } from "./popup-message-helper";
 import { LogHelper } from "./log-helper";
 
@@ -14,19 +14,19 @@ import { LogHelper } from "./log-helper";
  * Setup the listeners for the buttons
  */
 async function documentLoaded() {
-   chrome.tabs.onRemoved.addListener(Popup.tabRemoved);
-   chrome.tabs.onUpdated.addListener(Popup.tabUpdated);
+   chrome.tabs.onRemoved.addListener(PopupLogic.tabRemoved);
+   chrome.tabs.onUpdated.addListener(PopupLogic.tabUpdated);
    chrome.windows.onRemoved.addListener(windowRemoved);
 
    document.getElementById("addBtn").addEventListener("click", addWorkspaceButtonClicked);
    document.getElementById("clearStorage").addEventListener("click", clearStorageButtonClicked);
 
-   Popup.listWorkspaces(await getWorkspaces());
+   PopupLogic.listWorkspaces(await getWorkspaces());
 }
 
 async function clearStorageButtonClicked() {
    await StorageHelper.clearAllData();
-   Popup.listWorkspaces(await StorageHelper.getWorkspaces());
+   PopupLogic.listWorkspaces(await StorageHelper.getWorkspaces());
 }
 
 /**
@@ -45,7 +45,7 @@ async function addWorkspaceButtonClicked() {
 
    if (response.message === MessageResponses.SUCCESS.message) {
       console.debug("Workspace added successfully, refreshing list");
-      Popup.listWorkspaces(await getWorkspaces());
+      PopupLogic.listWorkspaces(await getWorkspaces());
    }
    else {
       LogHelper.errorAlert("Workspace could not be added\n" + response.message);
@@ -60,7 +60,7 @@ async function addWorkspaceButtonClicked() {
  */
 async function windowRemoved(window) {
    console.debug("windowRemoved", window);
-   Popup.listWorkspaces(await getWorkspaces());
+   PopupLogic.listWorkspaces(await getWorkspaces());
 }
 
 /**

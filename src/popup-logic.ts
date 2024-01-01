@@ -2,9 +2,9 @@ import { Workspace } from "./obj/workspace";
 import { Utils } from "./utils";
 import { WorkspaceStorage } from "./workspace-storage";
 import WORKSPACE_TEMPLATE from "./templates/workspaceElemTemplate.html";
-import { PopupActions } from "./actions";
+import { PopupActions } from "./popup-actions";
 
-export class Popup {
+export class PopupLogic {
 
     public static listWorkspaces(workspaces: WorkspaceStorage) {
         console.debug("listWorkspaces", workspaces)
@@ -56,6 +56,10 @@ export class Popup {
         else {
             throw new Error("parentNode must be a valid DOM node");
         }
+    }
+
+    public static clearWorkspaceStorage() {
+
     }
 
     /**
