@@ -64,6 +64,29 @@ export class Background {
             }
         );
     }
+
+    /**
+     * We need to update the workspace with the new window ID.
+     * 
+     * Then we need to send a message back to the content script with the updated workspace.
+     * @param uuid - The UUID of the workspace to open.
+     * @param windowId - The ID of the window that the workspace is being opened in.
+     * @returns 
+     */
+    public static async openWorkspace(uuid: string, windowId: number): Promise<MessageResponse> {
+        const workspace = await StorageHelper.getWorkspace(uuid);
+        workspace.windowId = windowId;
+        // Serialize the workspace before we make any other changes
+        const data = workspace.serialize();
+
+        // The workspace is just about to get a bunch of tabs opened.
+        // The tabs are going to have unique IDs again, so we need to clear the tabs map
+        // to avoid duplicate tabs.
+        workspace.clearTabs();
+        await StorageHelper.setWorkspace(workspace);
+
+        return { "data": data };
+    }
 }
 
 /**
@@ -72,29 +95,17 @@ export class Background {
  * @remarks This class is public for testing purposes.
  */
 export class BackgroundMessageHandlers {
+
     /**
-     * We're being informed that a workspace is being opened in a new window.\
-     * We need to update the workspace with the new window ID.\
-     * Then we need to send a message back to the content script with the updated workspace.
-     * @param request {Object{data: { uuid: string, windowId: number}}}
+     * We're being informed that a workspace is being opened in a new window.
+     * @param request - The request object containing the workspace data.
      */
-    public static async processOpenWorkspace(request: any): Promise<MessageResponse> {
+    public static async processOpenWorkspace(request: IRequestOpenWorkspace): Promise<MessageResponse> {
         if (!request?.payload?.data?.uuid || !request?.payload?.data?.windowId) {
             return MessageResponses.ERROR;
         }
         
-        let workspace = await StorageHelper.getWorkspace(request.payload.data.uuid);
-        workspace.windowId = request.payload.data.windowId;
-        // Serialize the workspace before we make any other changes
-        let data = workspace.serialize();
-
-        // The workspace is just about to get a bunch of tabs opened.
-        // The tabs are going to have unique IDs again, so we need to clear the tabs map
-        // so that we don't have duplicate tabs.
-        workspace.clearTabs();
-        await StorageHelper.setWorkspace(workspace);
-
-        return { "data": data };
+        return await Background.openWorkspace(request.payload.data.uuid, request.payload.data.windowId);
     }
 
     /**
@@ -130,11 +141,11 @@ export class BackgroundMessageHandlers {
     public static messageListener(request: IRequest, _sender: unknown, sendResponse: (response: unknown) => void): boolean {
         switch (request.type) {
             case Messages.MSG_GET_WORKSPACES:
-                this.processGetWorkspaces(request).then(sendResponse);
+                BackgroundMessageHandlers.processGetWorkspaces(request).then(sendResponse);
                 return true;
 
             case Messages.MSG_NEW_WORKSPACE:
-                this.processNewWorkspace(request).then(sendResponse);
+                BackgroundMessageHandlers.processNewWorkspace(request as IRequestNewWorkspace).then(sendResponse);
                 return true;
         }
 
