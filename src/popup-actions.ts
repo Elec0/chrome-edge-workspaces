@@ -17,7 +17,7 @@ export class PopupActions {
      * <li>Then it will respond with the most up-to-date version of the workspace</li>
      * <li>Then we will open the tabs in the new window</li>
      * </ol>
-     * @param workspace 
+     * @param workspace -
      */
     public static openWorkspace(workspace: Workspace): void {
 
@@ -26,7 +26,7 @@ export class PopupActions {
                 return;
             }
             // Send a message to the background script that we are opening a workspace.uuid in the new windowId
-            let response = await PopupMessageHelper.sendOpenWorkspace(workspace.uuid, newWindow.id);
+            const response = await PopupMessageHelper.sendOpenWorkspace(workspace.uuid, newWindow.id);
 
             if (!response) {
                 console.error("Response was undefined!", "response:", response);
@@ -35,7 +35,7 @@ export class PopupActions {
 
             // Background script will update the workspace with the new windowId
             // Then it will respond with the most up-to-date version of the workspace
-            let updatedWorkspace = Workspace.deserialize(response.data);
+            const updatedWorkspace = Workspace.deserialize(response.data);
 
             // Then we will open the tabs in the new window
             updatedWorkspace.getTabs().forEach(tab => {
