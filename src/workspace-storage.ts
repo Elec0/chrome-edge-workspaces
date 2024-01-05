@@ -1,3 +1,4 @@
+import { IWorkspaceJson } from "./interfaces/i-workspace-json";
 import { Workspace } from './obj/workspace';
 
 /**
@@ -9,7 +10,7 @@ export class WorkspaceStorage implements Map<string | number, Workspace> {
     private workspaces: Map<string, Workspace>;
     private windowIdToUuid: Map<number, string>;
 
-    [Symbol.toStringTag]: 'WorkspaceStorage' = 'WorkspaceStorage'; // Initialize the property
+    [Symbol.toStringTag] = 'WorkspaceStorage' as const; // Initialize the property
 
     constructor() {
         this.workspaces = new Map();
@@ -43,7 +44,7 @@ export class WorkspaceStorage implements Map<string | number, Workspace> {
         return false;
     }
 
-    forEach(callbackfn: (value: Workspace, key: string | number, map: Map<string | number, Workspace>) => void, thisArg?: any): void {
+    forEach(callbackfn: (value: Workspace, key: string | number, map: Map<string | number, Workspace>) => void, thisArg?: unknown): void {
         this.workspaces.forEach((value, key) => {
             callbackfn.call(thisArg, value, key, this);
         });
@@ -113,7 +114,7 @@ export class WorkspaceStorage implements Map<string | number, Workspace> {
 
     // #region Serialization
     serialize(): string {
-        let workspacesArray: [string, any][] = [];
+        const workspacesArray: [string, object][] = [];
         this.workspaces.forEach((workspace, uuid) => {
             workspacesArray.push([uuid, workspace.toJsonObject()]);
         });
@@ -124,12 +125,12 @@ export class WorkspaceStorage implements Map<string | number, Workspace> {
     deserialize(serialized: string): void {
         const data = JSON.parse(serialized);
         // This turns them into maps, but they're still just data objects, not Workspace objects.
-        let workspaces = new Map(data.workspaces);
+        const workspaces = new Map(data.workspaces);
 
         // Convert the workspaces to Workspace objects, and set them in the storage.
         // This also sets the windowIdToUuid map.
         workspaces.forEach((workspace, uuid) => {
-            this.set(uuid as string, Workspace.fromJson(workspace));
+            this.set(uuid as string, Workspace.fromJson(workspace as IWorkspaceJson));
         });
     }
     // #endregion
