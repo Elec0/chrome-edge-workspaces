@@ -1,5 +1,7 @@
-import { TabStub } from "./tab-stub";
 import { v4 as uuidv4 } from "uuid";
+import { IWorkspaceJson } from "../interfaces/i-workspace-json";
+import { TabStub } from "./tab-stub";
+
 
 /**
  * Represents a workspace.
@@ -30,7 +32,7 @@ export class Workspace {
         }
     }
 
-    
+
     /**
      * Adds a tab to the workspace.
      * @param tabStub - The tab stub to add. If not provided, it will be created from the chrome tab.
@@ -59,7 +61,7 @@ export class Workspace {
 
     /**
      * Retrieves a tab by its ID.
-     * @param tabId The ID of the tab to retrieve.
+     * @param tabId - The ID of the tab to retrieve.
      * @returns The tab with the specified ID, or undefined if not found.
      */
     public getTab(tabId: number): TabStub | undefined {
@@ -75,14 +77,13 @@ export class Workspace {
         return Array.from(this.tabs.values());
     }
 
-    public toJsonObject(): any {
-        let json = {
+    public toJsonObject(): object {
+        return {
             id: this.windowId,
             name: this.name,
             uuid: this.uuid,
             tabs: this.getTabs().map((tab: TabStub) => tab.toJson())
         };
-        return json;
     }
 
     /**
@@ -90,21 +91,21 @@ export class Workspace {
      * @param json - The JSON object representing the Workspace.
      * @returns A new Workspace object.
      */
-    public static fromJson(json: any): Workspace {
-        let workspace = new Workspace(json.id, json.name, undefined, undefined, json.uuid);
-        if (json.tabs != null && json.tabs instanceof Array) {
-            json.tabs.forEach((tab: any) => {
-                workspace.addTab(TabStub.fromJson(tab));
-            });
-        }
-        return workspace;
+    public static fromJson(json: IWorkspaceJson): Workspace {
+    const workspace = new Workspace(json.id, json.name, undefined, undefined, json.uuid);
+    if (json.tabs != null && json.tabs instanceof Array) {
+        json.tabs.forEach((tab: string) => {
+            workspace.addTab(TabStub.fromJson(tab));
+        });
     }
+    return workspace;
+}
 
     public serialize(): string {
-        return JSON.stringify(this.toJsonObject());
-    }
+    return JSON.stringify(this.toJsonObject());
+}
 
     public static deserialize(serialized: string): Workspace {
-        return Workspace.fromJson(JSON.parse(serialized));
-    }
+    return Workspace.fromJson(JSON.parse(serialized));
+}
 }

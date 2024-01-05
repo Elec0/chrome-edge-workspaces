@@ -1,5 +1,6 @@
 import { MessageResponse, MessageResponses } from "./constants/message-responses";
 import { Messages } from "./constants/messages";
+import { IRequestOpenWorkspace, IRequestNewWorkspace, IRequest } from "./interfaces/messages";
 import { StorageHelper } from "./storage-helper";
 import { Utils } from "./utils";
 
@@ -11,7 +12,7 @@ import { Utils } from "./utils";
 export class Background {
     /**
      * A window is closing. Check to see if it's a workspace, and if so, push an update to the sync storage.
-     * @param windowId 
+     * @param windowId - The ID of the window that is closing.
      * @returns 
      */
     public static async windowRemoved(windowId: number) {
@@ -30,8 +31,8 @@ export class Background {
      * 
      * Additionally, if the tab is being closed normally, but it is the only tab in the window,
      * we treat it as if the window is closing.
-     * @param tabId 
-     * @param removeInfo 
+     * @param tabId - The ID of the tab that is closing.
+     * @param removeInfo - Information about the tab removal.
      * @returns 
      */
     public static async tabRemoved(tabId: number, removeInfo: chrome.tabs.TabRemoveInfo) {
@@ -42,7 +43,7 @@ export class Background {
         console.debug(`Tab ${ tabId } removed`);
 
         // Tab is being closed normally, update the workspace that the tab has closed.
-        let workspace = await StorageHelper.getWorkspace(removeInfo.windowId);
+        const workspace = await StorageHelper.getWorkspace(removeInfo.windowId);
         workspace.removeTab(tabId);
         await StorageHelper.setWorkspace(workspace);
 
@@ -68,7 +69,7 @@ export class Background {
 /**
  * Class representing the message handlers for background operations.
  * 
- * @VisibleForTesting
+ * @remarks This class is public for testing purposes.
  */
 export class BackgroundMessageHandlers {
     /**
@@ -101,8 +102,8 @@ export class BackgroundMessageHandlers {
      * @param request - The request object containing the workspace name and window ID.
      * @returns A promise that resolves to a MessageResponse indicating the success or failure of the operation.
      */
-    public static async processNewWorkspace(request: any): Promise<MessageResponse> {
-        let result = await StorageHelper.addWorkspace(request.payload.workspaceName, request.payload.windowId);
+    public static async processNewWorkspace(request: IRequestNewWorkspace): Promise<MessageResponse> {
+        const result = await StorageHelper.addWorkspace(request.payload.workspaceName, request.payload.windowId);
         if (!result) {
             return MessageResponses.FAILURE;
         }
@@ -114,8 +115,8 @@ export class BackgroundMessageHandlers {
      * @param request - The request object.
      * @returns A promise that resolves to a MessageResponse containing the serialized workspaces data.
      */
-    public static async processGetWorkspaces(request: any): Promise<MessageResponse> {
-        let workspaces = await StorageHelper.getWorkspaces();
+    public static async processGetWorkspaces(_request: unknown): Promise<MessageResponse> {
+        const workspaces = await StorageHelper.getWorkspaces();
         return { "data": workspaces.serialize() };
     }
 
@@ -126,7 +127,7 @@ export class BackgroundMessageHandlers {
      * @param sendResponse - The function to send a response back to the content script.
      * @returns A boolean indicating whether the message was successfully handled.
      */
-    public static messageListener(request: any, sender: any, sendResponse: any): boolean {
+    public static messageListener(request: IRequest, _sender: unknown, sendResponse: (response: unknown) => void): boolean {
         switch (request.type) {
             case Messages.MSG_GET_WORKSPACES:
                 this.processGetWorkspaces(request).then(sendResponse);

@@ -4,14 +4,14 @@
  */
 export class TabStub {
     public id: number = -1;
-    public index: number = -1;;
+    public index: number = -1;
     public title: string = "";
     public url: string = "";
     public favIconUrl: string = "";
     public pinned: boolean = false;
     public windowId: number = -1;
 
-    [key: string]: any;
+    [key: string]: unknown;
 
     private static propertiesToExtract: string[] = [
         "id",
@@ -31,7 +31,7 @@ export class TabStub {
         }
     }
 
-    public toJson(): any {
+    public toJson(): string {
         return JSON.stringify(this);
     }
 
@@ -39,7 +39,7 @@ export class TabStub {
         return new TabStub(tab);
     }
 
-    public static fromJson(json: any): TabStub {
+    public static fromJson(json: string): TabStub {
         return new TabStub(JSON.parse(json));
     }
 
