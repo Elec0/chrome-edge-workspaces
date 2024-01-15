@@ -38,9 +38,16 @@ export class PopupActions {
             const updatedWorkspace = Workspace.deserialize(response.data);
 
             // Then we will open the tabs in the new window
+            // Then we will open the tabs in the new window
             updatedWorkspace.getTabs().forEach(tab => {
-                chrome.tabs.create({ windowId: newWindow.id, url: tab.url, active: tab.active, pinned: tab.pinned, index: tab.index });
+                chrome.tabs.create({ 
+                    windowId: newWindow.id, 
+                    url: tab.url, 
+                    active: tab.active as boolean | undefined, 
+                    pinned: tab.pinned as boolean | undefined, 
+                    index: tab.index as number | undefined 
+                });
             });
         });
-    }
+    }    
 }
