@@ -10,7 +10,7 @@ beforeEach(async () => {
     // https://pptr.dev/guides/debugging
     browser = await puppeteer.launch({
         // slowMo: 250, // slow down by 250ms
-        headless: false,
+        headless: "new",
         args: [
             `--disable-extensions-except=${EXTENSION_PATH}`,
             `--load-extension=${EXTENSION_PATH}`
@@ -18,20 +18,21 @@ beforeEach(async () => {
     });
 });
 
+// Note: this is how you can get console logs from the page.
+// page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+
 afterEach(async () => {
     await browser?.close();
     browser = undefined;
 });
 
-test("popup renders correctly", async () => {
+test("creating a new workspace adds it to the list", async () => {
     if (!browser) {
         assert(browser);
         return;
     }
     const page = await browser.newPage();
     await page.goto(`chrome-extension://${EXTENSION_ID}/popup.html`);
-    
-    // page.on('console', msg => console.log('PAGE LOG:', msg.text()));
 
     // Enter 'test workspace' in the input box, when it appears
     page.on("dialog", async (dialog) => {
@@ -47,7 +48,9 @@ test("popup renders correctly", async () => {
     const list = await page.$("#workspaces");
     expect(await list?.isVisible()).toBe(true);
     // Find the text of the workspace name
-    await list?.waitForXPath("//div[contains(text(), 'test workspace')]");
+    const workspaceBtn = await list?.waitForSelector("xpath///div[contains(text(), 'test workspace')]");
+    // Verify there are "1 tabs" in the workspace button text, since it's a new workspace
+    expect(await workspaceBtn?.evaluate((el) => el.textContent)).toContain("1 tabs");
 
     await browser.close();
 });
