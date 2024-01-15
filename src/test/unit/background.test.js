@@ -101,7 +101,7 @@ describe('Background', () => {
                 const result = await BackgroundMessageHandlers.processNewWorkspace({ payload: { workspaceName: 'test', windowId: 1 } });
                 expect(result).toBe(MessageResponses.FAILURE);
             });
-    
+
             it('should return SUCCESS when addWorkspace succeeds', async () => {
                 StorageHelper.addWorkspace.mockResolvedValue(true);
                 const result = await BackgroundMessageHandlers.processNewWorkspace({ payload: { workspaceName: 'test', windowId: 1 } });
@@ -111,23 +111,23 @@ describe('Background', () => {
 
         describe('messageListener', () => {
             it('should process new workspace and send response when request type is MSG_NEW_WORKSPACE', async () => {
+                StorageHelper.addWorkspace.mockResolvedValue(true);
                 const sendResponse = jest.fn();
-                const request = { type: Messages.MSG_NEW_WORKSPACE };
-    
+                const request = { type: Messages.MSG_NEW_WORKSPACE, payload: { workspaceName: 'test', windowId: 1 } };
+
                 jest.spyOn(BackgroundMessageHandlers, 'processNewWorkspace').mockResolvedValue(MessageResponses.SUCCESS);
-    
                 const result = BackgroundMessageHandlers.messageListener(request, {}, sendResponse);
-    
+
                 expect(result).toBe(true);
                 await Promise.resolve(); // wait for promises to resolve
                 expect(sendResponse).toHaveBeenCalledWith(MessageResponses.SUCCESS);
             });
-    
+
             it('should log unknown message and send response when request type is unknown', () => {
                 const sendResponse = jest.fn();
                 const request = { type: 'UNKNOWN' };
                 const result = BackgroundMessageHandlers.messageListener(request, {}, sendResponse);
-    
+
                 expect(result).toBe(false);
                 expect(sendResponse).toHaveBeenCalledWith(MessageResponses.UNKNOWN_MSG);
             });
@@ -165,10 +165,8 @@ describe('Background', () => {
             it('should get the workspace, update it, clear its tabs, and return the serialized data', async () => {
                 const request = {
                     payload: {
-                        data: {
-                            uuid: '123',
-                            windowId: 1
-                        }
+                        uuid: '123',
+                        windowId: 1
                     }
                 };
 

@@ -8,10 +8,8 @@ export interface IRequest {
  */
 export interface IRequestOpenWorkspace extends IRequest {
     payload: {
-        data: {
-            uuid: string;
-            windowId: number;
-        };
+        uuid: string;
+        windowId: number;
     };
 }
 

@@ -1,6 +1,7 @@
 import { LogHelper } from "./log-helper";
 import { PopupMessageHelper } from "./popup-message-helper";
 import { Workspace } from './obj/workspace';
+import { MessageResponses } from "./constants/message-responses";
 
 /**
  * Actions that can be performed by the popup.
@@ -28,9 +29,10 @@ export class PopupActions {
             // Send a message to the background script that we are opening a workspace.uuid in the new windowId
             const response = await PopupMessageHelper.sendOpenWorkspace(workspace.uuid, newWindow.id);
 
-            if (!response) {
-                console.error("Response was undefined!", "response:", response);
+            if (!response || response.message === MessageResponses.UNKNOWN_MSG.message) {
+                console.error("Response returned invalid!", "response:", response);
                 LogHelper.errorAlert("Error opening workspace. Check the console for more details.");
+                return;
             }
 
             // Background script will update the workspace with the new windowId

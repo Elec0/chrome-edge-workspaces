@@ -1,11 +1,8 @@
 import { MessageResponse, MessageResponses } from "./constants/message-responses";
 import { Messages } from "./constants/messages";
-import { IRequestOpenWorkspace, IRequestNewWorkspace, IRequest } from "./interfaces/messages";
+import { IRequest, IRequestNewWorkspace, IRequestOpenWorkspace } from "./interfaces/messages";
 import { StorageHelper } from "./storage-helper";
 import { Utils } from "./utils";
-
-
-
 
 // Functions
 
@@ -59,7 +56,7 @@ export class Background {
             workspace.addTab(undefined, tab);
             await StorageHelper.setWorkspace(workspace);
         },
-            (error) => { 
+            (error) => {
                 // console.error(error);
             }
         );
@@ -95,17 +92,16 @@ export class Background {
  * @remarks This class is public for testing purposes.
  */
 export class BackgroundMessageHandlers {
-
     /**
      * We're being informed that a workspace is being opened in a new window.
      * @param request - The request object containing the workspace data.
      */
     public static async processOpenWorkspace(request: IRequestOpenWorkspace): Promise<MessageResponse> {
-        if (!request?.payload?.data?.uuid || !request?.payload?.data?.windowId) {
+        if (!request?.payload?.uuid || !request?.payload?.windowId) {
             return MessageResponses.ERROR;
         }
-        
-        return await Background.openWorkspace(request.payload.data.uuid, request.payload.data.windowId);
+
+        return await Background.openWorkspace(request.payload.uuid, request.payload.windowId);
     }
 
     /**
@@ -138,7 +134,7 @@ export class BackgroundMessageHandlers {
      * @param sendResponse - The function to send a response back to the content script.
      * @returns A boolean indicating whether the message was successfully handled.
      */
-    public static messageListener(request: IRequest, _sender: unknown, sendResponse: (response: unknown) => void): boolean {
+    public static messageListener(request: IRequest, _sender: unknown, sendResponse: (response: MessageResponse) => void): boolean {
         switch (request.type) {
             case Messages.MSG_GET_WORKSPACES:
                 BackgroundMessageHandlers.processGetWorkspaces(request).then(sendResponse);
@@ -147,9 +143,13 @@ export class BackgroundMessageHandlers {
             case Messages.MSG_NEW_WORKSPACE:
                 BackgroundMessageHandlers.processNewWorkspace(request as IRequestNewWorkspace).then(sendResponse);
                 return true;
+
+            case Messages.MSG_OPEN_WORKSPACE:
+                BackgroundMessageHandlers.processOpenWorkspace(request as IRequestOpenWorkspace).then(sendResponse);
+                return true;
         }
 
-        console.log(MessageResponses.UNKNOWN_MSG.message, request);
+        console.log(MessageResponses.UNKNOWN_MSG.message, "for request:", request);
         sendResponse(MessageResponses.UNKNOWN_MSG);
         return false;
     }

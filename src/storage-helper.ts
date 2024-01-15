@@ -1,4 +1,5 @@
 import { Constants } from "./constants/constants";
+import { MessageResponse } from "./constants/message-responses";
 import { Workspace } from "./obj/workspace";
 import { Utils } from "./utils";
 import { WorkspaceStorage } from "./workspace-storage";
@@ -58,9 +59,9 @@ export class StorageHelper {
         // return this.workspacesFromJson(await this.getValue(Constants.KEY_STORAGE_WORKSPACES, "{}"));
     }
 
-    public static workspacesFromJson(json: string): WorkspaceStorage {
+    public static workspacesFromJson(json: MessageResponse): WorkspaceStorage {
         const workspaceStorage = new WorkspaceStorage();
-        workspaceStorage.deserialize(json);
+        workspaceStorage.deserialize(json.data);
         return workspaceStorage;
     }
 

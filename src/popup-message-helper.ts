@@ -21,7 +21,7 @@ export class PopupMessageHelper {
     public static async sendOpenWorkspace(workspaceUuid: string, windowId: number): Promise<MessageResponse> {
         const response = await chrome.runtime.sendMessage({
             type: Messages.MSG_OPEN_WORKSPACE,
-            payload: { "data": { uuid: workspaceUuid, windowId: windowId } }
+            payload: { uuid: workspaceUuid, windowId: windowId }
         });
 
         if (response === undefined) {
