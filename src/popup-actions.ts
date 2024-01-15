@@ -40,7 +40,6 @@ export class PopupActions {
             const updatedWorkspace = Workspace.deserialize(response.data);
 
             // Then we will open the tabs in the new window
-            // Then we will open the tabs in the new window
             updatedWorkspace.getTabs().forEach(tab => {
                 chrome.tabs.create({ 
                     windowId: newWindow.id, 
@@ -50,6 +49,9 @@ export class PopupActions {
                     index: tab.index as number | undefined 
                 });
             });
+
+            // The window is created with a single new tab, so we need to remove it.
+            chrome.tabs.remove(newWindow.tabs?.[0].id as number);
         });
     }    
 }
