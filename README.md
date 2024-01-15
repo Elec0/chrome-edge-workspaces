@@ -18,6 +18,7 @@ So that's what this extension does.
 
 [**Chrome** extension]()
 
+
 ## Contribution
 
 Suggestions and pull requests are welcomed!.
@@ -26,3 +27,19 @@ Suggestions and pull requests are welcomed!.
 
 This project was bootstrapped with [Chrome Extension CLI](https://github.com/dutiyesh/chrome-extension-cli)
 
+
+# Architecture
+## Class Diagram
+![Project Diagram](docs\diagrams\out\class\project\project.png)
+
+## Component Diagrams
+### `popup-logic.ts`
+![Popup Logic Component Diagram](docs\diagrams\out\component\popup-logic\component-popup-logic.png)
+
+
+
+## Popup
+
+## Background
+
+## Storage

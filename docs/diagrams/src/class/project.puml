@@ -1,0 +1,157 @@
+@startuml
+class MessageResponses {
+    -{static} _key: "message"
+    +{static} OK: MessageResponse
+    +{static} ERROR: MessageResponse
+    +{static} DATA: MessageResponse
+    +{static} SUCCESS: MessageResponse
+    +{static} FAILURE: MessageResponse
+    +{static} UNKNOWN_MSG: MessageResponse
+}
+class Messages {
+    +{static} MSG_NEW_WORKSPACE: string
+    +{static} MSG_GET_WORKSPACES: string
+    +{static} MSG_OPEN_WORKSPACE: string
+}
+interface IRequest {
+    +type: string
+    +payload: unknown
+}
+interface IRequestOpenWorkspace extends IRequest {
+    +payload: { data: {    uuid: string;    windowId: number;}; }
+}
+interface IRequestNewWorkspace extends IRequest {
+    +payload: { workspaceName: string; windowId: number; }
+}
+class Constants {
+    +{static} KEY_STORAGE_WORKSPACES: string
+}
+interface IWorkspaceJson {
+    +id: number
+    +name: string
+    +uuid: string
+    +tabs: string[]
+}
+class TabStub {
+    +id: number
+    +index: number
+    +title: string
+    +url: string
+    +favIconUrl: string
+    +pinned: boolean
+    +windowId: number
+    +toJson(): string
+    -{static} propertiesToExtract: string[]
+    +{static} fromTab(tab: chrome.tabs.Tab): TabStub
+    +{static} fromJson(json: string): TabStub
+    +{static} fromTabs(tabs: chrome.tabs.Tab[]): TabStub[]
+}
+class Workspace {
+  -uuid: string
+  -windowId: number
+  -name: string
+  -tabs: Map<number, TabStub>
+
+  +constructor(windowId: number, name: string, tabs: chrome.tabs.Tab[], tabStubs: TabStub[], uuid: string)
+  +addTab(tabStub?: TabStub, chromeTab?: chrome.tabs.Tab): void
+  +removeTab(tabId: number): void
+  +clearTabs(): void
+  +getTab(tabId: number): TabStub | undefined
+  +getTabs(): TabStub[]
+  +toJsonObject(): object
+  +serialize(): string
+  +static fromJson(json: IWorkspaceJson): Workspace
+  +static deserialize(serialized: string): Workspace
+}
+class Utils {
+    +{static} areWeTestingWithJest(): boolean
+    +{static} interpolateTemplate(template: string, variables: any): string
+}
+class WorkspaceStorage implements Map {
+    -workspaces: Map<string, Workspace>
+    -windowIdToUuid: Map<number, string>
+    +size: number
+    +clear(): void
+    +delete(key: string | number): boolean
+    +forEach(callbackfn: (value: Workspace, key: string | number, map: Map<string | number, Workspace>) => void, thisArg?: unknown): void
+    +get(key: string | number): Workspace | undefined
+    +has(key: string | number): boolean
+    +set(key: string | number, value: Workspace): this
+    +entries(): IterableIterator<[string | number, Workspace]>
+    +keys(): IterableIterator<string | number>
+    +values(): IterableIterator<Workspace>
+    +serialize(): string
+    +deserialize(serialized: string): void
+}
+class StorageHelper {
+    -{static} _storage: chrome.storage.LocalStorageArea
+    -{static} _loadedWorkspaces: WorkspaceStorage
+    +{static} init(): Promise<void>
+    +{static} getValue(key: string, defaultValue?: string): Promise<string>
+    +{static} setValue(key: string, val: string): Promise<void>
+    +{static} getSyncValue(key: string, callback: (value: unknown) => void): void
+    +{static} setSyncValue(key: string, val: string): void
+    +{static} getWorkspaces(): Promise<WorkspaceStorage>
+    +{static} workspacesFromJson(json: string): WorkspaceStorage
+    +{static} getWorkspace(id: string | number): Promise<Workspace>
+    +{static} setWorkspace(workspace: Workspace): Promise<void>
+    +{static} addWorkspace(workspaceName: string, windowId: number): Promise<boolean>
+    +{static} removeWorkspace(uuid: string): Promise<boolean>
+    +{static} isWindowWorkspace(windowId: number): Promise<boolean>
+    +{static} clearAllData(): void
+    +{static} hashCode(toHash: string): string
+    +{static} stringToUTF16Bytes(str: string): number[]
+    +{static} utf16BytesToString(bytes: number[]): string
+    +{static} generateHash(): string
+}
+class Background {
+    +{static} windowRemoved(windowId: number): Promise<void>
+    +{static} tabRemoved(tabId: number, removeInfo: chrome.tabs.TabRemoveInfo): Promise<void>
+    +{static} tabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab): Promise<void>
+    +{static} openWorkspace(uuid: string, windowId: number): Promise<MessageResponse>
+}
+class BackgroundMessageHandlers {
+    +{static} processOpenWorkspace(request: IRequestOpenWorkspace): Promise<MessageResponse>
+    +{static} processNewWorkspace(request: IRequestNewWorkspace): Promise<MessageResponse>
+    +{static} processGetWorkspaces(_request: unknown): Promise<MessageResponse>
+    +{static} messageListener(request: IRequest, _sender: unknown, sendResponse: (response: unknown) => void): boolean
+}
+interface ITabJson {
+    +id: string
+    +url: string
+}
+class LogHelper {
+    +{static} log(message: string, optionalParams: any[]): void
+    +{static} errorAlert(message: string, optionalParams: any[]): void
+    +{static} warn(message: string, optionalParams: any[]): void
+}
+class PopupMessageHelper {
+    +{static} sendAddNewWorkspace(workspaceName: string, windowId: number): Promise<MessageResponse>
+    +{static} sendOpenWorkspace(workspaceUuid: string, windowId: number): Promise<MessageResponse>
+    +{static} sendGetWorkspaces(): Promise<MessageResponse>
+}
+class PopupActions {
+    +{static} openWorkspace(workspace: Workspace): void
+}
+class PopupLogic {
+    +{static} listWorkspaces(workspaces: WorkspaceStorage): void
+    -{static} addWorkspace(parentNode: HTMLElement, workspace: Workspace): HTMLElement
+    +{static} clearWorkspaceStorage(): void
+    +{static} workspaceClicked(workspace: Workspace): void
+    +{static} workspaceSettingsClicked(workspace: Workspace): void
+    +{static} tabRemoved(tabId: number, removeInfo: chrome.tabs.TabRemoveInfo): Promise<void>
+    +{static} tabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab): Promise<void>
+}
+Workspace --> "1" TabStub
+Workspace --> "*" TabStub
+Workspace --> "1" IWorkspaceJson
+WorkspaceStorage --> "1" Workspace
+StorageHelper --> "1" WorkspaceStorage
+StorageHelper --> "1" Workspace
+BackgroundMessageHandlers --> "1" IRequestOpenWorkspace
+BackgroundMessageHandlers --> "1" IRequestNewWorkspace
+BackgroundMessageHandlers --> "1" IRequest
+PopupActions --> "1" Workspace
+PopupLogic --> "1" WorkspaceStorage
+PopupLogic --> "1" Workspace
+@enduml
