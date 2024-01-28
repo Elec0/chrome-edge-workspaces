@@ -55,4 +55,18 @@ export class PopupMessageHelper {
         console.debug("getWorkspaces response", response);
         return response;
     }
+
+    public static async sendClearWorkspaces(): Promise<MessageResponse> {
+        const response = await chrome.runtime.sendMessage({
+            type: Messages.MSG_CLEAR_WORKSPACES,
+            payload: {}
+        });
+
+        if (response === undefined) {
+            console.error("Response was undefined");
+            return MessageResponses.ERROR;
+        }
+
+        return response;
+    }
 }

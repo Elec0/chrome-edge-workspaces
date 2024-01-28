@@ -2,6 +2,7 @@
 
 import { MessageResponses } from "./constants/message-responses";
 import { LogHelper } from "./log-helper";
+import { PopupActions } from "./popup-actions";
 import { PopupLogic } from "./popup-logic";
 import { PopupMessageHelper } from "./popup-message-helper";
 import "./popup.css";
@@ -24,7 +25,7 @@ async function documentLoaded() {
 }
 
 async function clearStorageButtonClicked() {
-   await StorageHelper.clearAllData();
+   PopupActions.clearWorkspaceData();
    PopupLogic.listWorkspaces(await StorageHelper.getWorkspaces());
 }
 

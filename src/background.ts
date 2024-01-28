@@ -127,6 +127,11 @@ export class BackgroundMessageHandlers {
         return { "data": workspaces.serialize() };
     }
 
+    public static async processClearWorkspaces(_request: unknown): Promise<MessageResponse> {
+        await StorageHelper.clearWorkspaces();
+        return MessageResponses.SUCCESS;
+    }
+
     /**
      * Handles incoming messages from the content script.
      * @param request - The message request object.
@@ -146,6 +151,10 @@ export class BackgroundMessageHandlers {
 
             case Messages.MSG_OPEN_WORKSPACE:
                 BackgroundMessageHandlers.processOpenWorkspace(request as IRequestOpenWorkspace).then(sendResponse);
+                return true;
+
+            case Messages.MSG_CLEAR_WORKSPACES:
+                BackgroundMessageHandlers.processClearWorkspaces(request).then(sendResponse);
                 return true;
         }
 

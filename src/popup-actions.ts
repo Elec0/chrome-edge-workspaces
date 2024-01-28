@@ -53,5 +53,21 @@ export class PopupActions {
             // The window is created with a single new tab, so we need to remove it.
             chrome.tabs.remove(newWindow.tabs?.[0].id as number);
         });
-    }    
+    }
+
+    /**
+     * Called when the clear workspace button is clicked.
+     * 
+     * Send a message to the background script to clear the workspace data.
+     */
+    public static clearWorkspaceData(): void {
+        PopupMessageHelper.sendClearWorkspaces().then(response => {
+            if (response.message === MessageResponses.SUCCESS.message) {
+                LogHelper.successAlert("Workspace data cleared.");
+            }
+            else {
+                LogHelper.errorAlert("Error clearing workspace data. Check the console for more details.");
+            }
+        });
+    }
 }

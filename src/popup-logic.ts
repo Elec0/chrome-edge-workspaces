@@ -58,10 +58,6 @@ export class PopupLogic {
         }
     }
 
-    public static clearWorkspaceStorage() {
-
-    }
-
     /**
      * Called when a workspace is clicked.
      * @param workspaceId -
