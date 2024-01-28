@@ -2,6 +2,8 @@ import { LogHelper } from "./log-helper";
 import { PopupMessageHelper } from "./popup-message-helper";
 import { Workspace } from './obj/workspace';
 import { MessageResponses } from "./constants/message-responses";
+import { PopupLogic } from "./popup-logic";
+import { StorageHelper } from "./storage-helper";
 
 /**
  * Actions that can be performed by the popup.
@@ -59,11 +61,13 @@ export class PopupActions {
      * Called when the clear workspace button is clicked.
      * 
      * Send a message to the background script to clear the workspace data.
+     * Then update the workspace list.
      */
     public static clearWorkspaceData(): void {
-        PopupMessageHelper.sendClearWorkspaces().then(response => {
+        PopupMessageHelper.sendClearWorkspaces().then(async response => {
             if (response.message === MessageResponses.SUCCESS.message) {
                 LogHelper.successAlert("Workspace data cleared.");
+                PopupLogic.listWorkspaces(await StorageHelper.getWorkspaces());
             }
             else {
                 LogHelper.errorAlert("Error clearing workspace data. Check the console for more details.");

@@ -26,7 +26,6 @@ async function documentLoaded() {
 
 async function clearStorageButtonClicked() {
    PopupActions.clearWorkspaceData();
-   PopupLogic.listWorkspaces(await StorageHelper.getWorkspaces());
 }
 
 /**
