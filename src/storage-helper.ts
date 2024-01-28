@@ -54,9 +54,20 @@ export class StorageHelper {
      * @returns A promise that resolves to a map of workspaces, or an empty object if no workspaces exist.
      */
     public static async getWorkspaces(): Promise<WorkspaceStorage> {
-        return this._loadedWorkspaces;
+        // return this._loadedWorkspaces;
+        
+        const result = await this.getValue(Constants.KEY_STORAGE_WORKSPACES, "{}")
 
-        // return this.workspacesFromJson(await this.getValue(Constants.KEY_STORAGE_WORKSPACES, "{}"));
+        return this.workspacesFromJson({"data": result});
+    }
+
+    /**
+     * Set the workspaces in storage.
+     * @param workspaces - The workspaces to set.
+     */
+    public static async setWorkspaces(workspaces: WorkspaceStorage): Promise<void> {
+        await this.setValue(Constants.KEY_STORAGE_WORKSPACES, workspaces.serialize());
+        this._loadedWorkspaces = workspaces;
     }
 
     public static workspacesFromJson(json: MessageResponse): WorkspaceStorage {
@@ -87,7 +98,7 @@ export class StorageHelper {
     public static async setWorkspace(workspace: Workspace): Promise<void> {
         const workspaces = await this.getWorkspaces();
         workspaces.set(workspace.uuid, workspace);
-        // await this.setWorkspaces(workspaces);
+        await this.setWorkspaces(workspaces);
     }
 
     /**
@@ -107,7 +118,7 @@ export class StorageHelper {
         const workspaces = await this.getWorkspaces();
         const newWorkspace = new Workspace(windowId, workspaceName, []);
         workspaces.set(newWorkspace.uuid, newWorkspace);
-        // await this.setWorkspaces(workspaces);
+        await this.setWorkspaces(workspaces);
 
         return Promise.resolve(true);
     }
@@ -115,7 +126,7 @@ export class StorageHelper {
     public static async removeWorkspace(uuid: string): Promise<boolean> {
         const workspaces = await this.getWorkspaces();
         if (workspaces.delete(uuid)) {
-            // await this.setWorkspaces(workspaces);
+            await this.setWorkspaces(workspaces);
             return Promise.resolve(true);
         }
         return Promise.reject("Workspace does not exist");
@@ -136,8 +147,8 @@ export class StorageHelper {
     }
 
     /** Delete everything we have in storage. */
-    public static clearAllData() {
-        this._storage.clear();
+    public static async clearWorkspaces() {
+        await this._storage.clear();
         console.log("Cleared all data");
     }
 
