@@ -13,7 +13,7 @@ export class Background {
      * @returns 
      */
     public static async windowRemoved(windowId: number) {
-        if (!await StorageHelper.isWindowWorkspace(windowId)) return;
+                if (!await StorageHelper.isWindowWorkspace(windowId)) return;
 
         console.debug(`Window ${ windowId } is a workspace, saving tabs...`);
 
@@ -39,11 +39,17 @@ export class Background {
         }
         console.debug(`Tab ${ tabId } removed`);
 
-        // Tab is being closed normally, update the workspace that the tab has closed.
         const workspace = await StorageHelper.getWorkspace(removeInfo.windowId);
-        workspace.removeTab(tabId);
-        await StorageHelper.setWorkspace(workspace);
 
+        // If the tab is the last tab in the window, treat it as if the window is closing.
+        if (workspace.getTabs().length <= 1) {
+            Background.windowRemoved(removeInfo.windowId);
+        }
+        else {
+            // Tab is being closed normally, update the workspace that the tab has closed.
+            workspace.removeTab(tabId);
+            await StorageHelper.setWorkspace(workspace);
+        }
     }
 
     public static async tabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) {

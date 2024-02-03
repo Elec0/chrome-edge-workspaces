@@ -58,7 +58,7 @@ async function addWorkspaceButtonClicked() {
  * @param {chrome.windows.window} window 
  */
 async function windowRemoved(window) {
-   console.debug("windowRemoved", window);
+   console.debug("Popup: windowRemoved", window);
    PopupLogic.listWorkspaces(await getWorkspaces());
 }
 
