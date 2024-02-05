@@ -1,29 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <title>Chrome Edge Workspaces</title>
-    <link rel="stylesheet" href="popup.css" />
-    <script src="popup.js" type="module"></script>
-  </head>
+  <meta charset="UTF-8">
+  <title>Chrome Edge Workspaces</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+    rel="stylesheet">
+  <link rel="stylesheet" href="popup.css" />
+  <script src="popup.js" type="module"></script>
+</head>
+
 <body>
   <div class="app">
-    <p class="counter-label">Create new workspace</p>
+    <div class="header-bar">
+      <h1>Chrome Edge Workspaces</h1>
+      <div class="header-bar-right">
+        <span alt="Add" id="addWorkspace" class="material-icons">add_circle</span>
+        <span alt="Settings" id="settingsButton" class="material-icons">more_horiz</span>
+      </div>
+    </div>
     <div class="button-container">
-      <button id="addBtn" class="button">+</button><br/><br/>
       <button id="clearStorage" class="button">Clear storage</button>
     </div>
-    <br/>
+    <br />
     <p class="counter-label">Workspaces</p>
     <div id="workspaces" class="workspaces"></div>
 
   </div>
-
-  <!--
-    This HTML file opens when you click on icon from the toolbar.
-
-    To begin the development, run `npm run watch`.
-    To create a production bundle, use `npm run build`.
-  -->
 </body>
+
 </html>

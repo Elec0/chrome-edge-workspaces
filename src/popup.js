@@ -18,7 +18,7 @@ async function documentLoaded() {
    chrome.tabs.onUpdated.addListener(PopupLogic.tabUpdated);
    chrome.windows.onRemoved.addListener(windowRemoved);
 
-   document.getElementById("addBtn").addEventListener("click", addWorkspaceButtonClicked);
+   document.getElementById("addWorkspace").addEventListener("click", addWorkspaceButtonClicked);
    document.getElementById("clearStorage").addEventListener("click", clearStorageButtonClicked);
 
    PopupLogic.listWorkspaces(await getWorkspaces());
