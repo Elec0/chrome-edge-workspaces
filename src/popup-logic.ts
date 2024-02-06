@@ -9,19 +9,16 @@ export class PopupLogic {
     public static listWorkspaces(workspaces: WorkspaceStorage) {
         console.debug("listWorkspaces", workspaces)
 
-        const workspaceDiv = document.getElementById("workspaces");
+        const workspaceDiv = document.getElementById("workspaces-list");
         if (!workspaceDiv) {
             console.error("Could not find workspace div");
             return;
         }
         workspaceDiv.innerHTML = "";
 
-        // Create an unordered list and put it in the workspaceDiv
-        const workspaceContainer = document.createElement("ul");
-        workspaceDiv.appendChild(workspaceContainer);
-
+        // Add each workspace to the list, and add event listeners to the buttons.
         for (const workspace of Array.from(workspaces.values())) {
-            const workspaceElement = this.addWorkspace(workspaceContainer, workspace);
+            const workspaceElement = this.addWorkspace(workspaceDiv, workspace);
             const openWorkspace = workspaceElement.querySelector('.workspace-button');
             const settingsWorkspace = workspaceElement.querySelector('.settings-button');
 
