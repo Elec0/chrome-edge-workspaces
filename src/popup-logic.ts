@@ -1,11 +1,11 @@
 import { Workspace } from "./obj/workspace";
+import { PopupActions } from "./popup-actions";
+import WORKSPACE_TEMPLATE from "./templates/workspaceElemTemplate.html";
 import { Utils } from "./utils";
 import { WorkspaceStorage } from "./workspace-storage";
-import WORKSPACE_TEMPLATE from "./templates/workspaceElemTemplate.html";
-import { PopupActions } from "./popup-actions";
 
 export class PopupLogic {
-
+    
     public static listWorkspaces(workspaces: WorkspaceStorage) {
         console.debug("listWorkspaces", workspaces)
 
