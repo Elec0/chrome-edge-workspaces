@@ -51,8 +51,11 @@ describe('Background', () => {
             expect(workspace.removeTab).not.toHaveBeenCalled();
         });
 
-        it('should log a debug message and update the workspace when the window is not closing', async () => {
+        it('should update the workspace when a tab, not the window, is closing', async () => {
             const workspace = new Workspace('test', 1);
+            workspace.addTab(TabStub.fromTab({ id: 1, windowId: 1 }));
+            workspace.addTab(TabStub.fromTab({ id: 2, windowId: 1 }));
+
             workspace.removeTab = jest.fn();
             StorageHelper.getWorkspace.mockResolvedValue(workspace);
             StorageHelper.setWorkspace.mockResolvedValue(true);
@@ -61,7 +64,22 @@ describe('Background', () => {
 
             expect(workspace.removeTab).toHaveBeenCalledWith(1);
             expect(StorageHelper.setWorkspace).toHaveBeenCalledWith(workspace);
+        });
 
+        it('should not update the workspace when the only tab in the workspace is closing', async () => {
+            const workspace = new Workspace('test', 1);
+            workspace.addTab(TabStub.fromTab({ id: 1, windowId: 1 }));
+
+            workspace.removeTab = jest.fn();
+            Background.windowRemoved = jest.fn();
+
+            StorageHelper.getWorkspace.mockResolvedValue(workspace);
+            StorageHelper.setWorkspace.mockResolvedValue(true);
+
+            await Background.tabRemoved(1, { isWindowClosing: false, windowId: 1 });
+
+            expect(workspace.removeTab).not.toHaveBeenCalled();
+            expect(Background.windowRemoved).toHaveBeenCalledWith(1);
         });
     });
 
