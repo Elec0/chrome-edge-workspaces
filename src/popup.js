@@ -6,8 +6,8 @@ import { PopupActions } from "./popup-actions";
 import { PopupLogic } from "./popup-logic";
 import { PopupMessageHelper } from "./popup-message-helper";
 import "./popup.css";
+import { Prompt } from "./prompt";
 import { StorageHelper } from "./storage-helper";
-import { Utils } from "./utils";
 import { WorkspaceStorage } from "./workspace-storage";
 
 /**
@@ -35,7 +35,7 @@ async function clearStorageButtonClicked() {
  */
 async function addWorkspaceButtonClicked() {
    // Present popup asking for workspace name
-   const workspaceName = await Utils.createPrompt("Enter a name for the new workspace");
+   const workspaceName = await Prompt.createPrompt("Enter a name for the new workspace");
 
    let window = await chrome.windows.create({});
 
