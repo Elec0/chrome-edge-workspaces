@@ -9,6 +9,8 @@ So that's what this extension does.
 * When a workspace is opened, store the window ID matched to the workspace name
 * When it's closed, use the window ID to get the workspace and save the tabs to it
 
+* Internal tabs, such as the new tab page, settings, or extensions, are not saved to workspaces.
+
 ## Features
 
 - Feature 1

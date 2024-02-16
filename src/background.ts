@@ -53,6 +53,10 @@ export class Background {
     }
 
     public static async tabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) {
+        // We need to ignore any tabs that are not normal website tabs.
+        if (tab.url?.startsWith("chrome://") || tab.url?.startsWith("chrome-extension://")) {
+            return;
+        }
         // Then's first callback is the success callback, second is the error callback.
         // We don't need the error callback, so we ignore it.
         StorageHelper.getWorkspace(tab.windowId).then(async (workspace) => {
