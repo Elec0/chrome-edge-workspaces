@@ -117,7 +117,7 @@ describe('Background', () => {
             it('should return FAILURE when addWorkspace fails', async () => {
                 StorageHelper.addWorkspace.mockResolvedValue(false);
                 const result = await BackgroundMessageHandlers.processNewWorkspace({ payload: { workspaceName: 'test', windowId: 1 } });
-                expect(result).toBe(MessageResponses.FAILURE);
+                expect(result).toBe(MessageResponses.ERROR);
             });
 
             it('should return SUCCESS when addWorkspace succeeds', async () => {
@@ -204,6 +204,54 @@ describe('Background', () => {
                 expect(mockWorkspace.clearTabs).toHaveBeenCalled();
                 expect(StorageHelper.setWorkspace).toHaveBeenCalledWith(mockWorkspace);
                 expect(response).toEqual({ data: 'serialized data' });
+            });
+        });
+
+        describe("processClearWorkspaces", () => {
+            it('should clear the workspaces, and report success', async () => {
+                const request = {
+                    payload: {
+                        uuid: '123'
+                    }
+                };
+
+                const mockWorkspace = {
+                    clearTabs: jest.fn()
+                };
+
+                (StorageHelper.getWorkspace).mockResolvedValue(mockWorkspace);
+
+                const response = await BackgroundMessageHandlers.processClearWorkspaces(request);
+                
+                expect(StorageHelper.clearWorkspaces).toHaveBeenCalled();
+                expect(response).toEqual(MessageResponses.SUCCESS);
+            });
+        });
+
+        describe("processDeleteWorkspace", () => {
+            it('should return an error response if uuid is not provided', async () => {
+                const request = {
+                    payload: {
+                        uuid: null
+                    }
+                };
+
+                const response = await BackgroundMessageHandlers.processDeleteWorkspace(request);
+                expect(response).toEqual(MessageResponses.ERROR);
+            });
+
+            it('should get the workspace, delete it, and report success', async () => {
+                const request = {
+                    payload: {
+                        uuid: '123'
+                    }
+                };
+
+                (StorageHelper.removeWorkspace).mockResolvedValue(true);
+
+                const response = await BackgroundMessageHandlers.processDeleteWorkspace(request);
+                expect(StorageHelper.removeWorkspace).toHaveBeenCalledWith('123');
+                expect(response).toEqual(MessageResponses.SUCCESS);
             });
         });
     });
