@@ -1,61 +1,23 @@
-import { assert } from "console";
-import puppeteer, { Browser, Page } from 'puppeteer';
+import { E2ECommon } from "./utils/e2e-common";
 
-const EXTENSION_PATH = `${ process.cwd() }/build`;
-const EXTENSION_ID = 'laobpiaijpjcdllfnphlmjoaofilopmi';
-
-let browser: Browser;
-let page: Page;
+let common: E2ECommon;
 
 beforeEach(async () => {
-    // https://pptr.dev/guides/debugging
-    browser = await puppeteer.launch({
-        // slowMo: 250, // slow down by 250ms
-        // headless: false,
-        headless: "new",
-        args: [
-            `--disable-extensions-except=${ EXTENSION_PATH }`,
-            `--load-extension=${ EXTENSION_PATH }`
-        ]
-    });
-
-    if (!browser) {
-        assert(browser);
-        return;
-    }
-
-    page = await browser.newPage();
-    await page.goto(`chrome-extension://${ EXTENSION_ID }/popup.html`);
-
-    if (!page) {
-        assert(page);
-        return;
-    }
-
-    // Clear the local and sync storage before each test
-    await page.evaluate(() => {
-        chrome.storage.local.clear();
-        chrome.storage.sync.clear();
-    });
+    common = new E2ECommon();
+    await common.beforeEach();
 });
 
 // Note: this is how you can get console logs from the page.
 // page.on('console', msg => console.log('PAGE LOG:', msg.text()));
 
 afterEach(async () => {
-    await browser?.close();
+    await common.afterEach();
 });
 
 test("creating a new workspace adds it to the list", async () => {
     // Setup listener for the new window (browser) popup
-    const newWindowPagePromise = new Promise<Page>((resolve) => {
-        browser?.on("targetcreated", async (target) => {
-            const newPage = await target.page();
-            if (newPage) {
-                resolve(newPage);
-            }
-        });
-    });
+    const newWindowPagePromise = common.getNewWindowPagePromise();
+    const page = common.page;
 
     // Click the button to add a workspace
     const btn = await page.$("#addWorkspace");
@@ -89,20 +51,12 @@ test("creating a new workspace adds it to the list", async () => {
     // Use ElementHandler.waitForSelector to wait for the new workspace text to appear
     const workspaceBtn = await list?.waitForSelector("xpath///div[contains(text(), 'test workspace')]");
     expect(await workspaceBtn?.evaluate((el) => el.textContent)).toContain("1 tabs");
-
-    await browser?.close();
 });
 
 test("clicking a workspace opens it", async () => {
     // Setup listener for the new window (browser) popup
-    const newWindowPagePromise = new Promise<Page>((resolve) => {
-        browser?.on("targetcreated", async (target) => {
-            const newPage = await target.page();
-            if (newPage) {
-                resolve(newPage);
-            }
-        });
-    });
+    const newWindowPagePromise = common.getNewWindowPagePromise();
+    const page = common.page;
 
     // Add a workspace
     const btn = await page.$("#addWorkspace");
