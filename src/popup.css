@@ -182,6 +182,10 @@ img#addIcon:hover {
     align-items: right;
 }
 
+.icon-button {
+    cursor: pointer;
+}
+
 .modal {
     top: 50%;
     left: 50%;

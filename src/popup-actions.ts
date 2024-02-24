@@ -74,4 +74,23 @@ export class PopupActions {
             }
         });
     }
+
+    /**
+     * Called when the delete workspace button is clicked.
+     * 
+     * Send a message to the background script to delete the workspace.
+     * Then update the workspace list.
+     * @param workspace -
+     */
+    public static deleteWorkspace(workspace: Workspace): void {
+        PopupMessageHelper.sendDeleteWorkspace(workspace.uuid).then(async response => {
+            if (response.message === MessageResponses.SUCCESS.message) {
+                console.log("Workspace deleted", workspace);
+                PopupLogic.listWorkspaces(await StorageHelper.getWorkspaces());
+            }
+            else {
+                LogHelper.errorAlert("Error deleting workspace. Check the console for more details.");
+            }
+        });
+    }
 }

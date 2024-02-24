@@ -20,7 +20,9 @@ export class PopupLogic {
         for (const workspace of Array.from(workspaces.values())) {
             const workspaceElement = this.addWorkspace(workspaceDiv, workspace);
             const openWorkspace = workspaceElement.querySelector('.workspace-button');
-            const settingsWorkspace = workspaceElement.querySelector('.settings-button');
+            const settingsWorkspace = workspaceElement.querySelector('#settings-button');
+            const editWorkspace = workspaceElement.querySelector('#edit-button');
+            const deleteWorkspace = workspaceElement.querySelector('#delete-button');
 
             openWorkspace?.addEventListener('click', () => {
                 this.workspaceClicked(workspace);
@@ -28,6 +30,14 @@ export class PopupLogic {
 
             settingsWorkspace?.addEventListener('click', () => {
                 this.workspaceSettingsClicked(workspace);
+            });
+
+            editWorkspace?.addEventListener('click', () => {
+                this.workspaceEditClicked(workspace);
+            });
+
+            deleteWorkspace?.addEventListener('click', () => {
+                this.workspaceDeleteClicked(workspace);
             });
         }
     }
@@ -68,9 +78,32 @@ export class PopupLogic {
      * @param workspaceId -
      */
     public static workspaceSettingsClicked(workspace: Workspace) {
+        console.debug("workspaceSettingsClicked", workspace)
         // Actions.openWorkspaceSettings(workspace.uuid);
     }
 
+    /**
+     * Called when a workspace's edit button is clicked.
+     * @param workspaceId -
+     */
+    public static workspaceEditClicked(workspace: Workspace) {
+        console.debug("workspaceEditClicked", workspace)
+        // Actions.editWorkspace(workspace.uuid);
+    }
+
+    /**
+     * Called when a workspace's delete button is clicked.
+     * @param workspaceId -
+     */
+    public static workspaceDeleteClicked(workspace: Workspace) {
+        console.debug("workspaceDeleteClicked", workspace)
+        // Verify the user wants to delete the workspace.
+        if (!confirm(`Are you sure you want to delete the workspace "${workspace.name}"?`)) {
+            return;
+        }
+        PopupActions.deleteWorkspace(workspace);
+    }
+    
     public static async tabRemoved(tabId: number, removeInfo: chrome.tabs.TabRemoveInfo) {
     }
 

@@ -19,3 +19,9 @@ export interface IRequestNewWorkspace extends IRequest {
         windowId: number;
     };
 }
+
+export interface IRequestDeleteWorkspace extends IRequest {
+    payload: {
+        uuid: string;
+    };
+}

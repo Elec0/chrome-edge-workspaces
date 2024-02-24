@@ -56,10 +56,33 @@ export class PopupMessageHelper {
         return response;
     }
 
+    /**
+     * Sends a message to clear workspaces.
+     * @returns A promise that resolves to a MessageResponse.
+     */
     public static async sendClearWorkspaces(): Promise<MessageResponse> {
         const response = await chrome.runtime.sendMessage({
             type: Messages.MSG_CLEAR_WORKSPACES,
             payload: {}
+        });
+
+        if (response === undefined) {
+            console.error("Response was undefined");
+            return MessageResponses.ERROR;
+        }
+
+        return response;
+    }
+
+    /**
+     * Sends a message to delete a workspace.
+     * @param workspaceUuid - The UUID of the workspace to delete.
+     * @returns A promise that resolves to a MessageResponse.
+     */
+    public static async sendDeleteWorkspace(workspaceUuid: string): Promise<MessageResponse> {
+        const response = await chrome.runtime.sendMessage({
+            type: Messages.MSG_DELETE_WORKSPACE,
+            payload: { uuid: workspaceUuid }
         });
 
         if (response === undefined) {

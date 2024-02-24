@@ -1,6 +1,6 @@
 import { MessageResponse, MessageResponses } from "./constants/message-responses";
 import { Messages } from "./constants/messages";
-import { IRequest, IRequestNewWorkspace, IRequestOpenWorkspace } from "./interfaces/messages";
+import { IRequest, IRequestDeleteWorkspace, IRequestNewWorkspace, IRequestOpenWorkspace } from "./interfaces/messages";
 import { StorageHelper } from "./storage-helper";
 import { Utils } from "./utils";
 
@@ -13,7 +13,7 @@ export class Background {
      * @returns 
      */
     public static async windowRemoved(windowId: number) {
-                if (!await StorageHelper.isWindowWorkspace(windowId)) return;
+        if (!await StorageHelper.isWindowWorkspace(windowId)) return;
 
         console.debug(`Window ${ windowId } is a workspace, saving tabs...`);
 
@@ -128,6 +128,17 @@ export class BackgroundMessageHandlers {
     }
 
     /**
+     * Processes a request to delete a workspace.
+     */
+    public static async processDeleteWorkspace(request: IRequestDeleteWorkspace): Promise<MessageResponse> {
+        const result = await StorageHelper.removeWorkspace(request.payload.uuid);
+        if (!result) {
+            return MessageResponses.FAILURE;
+        }
+        return MessageResponses.SUCCESS;
+    }
+
+    /**
      * Processes the request to get the workspaces.
      * @param request - The request object.
      * @returns A promise that resolves to a MessageResponse containing the serialized workspaces data.
@@ -165,6 +176,10 @@ export class BackgroundMessageHandlers {
 
             case Messages.MSG_CLEAR_WORKSPACES:
                 BackgroundMessageHandlers.processClearWorkspaces(request).then(sendResponse);
+                return true;
+
+            case Messages.MSG_DELETE_WORKSPACE:
+                BackgroundMessageHandlers.processDeleteWorkspace(request as IRequestDeleteWorkspace).then(sendResponse);
                 return true;
         }
 
