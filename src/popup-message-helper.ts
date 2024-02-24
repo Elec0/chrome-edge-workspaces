@@ -1,14 +1,16 @@
 import { MessageResponse, MessageResponses } from "./constants/message-responses";
 import { Messages } from "./constants/messages";
+import { IRequestDeleteWorkspace, IRequestNewWorkspace, IRequestOpenWorkspace } from "./interfaces/messages";
 import { LogHelper } from "./log-helper";
 
 export class PopupMessageHelper {
 
     public static async sendAddNewWorkspace(workspaceName: string, windowId: number): Promise<MessageResponse> {
-        const response = await chrome.runtime.sendMessage({
+        const message: IRequestNewWorkspace = {
             type: Messages.MSG_NEW_WORKSPACE,
             payload: { workspaceName, windowId: windowId }
-        });
+        };
+        const response = await chrome.runtime.sendMessage(message);
 
         if (response === undefined) {
             console.error("Response was undefined");
@@ -19,10 +21,11 @@ export class PopupMessageHelper {
     }
 
     public static async sendOpenWorkspace(workspaceUuid: string, windowId: number): Promise<MessageResponse> {
-        const response = await chrome.runtime.sendMessage({
+        const message: IRequestOpenWorkspace = {
             type: Messages.MSG_OPEN_WORKSPACE,
             payload: { uuid: workspaceUuid, windowId: windowId }
-        });
+        };
+        const response = await chrome.runtime.sendMessage(message);
 
         if (response === undefined) {
             console.error("Response was undefined");
@@ -80,10 +83,26 @@ export class PopupMessageHelper {
      * @returns A promise that resolves to a MessageResponse.
      */
     public static async sendDeleteWorkspace(workspaceUuid: string): Promise<MessageResponse> {
-        const response = await chrome.runtime.sendMessage({
+        const message: IRequestDeleteWorkspace = {
             type: Messages.MSG_DELETE_WORKSPACE,
             payload: { uuid: workspaceUuid }
-        });
+        };
+        const response = await chrome.runtime.sendMessage(message);
+
+        if (response === undefined) {
+            console.error("Response was undefined");
+            return MessageResponses.ERROR;
+        }
+
+        return response;
+    }
+
+    public static async sendRenameWorkspace(workspaceUuid: string, newName: string): Promise<MessageResponse> {
+        const message = {
+            type: Messages.MSG_RENAME_WORKSPACE,
+            payload: { uuid: workspaceUuid, newName: newName }
+        };
+        const response = await chrome.runtime.sendMessage(message);
 
         if (response === undefined) {
             console.error("Response was undefined");
