@@ -158,3 +158,16 @@ describe("getWorkspaces", () => {
         expect(value.get(workspace.uuid)).toEqual(workspace);
     });
 });
+
+describe("clearWorkspaceData", () => {
+    it("should clear the workspaces", async () => {
+        // Arrange
+        jest.spyOn(chrome.storage.local, "clear").mockResolvedValue("success");
+
+        // Act
+        await StorageHelper.clearWorkspaces();
+
+        // Assert
+        expect(chrome.storage.local.clear).toHaveBeenCalledTimes(1);
+    });
+});

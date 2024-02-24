@@ -5,7 +5,8 @@ global.chrome = {
     storage: {
         local: {
             get: async () => { throw new Error("Unimplemented.") },
-            set: async () => { throw new Error("Unimplemented.") }
+            set: async () => { throw new Error("Unimplemented.") },
+            clear: async () => { throw new Error("Unimplemented.") }
         }
     },
     windows: {
