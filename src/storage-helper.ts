@@ -54,8 +54,6 @@ export class StorageHelper {
      * @returns A promise that resolves to a map of workspaces, or an empty object if no workspaces exist.
      */
     public static async getWorkspaces(): Promise<WorkspaceStorage> {
-        // return this._loadedWorkspaces;
-        
         const result = await this.getValue(Constants.KEY_STORAGE_WORKSPACES, "{}")
 
         return this.workspacesFromJson({"data": result});
@@ -70,6 +68,11 @@ export class StorageHelper {
         this._loadedWorkspaces = workspaces;
     }
 
+    /**
+     * Deserialize the workspaces from a MessageResponse.
+     * @param json - The MessageResponse to deserialize.
+     * @returns The workspaces from the MessageResponse.
+     */
     public static workspacesFromJson(json: MessageResponse): WorkspaceStorage {
         const workspaceStorage = new WorkspaceStorage();
         workspaceStorage.deserialize(json.data);
@@ -123,6 +126,11 @@ export class StorageHelper {
         return Promise.resolve(true);
     }
 
+    /**
+     * Remove a workspace from storage.
+     * @param uuid - The UUID of the workspace to remove.
+     * @returns A promise that resolves to true if the workspace was removed successfully, or rejects if the workspace could not be removed.
+     */
     public static async removeWorkspace(uuid: string): Promise<boolean> {
         const workspaces = await this.getWorkspaces();
         if (workspaces.delete(uuid)) {
