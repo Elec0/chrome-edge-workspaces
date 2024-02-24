@@ -171,3 +171,18 @@ describe("clearWorkspaceData", () => {
         expect(chrome.storage.local.clear).toHaveBeenCalledTimes(1);
     });
 });
+
+describe("renameWorkspace", () => {
+    it("should rename the workspace", async () => {
+        // Arrange
+        let workspace = new Workspace(3, "toRename");
+        await StorageHelper.setWorkspace(workspace);
+
+        // Act
+        await StorageHelper.renameWorkspace(workspace.uuid, "newName");
+
+        // Assert
+        let workspaces = await StorageHelper.getWorkspaces();
+        expect(workspaces.get(workspace.uuid).name).toBe("newName");
+    });
+});

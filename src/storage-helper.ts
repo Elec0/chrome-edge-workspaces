@@ -138,7 +138,23 @@ export class StorageHelper {
             return Promise.resolve(true);
         }
         return Promise.reject("Workspace does not exist");
+    }
 
+    /**
+     * Rename a workspace in storage.
+     * @param uuid - The UUID of the workspace to rename.
+     * @param newName - The new name for the workspace.
+     * @returns A promise that resolves to true if the workspace was renamed successfully, or rejects if the workspace could not be renamed.
+     */
+    public static async renameWorkspace(uuid: string, newName: string): Promise<boolean> {
+        const workspaces = await this.getWorkspaces();
+        const workspace = workspaces.get(uuid);
+        if (workspace) {
+            workspace.name = newName;
+            await this.setWorkspaces(workspaces);
+            return Promise.resolve(true);
+        }
+        return Promise.reject("Workspace does not exist");
     }
 
     /**

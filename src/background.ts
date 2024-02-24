@@ -1,6 +1,6 @@
 import { MessageResponse, MessageResponses } from "./constants/message-responses";
 import { Messages } from "./constants/messages";
-import { IRequest, IRequestDeleteWorkspace, IRequestNewWorkspace, IRequestOpenWorkspace } from "./interfaces/messages";
+import { IRequest, IRequestDeleteWorkspace, IRequestNewWorkspace, IRequestOpenWorkspace, IRequestRenameWorkspace } from "./interfaces/messages";
 import { StorageHelper } from "./storage-helper";
 import { Utils } from "./utils";
 
@@ -139,6 +139,17 @@ export class BackgroundMessageHandlers {
     }
 
     /**
+     * Processes a request to rename a workspace.
+     */
+    public static async processRenameWorkspace(request: IRequestRenameWorkspace): Promise<MessageResponse> {
+        const result = await StorageHelper.renameWorkspace(request.payload.uuid, request.payload.newName);
+        if (!result) {
+            return MessageResponses.ERROR;
+        }
+        return MessageResponses.SUCCESS;
+    }
+
+    /**
      * Processes the request to get the workspaces.
      * @param request - The request object.
      * @returns A promise that resolves to a MessageResponse containing the serialized workspaces data.
@@ -174,12 +185,16 @@ export class BackgroundMessageHandlers {
                 BackgroundMessageHandlers.processOpenWorkspace(request as IRequestOpenWorkspace).then(sendResponse);
                 return true;
 
-            case Messages.MSG_CLEAR_WORKSPACES:
-                BackgroundMessageHandlers.processClearWorkspaces(request).then(sendResponse);
-                return true;
-
             case Messages.MSG_DELETE_WORKSPACE:
                 BackgroundMessageHandlers.processDeleteWorkspace(request as IRequestDeleteWorkspace).then(sendResponse);
+                return true;
+
+            case Messages.MSG_RENAME_WORKSPACE:
+                BackgroundMessageHandlers.processRenameWorkspace(request as IRequestRenameWorkspace).then(sendResponse);
+                return true;
+
+            case Messages.MSG_CLEAR_WORKSPACES:
+                BackgroundMessageHandlers.processClearWorkspaces(request).then(sendResponse);
                 return true;
         }
 
