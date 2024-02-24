@@ -122,7 +122,7 @@ export class BackgroundMessageHandlers {
     public static async processNewWorkspace(request: IRequestNewWorkspace): Promise<MessageResponse> {
         const result = await StorageHelper.addWorkspace(request.payload.workspaceName, request.payload.windowId);
         if (!result) {
-            return MessageResponses.FAILURE;
+            return MessageResponses.ERROR;
         }
         return MessageResponses.SUCCESS;
     }
@@ -133,7 +133,7 @@ export class BackgroundMessageHandlers {
     public static async processDeleteWorkspace(request: IRequestDeleteWorkspace): Promise<MessageResponse> {
         const result = await StorageHelper.removeWorkspace(request.payload.uuid);
         if (!result) {
-            return MessageResponses.FAILURE;
+            return MessageResponses.ERROR;
         }
         return MessageResponses.SUCCESS;
     }

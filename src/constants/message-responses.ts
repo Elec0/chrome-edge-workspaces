@@ -26,12 +26,7 @@ export class MessageResponses {
      * Represents a SUCCESS response.
      */
     public static readonly SUCCESS: MessageResponse = { [MessageResponses._key]: "SUCCESS"}
-
-    /**
-     * Represents a FAILURE response.
-     */
-    public static readonly FAILURE: MessageResponse = { [MessageResponses._key]: "FAILURE" }
-
+    
     public static readonly UNKNOWN_MSG: MessageResponse = { [MessageResponses._key]: "UNKNOWN message" }
 
 }

@@ -23,9 +23,4 @@ describe('MessageResponses', () => {
         const response = MessageResponses.SUCCESS;
         testMessageResponse(response, 'SUCCESS');
     });
-
-    it('should correctly construct FAILURE response', () => {
-        const response = MessageResponses.FAILURE;
-        testMessageResponse(response, 'FAILURE');
-    });
 });
