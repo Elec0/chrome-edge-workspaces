@@ -93,4 +93,23 @@ export class PopupActions {
             }
         });
     }
+
+    /**
+     * Send a message to the background script to rename the workspace. The user has already entered the new name.
+     * 
+     * 2. Send a message to the background script to rename the workspace.
+     * 3. Update the workspace list.
+     * @param workspace -
+     */
+    public static renameWorkspace(workspace: Workspace, newName: string): void {
+        PopupMessageHelper.sendRenameWorkspace(workspace.uuid, newName).then(async response => {
+            if (response.message === MessageResponses.SUCCESS.message) {
+                console.log("Workspace renamed", workspace);
+                PopupLogic.listWorkspaces(await StorageHelper.getWorkspaces());
+            }
+            else {
+                LogHelper.errorAlert("Error renaming workspace. Check the console for more details.");
+            }
+        });
+    }
 }

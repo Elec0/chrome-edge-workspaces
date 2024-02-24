@@ -25,3 +25,10 @@ export interface IRequestDeleteWorkspace extends IRequest {
         uuid: string;
     };
 }
+
+export interface IRequestRenameWorkspace extends IRequest {
+    payload: {
+        uuid: string;
+        newName: string;
+    };
+}

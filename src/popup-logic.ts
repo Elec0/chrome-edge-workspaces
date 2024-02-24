@@ -1,5 +1,6 @@
 import { Workspace } from "./obj/workspace";
 import { PopupActions } from "./popup-actions";
+import { Prompt } from "./prompt";
 import WORKSPACE_TEMPLATE from "./templates/workspaceElemTemplate.html";
 import { Utils } from "./utils";
 import { WorkspaceStorage } from "./workspace-storage";
@@ -78,17 +79,27 @@ export class PopupLogic {
      * @param workspaceId -
      */
     public static workspaceSettingsClicked(workspace: Workspace) {
-        console.debug("workspaceSettingsClicked", workspace)
+        console.debug("workspaceSettingsClicked", workspace);
         // Actions.openWorkspaceSettings(workspace.uuid);
     }
 
     /**
      * Called when a workspace's edit button is clicked.
+     * 
+     * Start the process of renaming the workspace:
+     * 1. Prompt the user for a new name.
+     * 2. Send a message to the background script to rename the workspace.
+     * 3. Update the workspace list.
      * @param workspaceId -
      */
-    public static workspaceEditClicked(workspace: Workspace) {
-        console.debug("workspaceEditClicked", workspace)
-        // Actions.editWorkspace(workspace.uuid);
+    public static async workspaceEditClicked(workspace: Workspace) {
+        console.debug("workspaceEditClicked", workspace);
+        const newName = await Prompt.createPrompt("Enter a new name for the workspace");
+        if (newName === null || newName === "" || newName === workspace.name) {
+            console.info("User canceled or entered the same name");
+            return;
+        }
+        PopupActions.renameWorkspace(workspace, newName);
     }
 
     /**
