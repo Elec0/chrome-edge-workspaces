@@ -77,6 +77,14 @@ export class Workspace {
         return Array.from(this.tabs.values());
     }
 
+    /**
+     * Renames the workspace.
+     * @param newName - The new name of the workspace.
+     */
+    public updateName(newName: string): void {
+        this.name = newName;
+    }
+
     public toJsonObject(): object {
         return {
             id: this.windowId,

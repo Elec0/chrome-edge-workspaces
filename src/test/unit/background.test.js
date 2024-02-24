@@ -254,5 +254,34 @@ describe('Background', () => {
                 expect(response).toEqual(MessageResponses.SUCCESS);
             });
         });
+
+        describe("processRenameWorkspace", () => {
+            it('should return an error response if uuid or newName is not provided', async () => {
+                const request = {
+                    payload: {
+                        uuid: null,
+                        newName: 'test'
+                    }
+                };
+
+                const response = await BackgroundMessageHandlers.processRenameWorkspace(request);
+                expect(response).toEqual(MessageResponses.ERROR);
+            });
+
+            it('should get the workspace, update its name, and report success', async () => {
+                const request = {
+                    payload: {
+                        uuid: '123',
+                        newName: 'test'
+                    }
+                };
+
+                (StorageHelper.renameWorkspace).mockResolvedValue(true);
+                
+                const response = await BackgroundMessageHandlers.processRenameWorkspace(request);
+                expect(StorageHelper.renameWorkspace).toHaveBeenCalledWith('123', 'test');
+                expect(response).toEqual(MessageResponses.SUCCESS);
+            });
+        });
     });
 });

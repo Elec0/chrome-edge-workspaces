@@ -147,11 +147,10 @@ export class StorageHelper {
      * @returns A promise that resolves to true if the workspace was renamed successfully, or rejects if the workspace could not be renamed.
      */
     public static async renameWorkspace(uuid: string, newName: string): Promise<boolean> {
-        const workspaces = await this.getWorkspaces();
-        const workspace = workspaces.get(uuid);
+        const workspace = await this.getWorkspace(uuid);
         if (workspace) {
-            workspace.name = newName;
-            await this.setWorkspaces(workspaces);
+            workspace.updateName(newName);
+            await this.setWorkspace(workspace);
             return Promise.resolve(true);
         }
         return Promise.reject("Workspace does not exist");
