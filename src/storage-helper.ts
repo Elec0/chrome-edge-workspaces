@@ -1,11 +1,11 @@
 import { Constants } from "./constants/constants";
 import { MessageResponse } from "./constants/message-responses";
 import { Workspace } from "./obj/workspace";
+import { BookmarkStorageHelper } from "./storage/bookmark-storage-helper";
 import { Utils } from "./utils";
 import { WorkspaceStorage } from "./workspace-storage";
 
 export class StorageHelper {
-
     private static _storage = chrome.storage.local;
     private static _loadedWorkspaces: WorkspaceStorage = new WorkspaceStorage();
 
@@ -54,8 +54,8 @@ export class StorageHelper {
      * @returns A promise that resolves to a map of workspaces, or an empty object if no workspaces exist.
      */
     public static async getWorkspaces(): Promise<WorkspaceStorage> {
+        // return await BookmarkStorageHelper.getWorkspaces();
         const result = await this.getValue(Constants.KEY_STORAGE_WORKSPACES, "{}")
-
         return this.workspacesFromJson({"data": result});
     }
 
@@ -114,6 +114,7 @@ export class StorageHelper {
      */
     public static async addWorkspace(workspaceName: string, windowId: number): Promise<boolean> {
         console.debug("addWorkspace: ", workspaceName, windowId);
+        // return await BookmarkStorageHelper.addWorkspace(workspaceName, windowId);
         if (windowId == null || windowId == undefined) {
             return Promise.resolve(false) // reject("Window id is null or undefined");
         }

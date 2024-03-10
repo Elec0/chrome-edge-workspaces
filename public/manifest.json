@@ -25,6 +25,7 @@
     "storage",
     "tabGroups",
     "scripting",
-    "activeTab"
+    "activeTab",
+    "bookmarks"
   ]
 }

@@ -2,6 +2,7 @@ import { MessageResponse, MessageResponses } from "./constants/message-responses
 import { Messages } from "./constants/messages";
 import { IRequest, IRequestDeleteWorkspace, IRequestNewWorkspace, IRequestOpenWorkspace, IRequestRenameWorkspace } from "./interfaces/messages";
 import { StorageHelper } from "./storage-helper";
+import { BookmarkStorageHelper } from "./storage/bookmark-storage-helper";
 import { Utils } from "./utils";
 
 // Functions
@@ -65,6 +66,7 @@ export class Background {
 
             workspace.addTab(undefined, tab);
             await StorageHelper.setWorkspace(workspace);
+            // await BookmarkStorageHelper.addTabToWorkspace(workspace.uuid, tab);
         },
             (error) => {
                 // console.error(error);
