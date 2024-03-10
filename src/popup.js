@@ -21,13 +21,8 @@ async function documentLoaded() {
 
    document.getElementById("addWorkspace").addEventListener("click", addWorkspaceButtonClicked);
    document.getElementById("settings-button").addEventListener("click", settingsButtonClicked);
-   document.getElementById("clearStorage").addEventListener("click", clearStorageButtonClicked);
-
+   
    WorkspaceEntryLogic.listWorkspaces(await getWorkspaces());
-}
-
-async function clearStorageButtonClicked() {
-   PopupActions.clearWorkspaceData();
 }
 
 /**
@@ -55,8 +50,14 @@ async function addWorkspaceButtonClicked() {
    }
 }
 
+/**
+ * Present a popup asking for confirmation, then clear all workspace data.
+ */
 async function settingsButtonClicked() {
-   
+   // Open basic javascript ok cancel prompt
+   if (confirm("Clear all workspace data?")) {
+      PopupActions.clearWorkspaceData();
+   }   
 }
 
 /**
