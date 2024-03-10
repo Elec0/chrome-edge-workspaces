@@ -45,7 +45,7 @@ html {
 
 body {
     width: 350px;
-    height: 300px;
+    /* height: 300px; */
 
     color: var(--on-background-color);
     background-color: var(--background-color);
