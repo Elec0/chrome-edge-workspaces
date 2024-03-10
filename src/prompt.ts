@@ -41,11 +41,14 @@ export class Prompt {
                 const inputValue = inputElement.value;
                 document.querySelector("dialog")?.close();
                 resolve(inputValue);
+                // Remove the dialog from the DOM or it will persist after closing
+                dialogElement.remove();
             });
 
             cancelButton.addEventListener("click", () => {
                 document.querySelector("dialog")?.close();
                 resolve(null);
+                dialogElement.remove();
             });
 
             document.body.appendChild(dialogElement);
