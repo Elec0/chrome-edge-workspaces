@@ -5,7 +5,7 @@ import WORKSPACE_TEMPLATE from "./templates/workspaceElemTemplate.html";
 import { Utils } from "./utils";
 import { WorkspaceStorage } from "./workspace-storage";
 
-export class PopupLogic {
+export class WorkspaceEntryLogic {
     
     public static listWorkspaces(workspaces: WorkspaceStorage) {
         console.debug("listWorkspaces", workspaces)
@@ -21,7 +21,7 @@ export class PopupLogic {
         for (const workspace of Array.from(workspaces.values())) {
             const workspaceElement = this.addWorkspace(workspaceDiv, workspace);
             const openWorkspace = workspaceElement.querySelector('.workspace-button');
-            const settingsWorkspace = workspaceElement.querySelector('#settings-button');
+            // const settingsWorkspace = workspaceElement.querySelector('#settings-button');
             const editWorkspace = workspaceElement.querySelector('#edit-button');
             const deleteWorkspace = workspaceElement.querySelector('#delete-button');
 
@@ -29,9 +29,9 @@ export class PopupLogic {
                 this.workspaceClicked(workspace);
             });
 
-            settingsWorkspace?.addEventListener('click', () => {
-                this.workspaceSettingsClicked(workspace);
-            });
+            // settingsWorkspace?.addEventListener('click', () => {
+            //     this.workspaceSettingsClicked(workspace);
+            // });
 
             editWorkspace?.addEventListener('click', () => {
                 this.workspaceEditClicked(workspace);

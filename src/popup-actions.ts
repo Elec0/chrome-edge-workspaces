@@ -2,7 +2,7 @@ import { LogHelper } from "./log-helper";
 import { PopupMessageHelper } from "./popup-message-helper";
 import { Workspace } from './obj/workspace';
 import { MessageResponses } from "./constants/message-responses";
-import { PopupLogic } from "./popup-logic";
+import { WorkspaceEntryLogic } from "./workspace-entry-logic";
 import { StorageHelper } from "./storage-helper";
 
 /**
@@ -67,7 +67,7 @@ export class PopupActions {
         PopupMessageHelper.sendClearWorkspaces().then(async response => {
             if (response.message === MessageResponses.SUCCESS.message) {
                 LogHelper.successAlert("Workspace data cleared.");
-                PopupLogic.listWorkspaces(await StorageHelper.getWorkspaces());
+                WorkspaceEntryLogic.listWorkspaces(await StorageHelper.getWorkspaces());
             }
             else {
                 LogHelper.errorAlert("Error clearing workspace data. Check the console for more details.");
@@ -86,7 +86,7 @@ export class PopupActions {
         PopupMessageHelper.sendDeleteWorkspace(workspace.uuid).then(async response => {
             if (response.message === MessageResponses.SUCCESS.message) {
                 console.log("Workspace deleted", workspace);
-                PopupLogic.listWorkspaces(await StorageHelper.getWorkspaces());
+                WorkspaceEntryLogic.listWorkspaces(await StorageHelper.getWorkspaces());
             }
             else {
                 LogHelper.errorAlert("Error deleting workspace. Check the console for more details.");
@@ -105,7 +105,7 @@ export class PopupActions {
         PopupMessageHelper.sendRenameWorkspace(workspace.uuid, newName).then(async response => {
             if (response.message === MessageResponses.SUCCESS.message) {
                 console.log("Workspace renamed", workspace);
-                PopupLogic.listWorkspaces(await StorageHelper.getWorkspaces());
+                WorkspaceEntryLogic.listWorkspaces(await StorageHelper.getWorkspaces());
             }
             else {
                 LogHelper.errorAlert("Error renaming workspace. Check the console for more details.");

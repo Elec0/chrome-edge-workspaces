@@ -3,7 +3,7 @@
 import { MessageResponses } from "./constants/message-responses";
 import { LogHelper } from "./log-helper";
 import { PopupActions } from "./popup-actions";
-import { PopupLogic } from "./popup-logic";
+import { WorkspaceEntryLogic } from "./workspace-entry-logic";
 import { PopupMessageHelper } from "./popup-message-helper";
 import "./popup.css";
 import { Prompt } from "./prompt";
@@ -15,14 +15,15 @@ import { WorkspaceStorage } from "./workspace-storage";
  * Setup the listeners for the buttons
  */
 async function documentLoaded() {
-   chrome.tabs.onRemoved.addListener(PopupLogic.tabRemoved);
-   chrome.tabs.onUpdated.addListener(PopupLogic.tabUpdated);
+   chrome.tabs.onRemoved.addListener(WorkspaceEntryLogic.tabRemoved);
+   chrome.tabs.onUpdated.addListener(WorkspaceEntryLogic.tabUpdated);
    chrome.windows.onRemoved.addListener(windowRemoved);
 
    document.getElementById("addWorkspace").addEventListener("click", addWorkspaceButtonClicked);
+   document.getElementById("settings-button").addEventListener("click", settingsButtonClicked);
    document.getElementById("clearStorage").addEventListener("click", clearStorageButtonClicked);
 
-   PopupLogic.listWorkspaces(await getWorkspaces());
+   WorkspaceEntryLogic.listWorkspaces(await getWorkspaces());
 }
 
 async function clearStorageButtonClicked() {
@@ -45,7 +46,7 @@ async function addWorkspaceButtonClicked() {
 
    if (response.message === MessageResponses.SUCCESS.message) {
       console.debug("Workspace added successfully, refreshing list");
-      PopupLogic.listWorkspaces(await getWorkspaces());
+      WorkspaceEntryLogic.listWorkspaces(await getWorkspaces());
    }
    else {
       LogHelper.errorAlert("Workspace could not be added\n" + response.message);
@@ -54,13 +55,17 @@ async function addWorkspaceButtonClicked() {
    }
 }
 
+async function settingsButtonClicked() {
+   
+}
+
 /**
  * 
  * @param {chrome.windows.window} window 
  */
 async function windowRemoved(window) {
    console.debug("Popup: windowRemoved", window);
-   PopupLogic.listWorkspaces(await getWorkspaces());
+   WorkspaceEntryLogic.listWorkspaces(await getWorkspaces());
 }
 
 /**
