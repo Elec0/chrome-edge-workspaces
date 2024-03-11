@@ -1,6 +1,7 @@
 import { MessageResponse, MessageResponses } from "./constants/message-responses";
 import { Messages } from "./constants/messages";
 import { IRequest, IRequestDeleteWorkspace, IRequestNewWorkspace, IRequestOpenWorkspace, IRequestRenameWorkspace } from "./interfaces/messages";
+import { LogHelper } from "./log-helper";
 import { StorageHelper } from "./storage-helper";
 import { BookmarkStorageHelper } from "./storage/bookmark-storage-helper";
 import { Utils } from "./utils";
@@ -74,6 +75,10 @@ export class Background {
         );
     }
 
+    public static async tabReplaced(addedTabId: number, removedTabId: number) {
+        console.error(`Tab ${ removedTabId } replaced with tab ${ addedTabId }`);
+    }
+
     /**
      * We need to update the workspace with the new window ID.
      * 
@@ -83,18 +88,24 @@ export class Background {
      * @returns 
      */
     public static async openWorkspace(uuid: string, windowId: number): Promise<MessageResponse> {
-        const workspace = await StorageHelper.getWorkspace(uuid);
-        workspace.windowId = windowId;
-        // Serialize the workspace before we make any other changes
-        const data = workspace.serialize();
+        try {
+            const workspace = await StorageHelper.getWorkspace(uuid);
+            workspace.windowId = windowId;
+            // Serialize the workspace before we make any other changes
+            const data = workspace.serialize();
 
-        // The workspace is just about to get a bunch of tabs opened.
-        // The tabs are going to have unique IDs again, so we need to clear the tabs map
-        // to avoid duplicate tabs.
-        workspace.clearTabs();
-        await StorageHelper.setWorkspace(workspace);
+            // The workspace is just about to get a bunch of tabs opened.
+            // The tabs are going to have unique IDs again, so we need to clear the tabs map
+            // to avoid duplicate tabs.
+            workspace.clearTabs();
+            await StorageHelper.setWorkspace(workspace);
 
-        return { "data": data };
+            return { "data": data };
+        }
+        catch (error) {
+            LogHelper.errorAlert(error as string);
+            return MessageResponses.ERROR;
+        }
     }
 }
 
@@ -213,6 +224,6 @@ function setupListeners() {
     chrome.windows.onRemoved.addListener(Background.windowRemoved);
     chrome.tabs.onRemoved.addListener(Background.tabRemoved);
     chrome.tabs.onUpdated.addListener(Background.tabUpdated);
-    // chrome.tabs.onReplaced.addListener(Background.tabUpdated);
+    chrome.tabs.onReplaced.addListener(Background.tabReplaced);
 }
 setupListeners();
