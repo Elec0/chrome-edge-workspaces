@@ -2,8 +2,8 @@ import { MessageResponse, MessageResponses } from "./constants/message-responses
 import { Messages } from "./constants/messages";
 import { IRequest, IRequestDeleteWorkspace, IRequestNewWorkspace, IRequestOpenWorkspace, IRequestRenameWorkspace } from "./interfaces/messages";
 import { LogHelper } from "./log-helper";
+import { TabStub } from "./obj/tab-stub";
 import { StorageHelper } from "./storage-helper";
-import { BookmarkStorageHelper } from "./storage/bookmark-storage-helper";
 import { Utils } from "./utils";
 
 // Functions
@@ -56,27 +56,35 @@ export class Background {
 
     public static async tabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) {
         // We need to ignore any tabs that are not normal website tabs.
-        if (tab.url?.startsWith("chrome://") || tab.url?.startsWith("chrome-extension://")) {
+        if (Utils.isUrlUntrackable(tab.url)) {
             return;
         }
         // Then's first callback is the success callback, second is the error callback.
         // We don't need the error callback, so we ignore it.
-        StorageHelper.getWorkspace(tab.windowId).then(async (workspace) => {
-            console.log(`Tab ${ tab.id } updated in workspace ${ tab.windowId }`);
-            console.debug(tab);
+        try {
+            const workspace = await StorageHelper.getWorkspace(tab.windowId);
 
-            workspace.addTab(undefined, tab);
+            // A tab updated, so grab all the tabs from the window and update the workspace, just to be thorough.
+            const windowTabs = await Background.getTabsFromWindow(tab.windowId);
+            workspace.setTabs(TabStub.fromTabs(windowTabs));
             await StorageHelper.setWorkspace(workspace);
             // await BookmarkStorageHelper.addTabToWorkspace(workspace.uuid, tab);
-        },
-            (error) => {
-                // console.error(error);
-            }
-        );
+        }
+        catch (error) {
+            console.error(error as string);
+        }
     }
 
     public static async tabReplaced(addedTabId: number, removedTabId: number) {
         console.error(`Tab ${ removedTabId } replaced with tab ${ addedTabId }`);
+    }
+
+    /**
+     * Retrieve all the tabs from an open workspace window.
+     * @param windowId - The ID of the window to retrieve tabs from.
+     */
+    public static async getTabsFromWindow(windowId: number): Promise<chrome.tabs.Tab[]> {
+        return chrome.tabs.query({ windowId: windowId });
     }
 
     /**
@@ -178,7 +186,8 @@ export class BackgroundMessageHandlers {
     }
 
     /**
-     * Handles incoming messages from the content script.
+     * Handles incoming messages from the content script.  
+     * Messages are sent from {@link PopupMessageHelper}.
      * @param request - The message request object.
      * @param sender - The sender of the message.
      * @param sendResponse - The function to send a response back to the content script.

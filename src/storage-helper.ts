@@ -33,7 +33,7 @@ export class StorageHelper {
     }
 
     public static setValue(key: string, val: string): Promise<void> {
-        console.log(`Set ${ key }: ${ val }`);
+        console.debug(`Set ${ key }: ${ val }`);
         return this._storage.set({ [key]: val });
     }
 

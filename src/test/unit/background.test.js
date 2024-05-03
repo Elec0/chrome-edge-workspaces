@@ -101,13 +101,17 @@ describe('Background', () => {
             const workspace = new Workspace('test', 1);
             StorageHelper.getWorkspace.mockResolvedValue(workspace);
             StorageHelper.setWorkspace.mockResolvedValue(true);
+            const windowTabs = [{ id: 1, windowId: 1, url: 'http://test.com'}];
+            chrome.tabs.query.mockResolvedValue(windowTabs);
 
-            await Background.tabUpdated(1, {}, { id: 1, windowId: 1 });
+            // The value of the tab is *only* used for the windowId and checking the url.
+            // The tab passed in is not added to the workspace. Instead, the tab from the query is added.
+            await Background.tabUpdated(1, {}, { id: 1, windowId: 1, url: 'http://something.com' });
 
-            let setTab = workspace.getTab(1);
-            expect(setTab).toBeDefined();
-            expect(setTab).toEqual(TabStub.fromTab({ id: 1, windowId: 1 }));
-            expect(StorageHelper.setWorkspace).toHaveBeenCalledWith(workspace);
+            // Make a copy of the workspace to ensure the original is not modified
+            const expectedWorkspace = Workspace.deserialize(workspace.serialize());
+            expectedWorkspace.setTabs(TabStub.fromTabs(windowTabs));
+            expect(StorageHelper.setWorkspace).toHaveBeenCalledWith(expectedWorkspace);
         });
     });
 

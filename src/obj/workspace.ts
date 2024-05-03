@@ -85,6 +85,16 @@ export class Workspace {
         this.name = newName;
     }
 
+    /**
+     * Replace the tabs in the workspace with the provided tabs.
+     */
+    public setTabs(tabs: TabStub[]): void {
+        this.clearTabs();
+        tabs.forEach((tab: TabStub) => {
+            this.addTab(tab);
+        });
+    }
+
     public toJsonObject(): object {
         return {
             id: this.windowId,
