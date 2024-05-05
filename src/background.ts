@@ -52,8 +52,8 @@ export class Background {
         }
         // Can't check if the URL is untrackable here, as there's no way to get the tab URL from the removeInfo.
         if (!await StorageHelper.isWindowWorkspace(removeInfo.windowId)) return;
+
         console.debug(`Tab ${ tabId } removed`);
-        
         const workspace = await StorageHelper.getWorkspace(removeInfo.windowId);
         // If the tab is the last tab in the window, we don't want to save the tabs.
         if (workspace.getTabs().length > 1) {
@@ -63,7 +63,16 @@ export class Background {
         }
     }
 
+    /**
+     * A tab has been updated. We need to save the tabs to the workspace.
+     * 
+     * @param tabId - The ID of the tab that was updated.
+     * @param changeInfo - Information about the tab change.
+     * @param tab - The tab that was updated.
+     */
     public static async tabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab): Promise<void> {
+        if (!await StorageHelper.isWindowWorkspace(tab.windowId)) return;
+
         // We need to ignore any tabs that are not normal website tabs.
         if (Utils.isUrlUntrackable(tab.url)) {
             return;
@@ -71,8 +80,17 @@ export class Background {
         Background.saveWindowTabsToWorkspace(tab.windowId);
     }
 
+    /**
+     * A tab has been attached to a window. This should be treated as if the tab is being opened.
+     * 
+     * @param tabId - The ID of the tab that was attached.
+     * @param attachInfo - Information about the tab attachment.
+     */
     public static async tabAttached(tabId: number, attachInfo: chrome.tabs.TabAttachInfo): Promise<void> {
-        console.error(`Tab ${ tabId } attached to window ${ attachInfo.newWindowId }`);
+        console.debug(`Tab ${ tabId } attached to window ${ attachInfo.newWindowId }`);
+        if (!await StorageHelper.isWindowWorkspace(attachInfo.newWindowId)) return;
+        
+        Background.saveWindowTabsToWorkspace(attachInfo.newWindowId);
     }
 
     /**
@@ -83,12 +101,21 @@ export class Background {
      * @param detachInfo - Information about the tab detachment.
      */
     public static async tabDetatched(tabId: number, detachInfo: chrome.tabs.TabDetachInfo): Promise<void> {
-        console.error(`Tab ${ tabId } detached from window ${ detachInfo.oldWindowId }`);
+        console.debug(`Tab ${ tabId } detached from window ${ detachInfo.oldWindowId }`);
+        Background.tabRemoved(tabId, { isWindowClosing: false, windowId: detachInfo.oldWindowId });
     }
 
 
+    /**
+     * A tab is being replaced.
+     * Check if the added tab is a workspace, and if so, update the workspace with the new tab. 
+     */
     public static async tabReplaced(addedTabId: number, removedTabId: number): Promise<void> {
-        console.error(`Tab ${ removedTabId } replaced with tab ${ addedTabId }`);
+        console.debug(`Tab ${ removedTabId } replaced with tab ${ addedTabId }`);
+        const addedTab = await chrome.tabs.get(addedTabId);
+        if (!await StorageHelper.isWindowWorkspace(addedTab.windowId)) return;
+
+        Background.saveWindowTabsToWorkspace(addedTab.windowId);
     }
 
 

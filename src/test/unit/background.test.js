@@ -110,6 +110,66 @@ describe('Background', () => {
 
             expect(workspace.tabs.push).not.toHaveBeenCalled();
         });
+
+        describe("tabAttached", () => {
+            it("should save window tabs to workspace if the window is a workspace", async () => {
+                // Arrange
+                const tabId = 1;
+                const attachInfo = { newWindowId: 2 };
+                const saveWindowTabsToWorkspaceSpy = jest.spyOn(Background, "saveWindowTabsToWorkspace").mockResolvedValue();
+                jest.spyOn(StorageHelper, "isWindowWorkspace").mockResolvedValue(true);
+
+                // Act
+                await Background.tabAttached(tabId, attachInfo);
+
+                // Assert
+                expect(saveWindowTabsToWorkspaceSpy).toHaveBeenCalledWith(attachInfo.newWindowId);
+            });
+
+            it("should not save window tabs to workspace if the window is not a workspace", async () => {
+                // Arrange
+                const tabId = 1;
+                const attachInfo = { newWindowId: 2 };
+                const saveWindowTabsToWorkspaceSpy = jest.spyOn(Background, "saveWindowTabsToWorkspace").mockResolvedValue();
+                jest.spyOn(StorageHelper, "isWindowWorkspace").mockResolvedValue(false);
+
+                // Act
+                await Background.tabAttached(tabId, attachInfo);
+
+                // Assert
+                expect(saveWindowTabsToWorkspaceSpy).not.toHaveBeenCalled();
+            });
+        });
+
+        describe("tabReplaced", () => {
+            it("should update the replaced tab in the workspace", async () => {
+                const addedTabId = 1;
+                const removedTabId = 2;
+                const windowId = 3;
+                const mockTab = { windowId };
+                const saveWindowTabsToWorkspaceSpy = jest.spyOn(Background, "saveWindowTabsToWorkspace").mockResolvedValue();
+                jest.spyOn(StorageHelper, "isWindowWorkspace").mockResolvedValue(true);
+                chrome.tabs.get.mockResolvedValue(mockTab);
+
+                await Background.tabReplaced(addedTabId, removedTabId);
+
+                expect(saveWindowTabsToWorkspaceSpy).toHaveBeenCalledWith(windowId);
+            });
+
+            it("should not call saveWindowTabsToWorkspace if the window is not a workspace", async () => {
+                const addedTabId = 1;
+                const removedTabId = 2;
+                const windowId = 3;
+                const mockTab = { windowId };
+                const saveWindowTabsToWorkspaceSpy = jest.spyOn(Background, "saveWindowTabsToWorkspace").mockResolvedValue();
+                jest.spyOn(StorageHelper, "isWindowWorkspace").mockResolvedValue(false);
+                chrome.tabs.get.mockResolvedValue(mockTab);
+
+                await Background.tabReplaced(addedTabId, removedTabId);
+
+                expect(saveWindowTabsToWorkspaceSpy).not.toHaveBeenCalled();
+            });
+        });
     });
 
     describe("BackgroundMessageHandlers", () => {

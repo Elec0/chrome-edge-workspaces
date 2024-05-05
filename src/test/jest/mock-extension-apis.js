@@ -24,7 +24,8 @@ global.chrome = {
         onCreated: {
             addListener: () => { jest.fn(); }
         },
-        query: jest.fn()
+        query: jest.fn(),
+        get: jest.fn()
     },
     runtime: {
         onMessage: {
