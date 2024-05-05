@@ -14,7 +14,7 @@ export class Background {
      * @param windowId - The ID of the window that is closing.
      * @returns 
      */
-    public static async windowRemoved(windowId: number) {
+    public static async windowRemoved(windowId: number): Promise<void> {
         if (!await StorageHelper.isWindowWorkspace(windowId)) return;
 
         console.debug(`Window ${ windowId } is a workspace, saving tabs...`);
@@ -45,20 +45,16 @@ export class Background {
      * 
      * @param tabId - The ID of the tab that is closing.
      * @param removeInfo - Information about the tab removal.
-     * @returns 
      */
-    public static async tabRemoved(tabId: number, removeInfo: chrome.tabs.TabRemoveInfo) {
+    public static async tabRemoved(tabId: number, removeInfo: chrome.tabs.TabRemoveInfo): Promise<void> {
         if (removeInfo.isWindowClosing || removeInfo.windowId == null || removeInfo.windowId == undefined) {
-            // Window is closing, not saving tabs; they've already been saved.
-            return;
+            return; // Window is closing, not saving tabs; they've already been saved.
         }
         // Can't check if the URL is untrackable here, as there's no way to get the tab URL from the removeInfo.
         if (!await StorageHelper.isWindowWorkspace(removeInfo.windowId)) return;
-
         console.debug(`Tab ${ tabId } removed`);
         
         const workspace = await StorageHelper.getWorkspace(removeInfo.windowId);
-
         // If the tab is the last tab in the window, we don't want to save the tabs.
         if (workspace.getTabs().length > 1) {
             // Tab is being closed normally, update the workspace that the tab has closed.
@@ -67,7 +63,7 @@ export class Background {
         }
     }
 
-    public static async tabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) {
+    public static async tabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab): Promise<void> {
         // We need to ignore any tabs that are not normal website tabs.
         if (Utils.isUrlUntrackable(tab.url)) {
             return;
@@ -75,7 +71,7 @@ export class Background {
         Background.saveWindowTabsToWorkspace(tab.windowId);
     }
 
-    public static async tabAttached(tabId: number, attachInfo: chrome.tabs.TabAttachInfo) {
+    public static async tabAttached(tabId: number, attachInfo: chrome.tabs.TabAttachInfo): Promise<void> {
         console.error(`Tab ${ tabId } attached to window ${ attachInfo.newWindowId }`);
     }
 
@@ -86,12 +82,12 @@ export class Background {
      * @param tabId - The ID of the tab that was detached.
      * @param detachInfo - Information about the tab detachment.
      */
-    public static async tabDetatched(tabId: number, detachInfo: chrome.tabs.TabDetachInfo) {
+    public static async tabDetatched(tabId: number, detachInfo: chrome.tabs.TabDetachInfo): Promise<void> {
         console.error(`Tab ${ tabId } detached from window ${ detachInfo.oldWindowId }`);
     }
 
 
-    public static async tabReplaced(addedTabId: number, removedTabId: number) {
+    public static async tabReplaced(addedTabId: number, removedTabId: number): Promise<void> {
         console.error(`Tab ${ removedTabId } replaced with tab ${ addedTabId }`);
     }
 
@@ -100,7 +96,7 @@ export class Background {
      * Save all the tabs from a window to a workspace, just to be thorough and simple.
      * @param windowId - The ID of the window to save tabs from.
      */
-    private static async saveWindowTabsToWorkspace(windowId: number) {
+    private static async saveWindowTabsToWorkspace(windowId: number): Promise<void> {
         const workspace = await StorageHelper.getWorkspace(windowId);
         const tabs = await Utils.getTabsFromWindow(windowId);
         await Utils.setWorkspaceTabs(workspace, tabs);
