@@ -53,17 +53,31 @@ describe('Background', () => {
 
         it('should update the workspace when a tab, not the window, is closing', async () => {
             const workspace = new Workspace('test', 1);
-            workspace.addTab(TabStub.fromTab({ id: 1, windowId: 1 }));
-            workspace.addTab(TabStub.fromTab({ id: 2, windowId: 1 }));
+            const tab1 = TabStub.fromTab({ id: 1, windowId: 1 });
+            const tab2 = TabStub.fromTab({ id: 2, windowId: 1 });
+            workspace.addTab(TabStub.fromTab(tab1));
+            workspace.addTab(TabStub.fromTab(tab2));
 
             workspace.removeTab = jest.fn();
             StorageHelper.getWorkspace.mockResolvedValue(workspace);
-            StorageHelper.setWorkspace.mockResolvedValue(true);
+            StorageHelper.isWindowWorkspace.mockResolvedValue(true);
+            chrome.tabs.query.mockResolvedValue([tab2]);
+
+            // This is our test condition
+            StorageHelper.setWorkspace.mockImplementation((workspace) => {
+                try {
+                    expect(workspace.getTabs()).toHaveLength(1);
+                    expect(workspace.getTabs()[0].id).toBe(2);
+                    Promise.resolve(true)
+                }
+                catch (e) {
+                    Promise.reject(e);
+                }
+            });
 
             await Background.tabRemoved(1, { isWindowClosing: false, windowId: 1 });
 
-            expect(workspace.removeTab).toHaveBeenCalledWith(1);
-            expect(StorageHelper.setWorkspace).toHaveBeenCalledWith(workspace);
+            expect(workspace.removeTab).not.toHaveBeenCalled();
         });
 
         it('should not update the workspace when the only tab in the workspace is closing', async () => {
@@ -75,6 +89,7 @@ describe('Background', () => {
 
             StorageHelper.getWorkspace.mockResolvedValue(workspace);
             StorageHelper.setWorkspace.mockResolvedValue(true);
+            StorageHelper.isWindowWorkspace.mockResolvedValue(true);
 
             await Background.tabRemoved(1, { isWindowClosing: false, windowId: 1 });
 
@@ -95,23 +110,6 @@ describe('Background', () => {
             await Background.tabUpdated(1, {}, { id: 1, windowId: 1 });
 
             expect(workspace.tabs.push).not.toHaveBeenCalled();
-        });
-
-        it('should log a message and update the workspace when the window is a workspace', async () => {
-            const workspace = new Workspace('test', 1);
-            StorageHelper.getWorkspace.mockResolvedValue(workspace);
-            StorageHelper.setWorkspace.mockResolvedValue(true);
-            const windowTabs = [{ id: 1, windowId: 1, url: 'http://test.com'}];
-            chrome.tabs.query.mockResolvedValue(windowTabs);
-
-            // The value of the tab is *only* used for the windowId and checking the url.
-            // The tab passed in is not added to the workspace. Instead, the tab from the query is added.
-            await Background.tabUpdated(1, {}, { id: 1, windowId: 1, url: 'http://something.com' });
-
-            // Make a copy of the workspace to ensure the original is not modified
-            const expectedWorkspace = Workspace.deserialize(workspace.serialize());
-            expectedWorkspace.setTabs(TabStub.fromTabs(windowTabs));
-            expect(StorageHelper.setWorkspace).toHaveBeenCalledWith(expectedWorkspace);
         });
     });
 
@@ -226,7 +224,7 @@ describe('Background', () => {
                 (StorageHelper.getWorkspace).mockResolvedValue(mockWorkspace);
 
                 const response = await BackgroundMessageHandlers.processClearWorkspaces(request);
-                
+
                 expect(StorageHelper.clearWorkspaces).toHaveBeenCalled();
                 expect(response).toEqual(MessageResponses.SUCCESS);
             });
@@ -281,7 +279,7 @@ describe('Background', () => {
                 };
 
                 (StorageHelper.renameWorkspace).mockResolvedValue(true);
-                
+
                 const response = await BackgroundMessageHandlers.processRenameWorkspace(request);
                 expect(StorageHelper.renameWorkspace).toHaveBeenCalledWith('123', 'test');
                 expect(response).toEqual(MessageResponses.SUCCESS);

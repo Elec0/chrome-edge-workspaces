@@ -39,6 +39,11 @@ export class Background {
             // Window is closing, not saving tabs; they've already been saved.
             return;
         }
+        // Can't check if the URL is untrackable here, as there's no way to get the tab URL from the removeInfo.
+
+        // Check if it's a workspace
+        if (!await StorageHelper.isWindowWorkspace(removeInfo.windowId)) return;
+
         console.debug(`Tab ${ tabId } removed`);
 
         const workspace = await StorageHelper.getWorkspace(removeInfo.windowId);
@@ -49,8 +54,8 @@ export class Background {
         }
         else {
             // Tab is being closed normally, update the workspace that the tab has closed.
-            workspace.removeTab(tabId);
-            await StorageHelper.setWorkspace(workspace);
+            // The tab is not part of the window anymore, so querying the window will not return the tab.
+            Background.saveWindowTabsToWorkspace(removeInfo.windowId);
         }
     }
 
@@ -59,32 +64,39 @@ export class Background {
         if (Utils.isUrlUntrackable(tab.url)) {
             return;
         }
-        // Then's first callback is the success callback, second is the error callback.
-        // We don't need the error callback, so we ignore it.
-        try {
-            const workspace = await StorageHelper.getWorkspace(tab.windowId);
-
-            // A tab updated, so grab all the tabs from the window and update the workspace, just to be thorough.
-            const windowTabs = await Background.getTabsFromWindow(tab.windowId);
-            workspace.setTabs(TabStub.fromTabs(windowTabs));
-            await StorageHelper.setWorkspace(workspace);
-            // await BookmarkStorageHelper.addTabToWorkspace(workspace.uuid, tab);
-        }
-        catch (error) {
-            console.error(error as string);
-        }
+        Background.saveWindowTabsToWorkspace(tab.windowId);
     }
+
+    public static async tabAttached(tabId: number, attachInfo: chrome.tabs.TabAttachInfo) {
+        console.error(`Tab ${ tabId } attached to window ${ attachInfo.newWindowId }`);
+    }
+
+    /**
+     * A tab has been detached from a window. This should be treated as if the tab is being closed.
+     * 
+     * Note that this event is not fired when a tab is just closing. Nor is tabRemoved fired when a tab is moved to another window.
+     * @param tabId - The ID of the tab that was detached.
+     * @param detachInfo - Information about the tab detachment.
+     */
+    public static async tabDetatched(tabId: number, detachInfo: chrome.tabs.TabDetachInfo) {
+        console.error(`Tab ${ tabId } detached from window ${ detachInfo.oldWindowId }`);
+    }
+
 
     public static async tabReplaced(addedTabId: number, removedTabId: number) {
         console.error(`Tab ${ removedTabId } replaced with tab ${ addedTabId }`);
     }
 
+
     /**
-     * Retrieve all the tabs from an open workspace window.
-     * @param windowId - The ID of the window to retrieve tabs from.
+     * Save all the tabs from a window to a workspace, just to be thorough and simple.
+     * @param windowId - The ID of the window to save tabs from.
      */
-    public static async getTabsFromWindow(windowId: number): Promise<chrome.tabs.Tab[]> {
-        return chrome.tabs.query({ windowId: windowId });
+    private static async saveWindowTabsToWorkspace(windowId: number) {
+        const workspace = await StorageHelper.getWorkspace(windowId);
+        const tabs = await Utils.getTabsFromWindow(windowId);
+        await Utils.setWorkspaceTabs(workspace, tabs);
+        // await BookmarkStorageHelper.addTabToWorkspace(workspace.uuid, tab);
     }
 
     /**
@@ -234,5 +246,7 @@ function setupListeners() {
     chrome.tabs.onRemoved.addListener(Background.tabRemoved);
     chrome.tabs.onUpdated.addListener(Background.tabUpdated);
     chrome.tabs.onReplaced.addListener(Background.tabReplaced);
+    chrome.tabs.onDetached.addListener(Background.tabDetatched);
+    chrome.tabs.onAttached.addListener(Background.tabAttached);
 }
 setupListeners();
