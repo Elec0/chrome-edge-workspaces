@@ -2,7 +2,6 @@ import { MessageResponse, MessageResponses } from "./constants/message-responses
 import { Messages } from "./constants/messages";
 import { IRequest, IRequestDeleteWorkspace, IRequestNewWorkspace, IRequestOpenWorkspace, IRequestRenameWorkspace } from "./interfaces/messages";
 import { LogHelper } from "./log-helper";
-import { TabStub } from "./obj/tab-stub";
 import { StorageHelper } from "./storage-helper";
 import { Utils } from "./utils";
 
@@ -11,6 +10,7 @@ import { Utils } from "./utils";
 export class Background {
     /**
      * A window is closing. Check to see if it's a workspace, and if so, push an update to the sync storage.
+     * 
      * @param windowId - The ID of the window that is closing.
      * @returns 
      */
@@ -28,8 +28,21 @@ export class Background {
      * If the window is closing, we don't need to save the tabs, since they've already been saved,
      * but if the tab is being closed normally, we need to update the workspace.
      * 
-     * Additionally, if the tab is being closed normally, but it is the only tab in the window,
-     * we treat it as if the window is closing.
+     * The process of closing the last tab goes like this:
+     * 1. User closes the tab
+     * 2. Popup.windowRemoved is called
+     *     - This causes a load of the workspace from storage, which returns the workspace with the single last tab
+     * 3. Background.tabRemoved is called
+     *      - Utils.getTabsFromWindow is called
+     *          - There are no tabs in the window, so `[]` is returned
+     *      - Workspace storage is updated with the empty tab list
+     * 4. Background.windowRemoved is called
+     * 
+     * This means popup's entry for the workspace will properly show '1 tab', but only until it is reloaded,
+     * at which point it will show '0 tabs'.
+     * 
+     * This, in turn, means we do need to have a special case for the last tab closing in this method.
+     * 
      * @param tabId - The ID of the tab that is closing.
      * @param removeInfo - Information about the tab removal.
      * @returns 
@@ -40,19 +53,14 @@ export class Background {
             return;
         }
         // Can't check if the URL is untrackable here, as there's no way to get the tab URL from the removeInfo.
-
-        // Check if it's a workspace
         if (!await StorageHelper.isWindowWorkspace(removeInfo.windowId)) return;
 
         console.debug(`Tab ${ tabId } removed`);
-
+        
         const workspace = await StorageHelper.getWorkspace(removeInfo.windowId);
 
-        // If the tab is the last tab in the window, treat it as if the window is closing.
-        if (workspace.getTabs().length <= 1) {
-            Background.windowRemoved(removeInfo.windowId);
-        }
-        else {
+        // If the tab is the last tab in the window, we don't want to save the tabs.
+        if (workspace.getTabs().length > 1) {
             // Tab is being closed normally, update the workspace that the tab has closed.
             // The tab is not part of the window anymore, so querying the window will not return the tab.
             Background.saveWindowTabsToWorkspace(removeInfo.windowId);

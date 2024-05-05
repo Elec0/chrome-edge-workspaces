@@ -94,7 +94,6 @@ describe('Background', () => {
             await Background.tabRemoved(1, { isWindowClosing: false, windowId: 1 });
 
             expect(workspace.removeTab).not.toHaveBeenCalled();
-            expect(Background.windowRemoved).toHaveBeenCalledWith(1);
         });
     });
 

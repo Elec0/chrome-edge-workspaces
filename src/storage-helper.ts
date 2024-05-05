@@ -1,8 +1,6 @@
 import { Constants } from "./constants/constants";
 import { MessageResponse } from "./constants/message-responses";
 import { Workspace } from "./obj/workspace";
-import { BookmarkStorageHelper } from "./storage/bookmark-storage-helper";
-import { Utils } from "./utils";
 import { WorkspaceStorage } from "./workspace-storage";
 
 export class StorageHelper {
@@ -10,14 +8,7 @@ export class StorageHelper {
     private static _loadedWorkspaces: WorkspaceStorage = new WorkspaceStorage();
 
     public static async init() {
-        if (Utils.areWeTestingWithJest())
-            return;
 
-        // console.log("StorageHelper init");
-        // console.debug(await this.getWorkspaces());
-
-        // console.debug("_storage dump:")
-        // console.debug(await this._storage.get(null));
     }
 
     /** 
