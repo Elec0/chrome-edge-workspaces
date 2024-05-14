@@ -1,7 +1,7 @@
 {
   "name": "edge-workspaces",
-  "version": "0.1.0",
-  "description": "My Chrome Extension",
+  "version": "0.2.0",
+  "description": "Edge workspaces for Chrome",
   "private": true,
   "scripts": {
     "watch": "node ./node_modules/webpack/bin/webpack.js --mode=development --watch --config config/webpack.config.js",
