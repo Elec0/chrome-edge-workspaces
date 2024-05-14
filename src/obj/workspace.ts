@@ -48,7 +48,12 @@ export class Workspace {
         } else {
             throw new Error("Either tabStub or tab must be defined.");
         }
-        this.tabs.set(tabStubToAdd.id, tabStubToAdd);
+        if (tabStubToAdd.url == undefined || tabStubToAdd.url.length == 0) {
+            console.warn(`Tab id=${ tabStubToAdd.id } URL is empty. This tab will not be added to the workspace.`);
+        }
+        else {
+            this.tabs.set(tabStubToAdd.id, tabStubToAdd);
+        }
     }
 
     public removeTab(tabId: number): void {
@@ -110,20 +115,20 @@ export class Workspace {
      * @returns A new Workspace object.
      */
     public static fromJson(json: IWorkspaceJson): Workspace {
-    const workspace = new Workspace(json.id, json.name, undefined, undefined, json.uuid);
-    if (json.tabs != null && json.tabs instanceof Array) {
-        json.tabs.forEach((tab: string) => {
-            workspace.addTab(TabStub.fromJson(tab));
-        });
+        const workspace = new Workspace(json.id, json.name, undefined, undefined, json.uuid);
+        if (json.tabs != null && json.tabs instanceof Array) {
+            json.tabs.forEach((tab: string) => {
+                workspace.addTab(TabStub.fromJson(tab));
+            });
+        }
+        return workspace;
     }
-    return workspace;
-}
 
     public serialize(): string {
-    return JSON.stringify(this.toJsonObject());
-}
+        return JSON.stringify(this.toJsonObject());
+    }
 
     public static deserialize(serialized: string): Workspace {
-    return Workspace.fromJson(JSON.parse(serialized));
-}
+        return Workspace.fromJson(JSON.parse(serialized));
+    }
 }

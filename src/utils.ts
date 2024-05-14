@@ -51,7 +51,7 @@ export class Utils {
      * @param url - The URL of the tab. If undefined, the URL is considered trackable.
      */
     public static isUrlUntrackable(url: string | undefined): boolean {
-        if (url === undefined)
+        if (url === undefined || url.length == 0)
             return true;
         return url.startsWith("chrome://") || url.startsWith("about:") || url.startsWith("chrome-extension://");
     }
