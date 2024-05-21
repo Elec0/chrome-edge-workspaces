@@ -11,6 +11,7 @@ export class TabStub {
     public pinned: boolean = false;
     public windowId: number = -1;
     public active: boolean = false;
+    public mutedInfo?: chrome.tabs.MutedInfo;
 
     [key: string]: unknown;
 
@@ -22,7 +23,8 @@ export class TabStub {
         "favIconUrl",
         "pinned",
         "windowId",
-        "active"
+        "active",
+        "mutedInfo"
     ];
 
     private constructor(tab: Partial<chrome.tabs.Tab>) {

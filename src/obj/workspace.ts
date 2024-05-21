@@ -75,11 +75,14 @@ export class Workspace {
 
     /**
      * Retrieves an array of TabStub objects representing the tabs in the workspace.
+     * The tabs are ordered by their index property.
      * 
      * @returns An array of TabStub objects.
      */
     public getTabs(): TabStub[] {
-        return Array.from(this.tabs.values());
+        const tabs = Array.from(this.tabs.values());
+        tabs.sort((a: TabStub, b: TabStub) => a.index - b.index);
+        return tabs;
     }
 
     /**
@@ -98,9 +101,24 @@ export class Workspace {
         tabs.forEach((tab: TabStub) => {
             this.addTab(tab);
         });
+        this.ensureTabIndexesOrdered();
+    }
+
+    /**
+     * Ensure that the tab.index values are ordered correctly from 0 to n.
+     * 
+     * The indexes can be out of order if there is an untrackable tab open.
+     */
+    private ensureTabIndexesOrdered(): void {
+        let index = 0;
+        this.getTabs().forEach(tab => {
+            tab.index = index;
+            index++;
+        });
     }
 
     public toJsonObject(): object {
+        this.ensureTabIndexesOrdered();
         return {
             id: this.windowId,
             name: this.name,
