@@ -10,6 +10,7 @@ export class TabStub {
     public favIconUrl: string = "";
     public pinned: boolean = false;
     public windowId: number = -1;
+    public active: boolean = false;
 
     [key: string]: unknown;
 
@@ -21,6 +22,7 @@ export class TabStub {
         "favIconUrl",
         "pinned",
         "windowId",
+        "active"
     ];
 
     private constructor(tab: Partial<chrome.tabs.Tab>) {
