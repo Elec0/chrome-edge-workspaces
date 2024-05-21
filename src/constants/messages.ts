@@ -8,6 +8,7 @@ export class Messages {
      * @see PopupMessageHelper.sendGetWorkspaces
      */
     public static MSG_GET_WORKSPACES = "GET_WORKSPACES";
+    public static MSG_GET_WORKSPACE = "GET_WORKSPACE";
     public static MSG_OPEN_WORKSPACE = "OPEN_WORKSPACE";
     public static MSG_CLEAR_WORKSPACES = "CLEAR_WORKSPACES";
     public static MSG_DELETE_WORKSPACE = "DELETE_WORKSPACE";

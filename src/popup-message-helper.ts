@@ -1,6 +1,6 @@
 import { MessageResponse, MessageResponses } from "./constants/message-responses";
 import { Messages } from "./constants/messages";
-import { IRequestDeleteWorkspace, IRequestNewWorkspace, IRequestOpenWorkspace } from "./interfaces/messages";
+import { IRequestWithUuid, IRequestNewWorkspace, IRequestOpenWorkspace } from "./interfaces/messages";
 import { LogHelper } from "./log-helper";
 
 export class PopupMessageHelper {
@@ -37,7 +37,7 @@ export class PopupMessageHelper {
 
     /**
      * Sends a message to get workspaces and returns the response.
-     * @returns A Promise that resolves to a MessageResponse object.
+     * @returns A Promise that resolves to a MessageResponse object that should contain the workspaces.
      */
     public static async sendGetWorkspaces(): Promise<MessageResponse> {
         const response = await chrome.runtime.sendMessage({
@@ -56,6 +56,21 @@ export class PopupMessageHelper {
             return MessageResponses.ERROR;
         }
         console.debug("getWorkspaces response", response);
+        return response;
+    }
+
+    public static async sendGetWorkspace(workspaceUuid: string): Promise<MessageResponse> {
+        const message = {
+            type: Messages.MSG_GET_WORKSPACE,
+            payload: { uuid: workspaceUuid }
+        };
+        const response = await chrome.runtime.sendMessage(message);
+
+        if (response === undefined) {
+            console.error("Response was undefined");
+            return MessageResponses.ERROR;
+        }
+
         return response;
     }
 
@@ -83,7 +98,7 @@ export class PopupMessageHelper {
      * @returns A promise that resolves to a MessageResponse.
      */
     public static async sendDeleteWorkspace(workspaceUuid: string): Promise<MessageResponse> {
-        const message: IRequestDeleteWorkspace = {
+        const message: IRequestWithUuid = {
             type: Messages.MSG_DELETE_WORKSPACE,
             payload: { uuid: workspaceUuid }
         };

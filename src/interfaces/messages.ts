@@ -20,7 +20,7 @@ export interface IRequestNewWorkspace extends IRequest {
     };
 }
 
-export interface IRequestDeleteWorkspace extends IRequest {
+export interface IRequestWithUuid extends IRequest {
     payload: {
         uuid: string;
     };

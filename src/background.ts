@@ -1,6 +1,6 @@
 import { MessageResponse, MessageResponses } from "./constants/message-responses";
 import { Messages } from "./constants/messages";
-import { IRequest, IRequestDeleteWorkspace, IRequestNewWorkspace, IRequestOpenWorkspace, IRequestRenameWorkspace } from "./interfaces/messages";
+import { IRequest, IRequestWithUuid, IRequestNewWorkspace, IRequestOpenWorkspace, IRequestRenameWorkspace } from "./interfaces/messages";
 import { LogHelper } from "./log-helper";
 import { StorageHelper } from "./storage-helper";
 import { Utils } from "./utils";
@@ -193,8 +193,9 @@ export class BackgroundMessageHandlers {
 
     /**
      * Processes a request to delete a workspace.
+     * @param request - The request object containing the workspace UUID to delete.
      */
-    public static async processDeleteWorkspace(request: IRequestDeleteWorkspace): Promise<MessageResponse> {
+    public static async processDeleteWorkspace(request: IRequestWithUuid): Promise<MessageResponse> {
         const result = await StorageHelper.removeWorkspace(request.payload.uuid);
         if (!result) {
             return MessageResponses.ERROR;
@@ -204,6 +205,7 @@ export class BackgroundMessageHandlers {
 
     /**
      * Processes a request to rename a workspace.
+     * @param request - The request object containing the workspace UUID and the new name.
      */
     public static async processRenameWorkspace(request: IRequestRenameWorkspace): Promise<MessageResponse> {
         const result = await StorageHelper.renameWorkspace(request.payload.uuid, request.payload.newName);
@@ -215,12 +217,25 @@ export class BackgroundMessageHandlers {
 
     /**
      * Processes the request to get the workspaces.
-     * @param request - The request object.
+     * @param request - The request object, unused.
      * @returns A promise that resolves to a MessageResponse containing the serialized workspaces data.
      */
     public static async processGetWorkspaces(_request: unknown): Promise<MessageResponse> {
         const workspaces = await StorageHelper.getWorkspaces();
         return { "data": workspaces.serialize() };
+    }
+
+    /**
+     * Processes the request to get a workspace.
+     * @param request - The request object.
+     * @returns A promise that resolves to a MessageResponse containing the serialized workspace data.
+     */
+    public static async processGetWorkspace(request: IRequestWithUuid): Promise<MessageResponse> {
+        if (!request?.payload?.uuid) {
+            return MessageResponses.ERROR;
+        }
+        const workspace = await StorageHelper.getWorkspace(request.payload.uuid);
+        return { "data": workspace.serialize() };
     }
 
     public static async processClearWorkspaces(_request: unknown): Promise<MessageResponse> {
@@ -242,6 +257,10 @@ export class BackgroundMessageHandlers {
                 BackgroundMessageHandlers.processGetWorkspaces(request).then(sendResponse);
                 return true;
 
+            case Messages.MSG_GET_WORKSPACE:
+                BackgroundMessageHandlers.processGetWorkspace(request as IRequestWithUuid).then(sendResponse);
+                return true;
+
             case Messages.MSG_NEW_WORKSPACE:
                 BackgroundMessageHandlers.processNewWorkspace(request as IRequestNewWorkspace).then(sendResponse);
                 return true;
@@ -251,7 +270,7 @@ export class BackgroundMessageHandlers {
                 return true;
 
             case Messages.MSG_DELETE_WORKSPACE:
-                BackgroundMessageHandlers.processDeleteWorkspace(request as IRequestDeleteWorkspace).then(sendResponse);
+                BackgroundMessageHandlers.processDeleteWorkspace(request as IRequestWithUuid).then(sendResponse);
                 return true;
 
             case Messages.MSG_RENAME_WORKSPACE:
