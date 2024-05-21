@@ -344,5 +344,36 @@ describe('Background', () => {
                 expect(response).toEqual(MessageResponses.SUCCESS);
             });
         });
+
+        describe("processGetWorkspace", () => {
+            it('should return an error response if uuid is not provided', async () => {
+                const request = {
+                    payload: {
+                        uuid: null
+                    }
+                };
+
+                const response = await BackgroundMessageHandlers.processGetWorkspace(request);
+                expect(response).toEqual(MessageResponses.ERROR);
+            });
+
+            it('should get the workspace, serialize it, and return the serialized data', async () => {
+                const request = {
+                    payload: {
+                        uuid: '123'
+                    }
+                };
+
+                const mockWorkspace = {
+                    serialize: jest.fn().mockReturnValue('serialized data')
+                };
+                (StorageHelper.getWorkspace).mockResolvedValue(mockWorkspace);
+
+                const response = await BackgroundMessageHandlers.processGetWorkspace(request);
+                expect(StorageHelper.getWorkspace).toHaveBeenCalledWith('123');
+                expect(mockWorkspace.serialize).toHaveBeenCalled();
+                expect(response).toEqual({ data: 'serialized data' });
+            });
+        });
     });
 });
