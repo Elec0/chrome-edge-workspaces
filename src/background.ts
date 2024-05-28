@@ -118,6 +118,19 @@ export class Background {
         Background.saveWindowTabsToWorkspace(addedTab.windowId);
     }
 
+    /**
+     * A tab has been activated. Update the workspace with the focused tab.
+     * 
+     * @param activeInfo - Information about the activated tab.
+     */
+    public static async tabActivated(activeInfo: chrome.tabs.TabActiveInfo): Promise<void> {
+        if (!await StorageHelper.isWindowWorkspace(activeInfo.windowId)) return;
+
+        const workspace = await StorageHelper.getWorkspace(activeInfo.windowId);
+        if (workspace.getTabs().length > 1) {
+            Background.saveWindowTabsToWorkspace(activeInfo.windowId);
+        }
+    }
 
     /**
      * Save all the tabs from a window to a workspace, just to be thorough and simple.
@@ -298,5 +311,6 @@ function setupListeners() {
     chrome.tabs.onReplaced.addListener(Background.tabReplaced);
     chrome.tabs.onDetached.addListener(Background.tabDetatched);
     chrome.tabs.onAttached.addListener(Background.tabAttached);
+    chrome.tabs.onActivated.addListener(Background.tabActivated);
 }
 setupListeners();

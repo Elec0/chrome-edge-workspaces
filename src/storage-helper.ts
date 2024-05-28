@@ -19,12 +19,10 @@ export class StorageHelper {
      */
     public static async getValue(key: string, defaultValue: string = ""): Promise<string> {
         const result = await this._storage.get(key);
-        console.debug(`Get ${ key }:`, result);
         return result[key] || defaultValue;
     }
 
     public static setValue(key: string, val: string): Promise<void> {
-        console.debug(`Set ${ key }: ${ val }`);
         return this._storage.set({ [key]: val });
     }
 
