@@ -6,6 +6,7 @@
   "scripts": {
     "watch": "node ./node_modules/webpack/bin/webpack.js --mode=development --watch --config config/webpack.config.js",
     "build": "node ./node_modules/webpack/bin/webpack.js --mode=production --config config/webpack.config.js",
+    "build-copy": "npm run build && cp -rf ./build/ ../chrome-edge-workspaces.vscode/test-build",
     "lint": "eslint -f unix \"src/**/*.{ts,tsx}\"",
     "test": "jest .",
     "test-unit": "jest --testMatch='**/unit/*.test.[tj]s'",
