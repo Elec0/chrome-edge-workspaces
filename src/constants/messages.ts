@@ -13,4 +13,6 @@ export class Messages {
     public static MSG_CLEAR_WORKSPACES = "CLEAR_WORKSPACES";
     public static MSG_DELETE_WORKSPACE = "DELETE_WORKSPACE";
     public static MSG_RENAME_WORKSPACE = "RENAME_WORKSPACE";
+    /** Send a message to the background script requesting the window id of the current window. */
+    public static MSG_GET_WINDOW_ID = "GET_WINDOW_ID";
 }

@@ -36,6 +36,26 @@ export class PopupMessageHelper {
     }
 
     /**
+     * Sends a message to get the current window id and returns the response.
+     * @returns A Promise that resolves to a MessageResponse object that should contain the window
+     * id of the current window.
+     * @see BackgroundMessageHandlers.processGetWindowId
+     */
+    public static async sendGetWindowId(): Promise<MessageResponse> {
+        const response = await chrome.runtime.sendMessage({
+            type: Messages.MSG_GET_WINDOW_ID,
+            payload: {}
+        });
+
+        if (response === undefined) {
+            console.error("Response was undefined");
+            return MessageResponses.ERROR;
+        }
+
+        return response;
+    }
+
+    /**
      * Sends a message to get workspaces and returns the response.
      * @returns A Promise that resolves to a MessageResponse object that should contain the workspaces.
      */

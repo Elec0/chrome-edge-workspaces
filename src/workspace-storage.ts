@@ -134,6 +134,4 @@ export class WorkspaceStorage implements Map<string | number, Workspace> {
         });
     }
     // #endregion
-
-
 }
