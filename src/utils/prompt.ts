@@ -1,5 +1,5 @@
 import DIALOG_TEMPLATE from "./templates/dialogPopupTemplate.html";
-import { Utils } from "./utils";
+import { Utils } from "../utils";
 
 export class Prompt {
     /**

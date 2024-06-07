@@ -1,7 +1,7 @@
-import { MessageResponse, MessageResponses } from "./constants/message-responses";
-import { Messages } from "./constants/messages";
-import { IRequestWithUuid, IRequestNewWorkspace, IRequestOpenWorkspace } from "./interfaces/messages";
-import { LogHelper } from "./log-helper";
+import { MessageResponse, MessageResponses } from "../constants/message-responses";
+import { Messages } from "../constants/messages";
+import { IRequestWithUuid, IRequestNewWorkspace, IRequestOpenWorkspace } from "../interfaces/messages";
+import { LogHelper } from "../log-helper";
 
 export class PopupMessageHelper {
 

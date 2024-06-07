@@ -1,6 +1,6 @@
 import { Workspace } from "./obj/workspace";
 import { PopupActions } from "./popup-actions";
-import { Prompt } from "./prompt";
+import { Prompt } from "./utils/prompt";
 import WORKSPACE_TEMPLATE from "./templates/workspaceElemTemplate.html";
 import { Utils } from "./utils";
 import { WorkspaceStorage } from "./workspace-storage";

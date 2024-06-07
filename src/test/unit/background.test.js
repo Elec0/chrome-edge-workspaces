@@ -1,6 +1,7 @@
-import { Background, BackgroundMessageHandlers } from "../../background";
+import { Background } from "../../background";
 import { MessageResponses } from "../../constants/message-responses";
 import { Messages } from "../../constants/messages";
+import { BackgroundMessageHandlers } from "../../messages/background-message-handlers";
 import { TabStub } from "../../obj/tab-stub";
 import { Workspace } from "../../obj/workspace";
 import { StorageHelper } from "../../storage-helper";

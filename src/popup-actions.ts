@@ -1,5 +1,5 @@
 import { LogHelper } from "./log-helper";
-import { PopupMessageHelper } from "./popup-message-helper";
+import { PopupMessageHelper } from "./messages/popup-message-helper";
 import { Workspace } from './obj/workspace';
 import { MessageResponses } from "./constants/message-responses";
 import { WorkspaceEntryLogic } from "./workspace-entry-logic";

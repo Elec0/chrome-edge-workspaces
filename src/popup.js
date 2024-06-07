@@ -4,9 +4,9 @@ import { MessageResponses } from "./constants/message-responses";
 import { LogHelper } from "./log-helper";
 import { PopupActions } from "./popup-actions";
 import { WorkspaceEntryLogic } from "./workspace-entry-logic";
-import { PopupMessageHelper } from "./popup-message-helper";
+import { PopupMessageHelper } from "./messages/popup-message-helper";
 import "./popup.css";
-import { Prompt } from "./prompt";
+import { Prompt } from "./utils/prompt";
 import { StorageHelper } from "./storage-helper";
 import { WorkspaceStorage } from "./workspace-storage";
 
@@ -18,11 +18,39 @@ async function documentLoaded() {
    chrome.tabs.onRemoved.addListener(WorkspaceEntryLogic.tabRemoved);
    chrome.tabs.onUpdated.addListener(WorkspaceEntryLogic.tabUpdated);
    chrome.windows.onRemoved.addListener(windowRemoved);
+   const workspaceStorage = await getWorkspaceStorage();
+   // Check if the popup is opened from a workspace or not
+   // TODO: window.id is not correct here. Might need to send a message to the background script to get the window id
+   if (isWindowWorkspace(window.id, workspaceStorage)) {
+      loadWorkspacePopup();
+   }
+   else {
+      loadNonWorkspacePopup(workspaceStorage);
+   }
+}
 
+/**
+ * Load the popup page for a non0workspace window.
+ */
+async function loadNonWorkspacePopup(workspaceStorage) {
    document.getElementById("addWorkspace").addEventListener("click", addWorkspaceButtonClicked);
    document.getElementById("settings-button").addEventListener("click", settingsButtonClicked);
-   
-   WorkspaceEntryLogic.listWorkspaces(await getWorkspaces());
+
+   WorkspaceEntryLogic.listWorkspaces(workspaceStorage);
+}
+
+/**
+ * Load the popup page for a workspace window.
+ */
+async function loadWorkspacePopup() {
+   console.log("Loading workspace popup")
+   document.getElementById("addWorkspace").style.display = "none";
+   document.getElementById("settings-button").style.display = "none";
+
+   let workspaceId = await PopupMessageHelper.sendGetWorkspaceId();
+   let workspace = await StorageHelper.getWorkspace(workspaceId);
+
+   WorkspaceEntryLogic.listTabs(workspace);
 }
 
 /**
@@ -41,7 +69,7 @@ async function addWorkspaceButtonClicked() {
 
    if (response.message === MessageResponses.SUCCESS.message) {
       console.debug("Workspace added successfully, refreshing list");
-      WorkspaceEntryLogic.listWorkspaces(await getWorkspaces());
+      WorkspaceEntryLogic.listWorkspaces(await getWorkspaceStorage());
    }
    else {
       LogHelper.errorAlert("Workspace could not be added\n" + response.message);
@@ -51,13 +79,23 @@ async function addWorkspaceButtonClicked() {
 }
 
 /**
+ * Check if the window is a workspace window.
+ * @param {number} windowId
+ * @param {WorkspaceStorage} workspaceStorage
+ * @returns {boolean}
+ */
+function isWindowWorkspace(windowId, workspaceStorage) {
+   return workspaceStorage.get(windowId) !== undefined;
+}
+
+/**
  * Present a popup asking for confirmation, then clear all workspace data.
  */
 async function settingsButtonClicked() {
    // Open basic javascript ok cancel prompt
    if (confirm("Clear all workspace data?")) {
       PopupActions.clearWorkspaceData();
-   }   
+   }
 }
 
 /**
@@ -66,14 +104,14 @@ async function settingsButtonClicked() {
  */
 async function windowRemoved(window) {
    console.debug("Popup: windowRemoved", window);
-   WorkspaceEntryLogic.listWorkspaces(await getWorkspaces());
+   WorkspaceEntryLogic.listWorkspaces(await getWorkspaceStorage());
 }
 
 /**
- * 
+ * Get the full workspace storage object from the background script
  * @returns {Promise<WorkspaceStorage>}
  */
-async function getWorkspaces() {
+async function getWorkspaceStorage() {
    return StorageHelper.workspacesFromJson(await PopupMessageHelper.sendGetWorkspaces());
 }
 
