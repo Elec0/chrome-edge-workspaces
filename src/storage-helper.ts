@@ -149,7 +149,11 @@ export class StorageHelper {
     /**
      * Determine if a window is in a workspace, meaning a workspace's window id is equal to the window id.
      */
-    public static async isWindowWorkspace(windowId: number): Promise<boolean> {
+    public static async isWindowWorkspace(windowId?: number): Promise<boolean> {
+        if (windowId == null || windowId == undefined) {
+            return false;
+        }
+        
         const workspaceWindows = await this.getWorkspaces();
         for (const workspace of Array.from(workspaceWindows.values())) {
             if (workspace.windowId === windowId) {

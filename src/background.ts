@@ -4,8 +4,6 @@ import { LogHelper } from "./log-helper";
 import { StorageHelper } from "./storage-helper";
 import { Utils } from "./utils";
 
-// Functions
-
 export class Background {
     /**
      * A window is closing. Check to see if it's a workspace, and if so, push an update to the sync storage.
@@ -139,6 +137,10 @@ export class Background {
         const workspace = await StorageHelper.getWorkspace(windowId);
         const tabs = await Utils.getTabsFromWindow(windowId);
         await Utils.setWorkspaceTabs(workspace, tabs);
+
+        // Update the badge text to show the number of tabs in the workspace
+        Utils.setBadgeForWindow(windowId, tabs.length.toString());
+        
         // await BookmarkStorageHelper.addTabToWorkspace(workspace.uuid, tab);
     }
 

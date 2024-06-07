@@ -7,6 +7,25 @@ import { StorageHelper } from "./storage-helper";
  */
 export class Utils {
     /**
+     * Sets the extension badge text for all tabs in a window.
+     * 
+     * There are only two options for badge text: per tab and globally. We can't set the badge text for a window, 
+     * so we have to set it for each tab in the window.
+     * 
+     * This is called every time the tabs are saved to workspace storage, which is common enough that it will
+     * always be up to date.
+     */
+    public static async setBadgeForWindow(windowId: number, text: string, color?: string | chrome.action.ColorArray): Promise<void> {
+        const tabs = await this.getTabsFromWindow(windowId);
+        for (const tab of tabs) {
+            chrome.action.setBadgeText({ text: text, tabId: tab.id });
+            if (color !== undefined) {
+                chrome.action.setBadgeBackgroundColor({ color: color, tabId: tab.id });
+            }
+        }
+    }
+
+    /**
      * Retrieve all the tabs from an open workspace window.
      * @param windowId - The ID of the window to retrieve tabs from.
      */
