@@ -5,9 +5,12 @@ import WORKSPACE_TEMPLATE from "./templates/workspaceElemTemplate.html";
 import { Utils } from "./utils";
 import { WorkspaceStorage } from "./workspace-storage";
 
+/**
+ * Logic for the workspace entry in the popup.
+ */
 export class WorkspaceEntryLogic {
-    
-    public static listWorkspaces(workspaces: WorkspaceStorage) {
+
+    public static listWorkspaces(workspaces: WorkspaceStorage, curOpenWorkspace: Workspace | undefined = undefined) {
         console.debug("listWorkspaces", workspaces)
 
         const workspaceDiv = document.getElementById("workspaces-list");
@@ -25,9 +28,16 @@ export class WorkspaceEntryLogic {
             const editWorkspace = workspaceElement.querySelector('#edit-button');
             const deleteWorkspace = workspaceElement.querySelector('#delete-button');
 
-            openWorkspace?.addEventListener('click', () => {
-                this.workspaceClicked(workspace);
-            });
+            // Add a class to the workspace if this window is the current workspace.
+            if (curOpenWorkspace?.uuid === workspace.uuid) {
+                workspaceElement.classList.add('workspace-current');
+            }
+            else {
+                // Don't allow the user to re-open the current workspace.
+                openWorkspace?.addEventListener('click', () => {
+                    this.workspaceClicked(workspace);
+                });
+            }
 
             // settingsWorkspace?.addEventListener('click', () => {
             //     this.workspaceSettingsClicked(workspace);
@@ -109,12 +119,12 @@ export class WorkspaceEntryLogic {
     public static workspaceDeleteClicked(workspace: Workspace) {
         console.debug("workspaceDeleteClicked", workspace)
         // Verify the user wants to delete the workspace.
-        if (!confirm(`Are you sure you want to delete the workspace "${workspace.name}"?`)) {
+        if (!confirm(`Are you sure you want to delete the workspace "${ workspace.name }"?`)) {
             return;
         }
         PopupActions.deleteWorkspace(workspace);
     }
-    
+
     public static async tabRemoved(tabId: number, removeInfo: chrome.tabs.TabRemoveInfo) {
     }
 

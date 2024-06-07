@@ -20,10 +20,13 @@ async function documentLoaded() {
    chrome.windows.onRemoved.addListener(windowRemoved);
    const workspaceStorage = await getWorkspaceStorage();
    const curWindow = await chrome.windows.getCurrent();
+
    // Check if the popup is opened from a workspace or not
-   console.log("Checking if window is workspace", curWindow);
-   if (isWindowWorkspace(curWindow.id, workspaceStorage)) {
-      loadWorkspacePopup();
+   const isWorkspace = isWindowWorkspace(curWindow.id, workspaceStorage);
+   console.debug("Window is workspace:", isWorkspace, curWindow);
+   
+   if (isWorkspace) {
+      loadWorkspacePopup(workspaceStorage, curWindow.id);
    }
    else {
       loadNonWorkspacePopup(workspaceStorage);
@@ -42,16 +45,16 @@ async function loadNonWorkspacePopup(workspaceStorage) {
 
 /**
  * Load the popup page for a workspace window.
+ * Highlight the current workspace name, and do nothing if the workspace is clicked.
+ * @param {WorkspaceStorage} workspaceStorage
+ * @param {number} curWindowId
  */
-async function loadWorkspacePopup() {
+async function loadWorkspacePopup(workspaceStorage, curWindowId) {
    console.log("Loading workspace popup")
    document.getElementById("addWorkspace").style.display = "none";
    document.getElementById("settings-button").style.display = "none";
 
-   let workspaceId = await PopupMessageHelper.sendGetWorkspaceId();
-   let workspace = await StorageHelper.getWorkspace(workspaceId);
-
-   WorkspaceEntryLogic.listTabs(workspace);
+   WorkspaceEntryLogic.listWorkspaces(workspaceStorage, workspaceStorage.get(curWindowId));
 }
 
 /**

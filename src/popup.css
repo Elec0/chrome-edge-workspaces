@@ -167,6 +167,10 @@ img#addIcon:hover {
 
 }
 
+.workspace-current {
+    font-weight: 700;
+}
+
 .workspace-item .workspace-button {
     display: inline-block;
     background: none !important;
