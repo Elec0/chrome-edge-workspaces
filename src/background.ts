@@ -3,6 +3,7 @@ import { MessageResponse, MessageResponses } from "./constants/message-responses
 import { LogHelper } from "./log-helper";
 import { StorageHelper } from "./storage-helper";
 import { Utils } from "./utils";
+import { Workspace } from "./obj/workspace";
 
 export class Background {
     /**
@@ -138,10 +139,18 @@ export class Background {
         const tabs = await Utils.getTabsFromWindow(windowId);
         await Utils.setWorkspaceTabs(workspace, tabs);
 
-        // Update the badge text to show the number of tabs in the workspace
-        Utils.setBadgeForWindow(windowId, tabs.length.toString());
-        
+        // Update the badge text
+        Utils.setBadgeForWindow(windowId, Background.getBadgeTextForWorkspace(workspace));
+
         // await BookmarkStorageHelper.addTabToWorkspace(workspace.uuid, tab);
+    }
+
+    /**
+     * Get the badge text for a workspace.
+     * FUTURE: Make this a user-settable option.
+     */
+    private static getBadgeTextForWorkspace(workspace: Workspace): string {
+        return workspace.name.substring(0, 3);
     }
 
     /**
