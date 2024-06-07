@@ -101,7 +101,7 @@ export class BackgroundMessageHandlers {
             case Messages.MSG_GET_WORKSPACES:
                 BackgroundMessageHandlers.processGetWorkspaces(request).then(sendResponse);
                 return true;
-
+                
             case Messages.MSG_GET_WORKSPACE:
                 BackgroundMessageHandlers.processGetWorkspace(request as IRequestWithUuid).then(sendResponse);
                 return true;

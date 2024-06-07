@@ -19,9 +19,10 @@ async function documentLoaded() {
    chrome.tabs.onUpdated.addListener(WorkspaceEntryLogic.tabUpdated);
    chrome.windows.onRemoved.addListener(windowRemoved);
    const workspaceStorage = await getWorkspaceStorage();
+   const curWindow = await chrome.windows.getCurrent();
    // Check if the popup is opened from a workspace or not
-   // TODO: window.id is not correct here. Might need to send a message to the background script to get the window id
-   if (isWindowWorkspace(window.id, workspaceStorage)) {
+   console.log("Checking if window is workspace", curWindow);
+   if (isWindowWorkspace(curWindow.id, workspaceStorage)) {
       loadWorkspacePopup();
    }
    else {
