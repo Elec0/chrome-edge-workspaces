@@ -32,11 +32,8 @@ This project was bootstrapped with [Chrome Extension CLI](https://github.com/dut
 
 # Architecture
 ## Class Diagram
-![Project Diagram](docs\diagrams\out\class\project\project.png)
 
 ## Component Diagrams
-### `popup-logic.ts`
-![Popup Logic Component Diagram](docs\diagrams\out\component\popup-logic\component-popup-logic.png)
 
 
 
