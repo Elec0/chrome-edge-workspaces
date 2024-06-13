@@ -150,7 +150,7 @@ export class Background {
      * FUTURE: Make this a user-settable option.
      */
     private static getBadgeTextForWorkspace(workspace: Workspace): string {
-        return workspace.name.substring(0, 3);
+        return workspace.name.substring(0, 1).toLocaleUpperCase();
     }
 
     /**
