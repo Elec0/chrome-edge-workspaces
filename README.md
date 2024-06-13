@@ -45,3 +45,7 @@ This project was bootstrapped with [Chrome Extension CLI](https://github.com/dut
 ## Background
 
 ## Storage
+
+## Credits
+* Extension icon made by [Yogi Aprelliyanto](https://www.flaticon.com/authors/yogi-aprelliyanto) from [Flaticon](https://www.flaticon.com/)
+* 
