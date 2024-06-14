@@ -65,6 +65,11 @@ async function addWorkspaceButtonClicked() {
    // Present popup asking for workspace name
    const workspaceName = await Prompt.createPrompt("Enter a name for the new workspace");
 
+   if (workspaceName === null) {
+      console.debug("New workspace prompt cancelled");
+      return;
+   }
+
    let window = await chrome.windows.create({});
 
    console.log(`window created, adding to workspace ${workspaceName}`);
