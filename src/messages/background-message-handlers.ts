@@ -37,6 +37,23 @@ export class BackgroundMessageHandlers {
     }
 
     /**
+     * Processes a new workspace from window request.
+     * Create a new workspace via `processNewWorkspace`, then save the tabs from the window to the workspace.
+     * 
+     * @param request - The request object containing the workspace name and window ID.
+     * @returns A promise that resolves to a MessageResponse indicating the success or failure of the operation.
+     */
+    public static async processNewWorkspaceFromWindow(request: IRequestWithNameId): Promise<MessageResponse> {
+        // Reuse the existing workspace creation logic
+        if (await this.processNewWorkspace(request) === MessageResponses.ERROR) {
+            return MessageResponses.ERROR;
+        }
+
+        await Background.saveWindowTabsToWorkspace(request.payload.windowId);
+        return MessageResponses.SUCCESS;
+    }
+
+    /**
      * Processes a request to delete a workspace.
      * @param request - The request object containing the workspace UUID to delete.
      */
@@ -108,6 +125,10 @@ export class BackgroundMessageHandlers {
 
             case Messages.MSG_NEW_WORKSPACE:
                 BackgroundMessageHandlers.processNewWorkspace(request as IRequestWithNameId).then(sendResponse);
+                return true;
+
+                case Messages.MSG_NEW_WORKSPACE_FROM_WINDOW:
+                BackgroundMessageHandlers.processNewWorkspaceFromWindow(request as IRequestWithNameId).then(sendResponse);
                 return true;
 
             case Messages.MSG_OPEN_WORKSPACE:
