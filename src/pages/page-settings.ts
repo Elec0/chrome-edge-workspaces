@@ -2,7 +2,15 @@ import { BaseDialog } from "../dialogs/base-dialog";
 import SETTINGS_TEMPLATE from "../templates/settingsModalTemplate.html";
 import { Utils } from "../utils";
 
+/**
+ * Represents the PageSettings class which extends the BaseDialog class.
+ * This class provides functionality for opening the settings dialog and handling its events.
+ */
 export class PageSettings extends BaseDialog {
+    /**
+     * Opens the settings dialog.
+     * This method creates the dialog element, attaches event listeners, and shows the dialog.
+     */
     public static openSettings() {
         const dialog = Utils.interpolateTemplate(SETTINGS_TEMPLATE, {});
 
