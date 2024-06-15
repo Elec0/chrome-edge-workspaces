@@ -1,23 +1,25 @@
 import { MessageResponse, MessageResponses } from "../constants/message-responses";
 import { Messages } from "../constants/messages";
-import { IRequestWithUuid, IRequestWithNameId, IRequestOpenWorkspace } from "../interfaces/messages";
+import { IRequestWithUuid, IRequestWithNameId, IRequestOpenWorkspace, IRequest } from "../interfaces/messages";
 import { LogHelper } from "../log-helper";
 
 export class PopupMessageHelper {
+    public static async sendAddNewWorkspaceFromWindow(workspaceName: string, windowId: number): Promise<MessageResponse> {
+        const message: IRequestWithNameId = {
+            type: Messages.MSG_NEW_WORKSPACE_FROM_WINDOW,
+            payload: { workspaceName, windowId: windowId }
+        };
+
+        return PopupMessageHelper.doSendMessage(message);
+    }
 
     public static async sendAddNewWorkspace(workspaceName: string, windowId: number): Promise<MessageResponse> {
         const message: IRequestWithNameId = {
             type: Messages.MSG_NEW_WORKSPACE,
             payload: { workspaceName, windowId: windowId }
         };
-        const response = await chrome.runtime.sendMessage(message);
 
-        if (response === undefined) {
-            console.error("Response was undefined");
-            return MessageResponses.ERROR;
-        }
-
-        return response;
+        return PopupMessageHelper.doSendMessage(message);
     }
 
     public static async sendOpenWorkspace(workspaceUuid: string, windowId: number): Promise<MessageResponse> {
@@ -25,14 +27,8 @@ export class PopupMessageHelper {
             type: Messages.MSG_OPEN_WORKSPACE,
             payload: { uuid: workspaceUuid, windowId: windowId }
         };
-        const response = await chrome.runtime.sendMessage(message);
-
-        if (response === undefined) {
-            console.error("Response was undefined");
-            return MessageResponses.ERROR;
-        }
-
-        return response;
+        
+        return PopupMessageHelper.doSendMessage(message);
     }
 
     /**
@@ -64,14 +60,8 @@ export class PopupMessageHelper {
             type: Messages.MSG_GET_WORKSPACE,
             payload: { uuid: workspaceUuid }
         };
-        const response = await chrome.runtime.sendMessage(message);
 
-        if (response === undefined) {
-            console.error("Response was undefined");
-            return MessageResponses.ERROR;
-        }
-
-        return response;
+        return PopupMessageHelper.doSendMessage(message);
     }
 
     /**
@@ -79,17 +69,12 @@ export class PopupMessageHelper {
      * @returns A promise that resolves to a MessageResponse.
      */
     public static async sendClearWorkspaces(): Promise<MessageResponse> {
-        const response = await chrome.runtime.sendMessage({
+        const message = {
             type: Messages.MSG_CLEAR_WORKSPACES,
             payload: {}
-        });
+        };
 
-        if (response === undefined) {
-            console.error("Response was undefined");
-            return MessageResponses.ERROR;
-        }
-
-        return response;
+        return PopupMessageHelper.doSendMessage(message);
     }
 
     /**
@@ -102,14 +87,8 @@ export class PopupMessageHelper {
             type: Messages.MSG_DELETE_WORKSPACE,
             payload: { uuid: workspaceUuid }
         };
-        const response = await chrome.runtime.sendMessage(message);
-
-        if (response === undefined) {
-            console.error("Response was undefined");
-            return MessageResponses.ERROR;
-        }
-
-        return response;
+        
+        return PopupMessageHelper.doSendMessage(message);
     }
 
     public static async sendRenameWorkspace(workspaceUuid: string, newName: string): Promise<MessageResponse> {
@@ -117,6 +96,16 @@ export class PopupMessageHelper {
             type: Messages.MSG_RENAME_WORKSPACE,
             payload: { uuid: workspaceUuid, newName: newName }
         };
+
+        return PopupMessageHelper.doSendMessage(message);
+    }
+
+    /**
+     * Sends a message to the background script using the Chrome runtime API.
+     * @param message - The message to send.
+     * @returns A promise that resolves to the response from the background script.
+     */
+    private static async doSendMessage(message: IRequest): Promise<MessageResponse> {
         const response = await chrome.runtime.sendMessage(message);
 
         if (response === undefined) {
