@@ -6,7 +6,12 @@ export class E2ECommon {
     public browser!: Browser;
     public page!: Page;
 
-
+    /*
+    // Use this to debug in the browser, with devtools: true:
+        await page.evaluate(() => {
+            debugger;
+        });
+    */
     public async beforeEach() {
         // https://pptr.dev/guides/debugging
         this.browser = await puppeteer.launch({
@@ -16,7 +21,8 @@ export class E2ECommon {
             args: [
                 `--disable-extensions-except=${ E2EConstants.EXTENSION_PATH }`,
                 `--load-extension=${ E2EConstants.EXTENSION_PATH }`
-            ]
+            ],
+            // devtools: true
         });
 
         if (!this.browser) {
@@ -25,13 +31,14 @@ export class E2ECommon {
         }
 
         this.page = await this.browser.newPage();
+
         await this.page.goto(`chrome-extension://${ E2EConstants.EXTENSION_ID }/popup.html`);
 
         if (!this.page) {
             assert(this.page);
             return;
         }
-
+        
         // Clear the local and sync storage before each test
         await this.page.evaluate(() => {
             chrome.storage.local.clear();
@@ -57,4 +64,9 @@ export class E2ECommon {
             });
         });
     }
+}
+
+// (name: string, fn?: jest.ProvidesCallback | undefined, timeout?: number | undefined) => void
+export function ignore(_name: string, _fn?: (() => void) | undefined, _timeout?: number): void {
+    // Do nothing
 }
