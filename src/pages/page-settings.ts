@@ -23,7 +23,9 @@ export class PageSettings extends BaseDialog {
         const dialogElement = tempDiv.firstElementChild as HTMLDialogElement;
         const newWorkspaceFromWindowButton = dialogElement.querySelector("#modal-settings-new-workspace-from-window") as HTMLButtonElement;
 
-        newWorkspaceFromWindowButton?.addEventListener("click", PageSettings.clickNewWorkspaceFromWindowButton);
+        newWorkspaceFromWindowButton?.addEventListener("click", (e) => {
+            PageSettings.clickNewWorkspaceFromWindowButton(e, dialogElement);
+        });
 
         dialogElement.querySelector("#modal-settings-close")?.addEventListener("click", () => {
             PageSettings.cancelCloseDialog(dialogElement);
@@ -41,7 +43,7 @@ export class PageSettings extends BaseDialog {
      * 
      * Note: This logic is duplicated from popup.js. It should be refactored into a shared function.
      */
-    private static async clickNewWorkspaceFromWindowButton(e: MouseEvent): Promise<void> {
+    private static async clickNewWorkspaceFromWindowButton(e: MouseEvent, dialogElement: HTMLDialogElement): Promise<void> {
         e.preventDefault();
         // Present popup asking for workspace name
         const workspaceName = await Prompt.createPrompt("Enter a name for the new workspace");
@@ -58,5 +60,6 @@ export class PageSettings extends BaseDialog {
             return;
         }
         PopupActions.addNewWorkspaceFromWindow(workspaceName, currentWindow.id);
+        PageSettings.cancelCloseDialog(dialogElement);
     }
 }
