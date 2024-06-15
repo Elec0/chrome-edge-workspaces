@@ -57,6 +57,6 @@ export class PageSettings extends BaseDialog {
             LogHelper.errorAlert("Error creating new workspace. Check the console for more details.");
             return;
         }
-        PopupActions.addNewWorkspaceFromWindow(workspaceName, currentWindow.id, currentWindow.tabs);
+        PopupActions.addNewWorkspaceFromWindow(workspaceName, currentWindow.id);
     }
 }

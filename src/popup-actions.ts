@@ -1,7 +1,7 @@
 import { LogHelper } from "./log-helper";
 import { PopupMessageHelper } from "./messages/popup-message-helper";
 import { Workspace } from './obj/workspace';
-import { MessageResponses } from "./constants/message-responses";
+import { MessageResponse, MessageResponses } from "./constants/message-responses";
 import { WorkspaceEntryLogic } from "./workspace-entry-logic";
 import { StorageHelper } from "./storage-helper";
 import { TabUtils } from "./utils/tab-utils";
@@ -13,23 +13,18 @@ import { Utils } from "./utils";
  */
 export class PopupActions {
 
-    public static async addNewWorkspaceFromWindow(workspaceName: string, windowId: number, curTabs?: chrome.tabs.Tab[]): Promise<void> {
+    public static async addNewWorkspaceFromWindow(workspaceName: string, windowId: number): Promise<void> {
         console.log("New workspace from window");
-        // Tabs didn't get passed in, for some reason. Try to get them.
-        if (!curTabs) {
-            curTabs = await Utils.getTabsFromWindow(windowId);
-        }
-        // If we still don't have tabs, we can't create a workspace.
-        if (!curTabs) {
-            console.error("Tabs are undefined");
-            LogHelper.errorAlert("Error creating new workspace. Check the console for more details.");
-            return;
-        }
+        const response = await PopupMessageHelper.sendAddNewWorkspaceFromWindow(workspaceName, windowId);
+        this.handleNewWorkspaceResponse(response, windowId);
     }
 
     public static async addNewWorkspace(workspaceName: string, windowId: number): Promise<void> {
         const response = await PopupMessageHelper.sendAddNewWorkspace(workspaceName, windowId);
+        this.handleNewWorkspaceResponse(response, windowId);
+    }
 
+    private static async handleNewWorkspaceResponse(response: MessageResponse, windowId: number): Promise<void> {
         if (response.message === MessageResponses.SUCCESS.message) {
             console.debug("Workspace added successfully, refreshing list");
             WorkspaceEntryLogic.listWorkspaces(await getWorkspaceStorage());
@@ -40,6 +35,7 @@ export class PopupActions {
             chrome.windows.remove(windowId);
         }
     }
+
     /**
      * Open the provided workspace in a new window.
      * 
