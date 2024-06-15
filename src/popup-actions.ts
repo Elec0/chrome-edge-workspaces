@@ -5,12 +5,41 @@ import { MessageResponses } from "./constants/message-responses";
 import { WorkspaceEntryLogic } from "./workspace-entry-logic";
 import { StorageHelper } from "./storage-helper";
 import { TabUtils } from "./utils/tab-utils";
+import { getWorkspaceStorage } from "./popup";
+import { Utils } from "./utils";
 
 /**
  * Actions that can be performed by the popup.
  */
 export class PopupActions {
 
+    public static async addNewWorkspaceFromWindow(workspaceName: string, windowId: number, curTabs?: chrome.tabs.Tab[]): Promise<void> {
+        console.log("New workspace from window");
+        // Tabs didn't get passed in, for some reason. Try to get them.
+        if (!curTabs) {
+            curTabs = await Utils.getTabsFromWindow(windowId);
+        }
+        // If we still don't have tabs, we can't create a workspace.
+        if (!curTabs) {
+            console.error("Tabs are undefined");
+            LogHelper.errorAlert("Error creating new workspace. Check the console for more details.");
+            return;
+        }
+    }
+
+    public static async addNewWorkspace(workspaceName: string, windowId: number): Promise<void> {
+        const response = await PopupMessageHelper.sendAddNewWorkspace(workspaceName, windowId);
+
+        if (response.message === MessageResponses.SUCCESS.message) {
+            console.debug("Workspace added successfully, refreshing list");
+            WorkspaceEntryLogic.listWorkspaces(await getWorkspaceStorage());
+        }
+        else {
+            LogHelper.errorAlert("Workspace could not be added\n" + response.message);
+            // Close the window
+            chrome.windows.remove(windowId);
+        }
+    }
     /**
      * Open the provided workspace in a new window.
      * 
@@ -29,7 +58,7 @@ export class PopupActions {
             LogHelper.errorAlert("Error opening workspace. Check the console for more details.");
             return;
         }
-        
+
         // Doing it this way creates the window before we add tabs to it, which seems like it
         // is messing up the active tab.
         // We don't have to create the window first, as I originally thought.

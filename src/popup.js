@@ -2,14 +2,14 @@
 
 import { MessageResponses } from "./constants/message-responses";
 import { LogHelper } from "./log-helper";
-import { PopupActions } from "./popup-actions";
-import { WorkspaceEntryLogic } from "./workspace-entry-logic";
 import { PopupMessageHelper } from "./messages/popup-message-helper";
-import "./popup.css";
-import { Prompt } from "./utils/prompt";
-import { StorageHelper } from "./storage-helper";
-import { WorkspaceStorage } from "./workspace-storage";
 import { PageSettings } from "./pages/page-settings";
+import { PopupActions } from "./popup-actions";
+import "./popup.css";
+import { StorageHelper } from "./storage-helper";
+import { Prompt } from "./utils/prompt";
+import { WorkspaceEntryLogic } from "./workspace-entry-logic";
+import { WorkspaceStorage } from "./workspace-storage";
 
 /**
  * This function is called when the popup is opened.
@@ -72,20 +72,9 @@ async function addWorkspaceButtonClicked() {
    }
 
    let window = await chrome.windows.create({});
-
    console.log(`window created, adding to workspace ${workspaceName}`);
 
-   let response = await PopupMessageHelper.sendAddNewWorkspace(workspaceName, window.id);
-
-   if (response.message === MessageResponses.SUCCESS.message) {
-      console.debug("Workspace added successfully, refreshing list");
-      WorkspaceEntryLogic.listWorkspaces(await getWorkspaceStorage());
-   }
-   else {
-      LogHelper.errorAlert("Workspace could not be added\n" + response.message);
-      // Close the window
-      chrome.windows.remove(window.id);
-   }
+   PopupActions.addNewWorkspace(workspaceName, window.id);
 }
 
 /**
@@ -123,7 +112,7 @@ async function windowRemoved(window) {
  * Get the full workspace storage object from the background script
  * @returns {Promise<WorkspaceStorage>}
  */
-async function getWorkspaceStorage() {
+export async function getWorkspaceStorage() {
    return StorageHelper.workspacesFromJson(await PopupMessageHelper.sendGetWorkspaces());
 }
 
