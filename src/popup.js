@@ -9,6 +9,7 @@ import "./popup.css";
 import { Prompt } from "./utils/prompt";
 import { StorageHelper } from "./storage-helper";
 import { WorkspaceStorage } from "./workspace-storage";
+import { PageSettings } from "./pages/page-settings";
 
 /**
  * This function is called when the popup is opened.
@@ -101,10 +102,12 @@ function isWindowWorkspace(windowId, workspaceStorage) {
  * Present a popup asking for confirmation, then clear all workspace data.
  */
 async function settingsButtonClicked() {
+   PageSettings.openSettings();
+   
    // Open basic javascript ok cancel prompt
-   if (confirm("Clear all workspace data?")) {
-      PopupActions.clearWorkspaceData();
-   }
+   // if (confirm("Clear all workspace data?")) {
+   //    PopupActions.clearWorkspaceData();
+   // }
 }
 
 /**
