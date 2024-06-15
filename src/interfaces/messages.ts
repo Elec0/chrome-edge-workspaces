@@ -13,7 +13,7 @@ export interface IRequestOpenWorkspace extends IRequest {
     };
 }
 
-export interface IRequestNewWorkspace extends IRequest {
+export interface IRequestWithNameId extends IRequest {
     payload: {
         workspaceName: string;
         windowId: number;

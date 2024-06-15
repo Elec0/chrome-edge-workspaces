@@ -1,5 +1,5 @@
 import { Messages } from "../constants/messages";
-import { IRequest, IRequestWithUuid, IRequestNewWorkspace, IRequestOpenWorkspace, IRequestRenameWorkspace } from "../interfaces/messages";
+import { IRequest, IRequestWithUuid, IRequestWithNameId, IRequestOpenWorkspace, IRequestRenameWorkspace } from "../interfaces/messages";
 import { StorageHelper } from "../storage-helper";
 import { Background } from "../background";
 import { MessageResponse, MessageResponses } from "../constants/message-responses";
@@ -28,7 +28,7 @@ export class BackgroundMessageHandlers {
      * @param request - The request object containing the workspace name and window ID.
      * @returns A promise that resolves to a MessageResponse indicating the success or failure of the operation.
      */
-    public static async processNewWorkspace(request: IRequestNewWorkspace): Promise<MessageResponse> {
+    public static async processNewWorkspace(request: IRequestWithNameId): Promise<MessageResponse> {
         const result = await StorageHelper.addWorkspace(request.payload.workspaceName, request.payload.windowId);
         if (!result) {
             return MessageResponses.ERROR;
@@ -107,7 +107,7 @@ export class BackgroundMessageHandlers {
                 return true;
 
             case Messages.MSG_NEW_WORKSPACE:
-                BackgroundMessageHandlers.processNewWorkspace(request as IRequestNewWorkspace).then(sendResponse);
+                BackgroundMessageHandlers.processNewWorkspace(request as IRequestWithNameId).then(sendResponse);
                 return true;
 
             case Messages.MSG_OPEN_WORKSPACE:

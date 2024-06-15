@@ -1,12 +1,12 @@
 import { MessageResponse, MessageResponses } from "../constants/message-responses";
 import { Messages } from "../constants/messages";
-import { IRequestWithUuid, IRequestNewWorkspace, IRequestOpenWorkspace } from "../interfaces/messages";
+import { IRequestWithUuid, IRequestWithNameId, IRequestOpenWorkspace } from "../interfaces/messages";
 import { LogHelper } from "../log-helper";
 
 export class PopupMessageHelper {
 
     public static async sendAddNewWorkspace(workspaceName: string, windowId: number): Promise<MessageResponse> {
-        const message: IRequestNewWorkspace = {
+        const message: IRequestWithNameId = {
             type: Messages.MSG_NEW_WORKSPACE,
             payload: { workspaceName, windowId: windowId }
         };
