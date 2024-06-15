@@ -3,6 +3,7 @@ import { IRequest, IRequestWithUuid, IRequestWithNameId, IRequestOpenWorkspace, 
 import { StorageHelper } from "../storage-helper";
 import { Background } from "../background";
 import { MessageResponse, MessageResponses } from "../constants/message-responses";
+import { Utils } from "../utils";
 
 /**
  * Class representing the message handlers for background operations.
@@ -58,6 +59,13 @@ export class BackgroundMessageHandlers {
      * @param request - The request object containing the workspace UUID to delete.
      */
     public static async processDeleteWorkspace(request: IRequestWithUuid): Promise<MessageResponse> {
+        // Get the windowId from the workspace before we delete it, so we can clear the badge
+        // just in case the workspace is open when it's deleted.
+        const workspace = await StorageHelper.getWorkspace(request.payload.uuid);
+        if (workspace) {
+            Utils.clearBadgeForWindow(workspace.windowId);
+        }
+
         const result = await StorageHelper.removeWorkspace(request.payload.uuid);
         if (!result) {
             return MessageResponses.ERROR;

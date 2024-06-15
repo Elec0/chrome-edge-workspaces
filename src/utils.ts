@@ -26,6 +26,16 @@ export class Utils {
     }
 
     /**
+     * Clears the extension badge text for all tabs in a window.
+     */
+    public static async clearBadgeForWindow(windowId: number): Promise<void> {
+        const tabs = await this.getTabsFromWindow(windowId);
+        for (const tab of tabs) {
+            chrome.action.setBadgeText({ text: "", tabId: tab.id });
+        }
+    }
+
+    /**
      * Retrieve all the tabs from an open workspace window.
      * @param windowId - The ID of the window to retrieve tabs from.
      */
