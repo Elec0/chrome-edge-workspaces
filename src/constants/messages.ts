@@ -1,5 +1,14 @@
 export class Messages {
     public static MSG_NEW_WORKSPACE = "NEW_WORKSPACE";
+    /** 
+     * The message type for creating a new workspace from a window.
+     * @see BackgroundMessageHandlers.processNewWorkspaceFromWindow
+     * @see PopupMessageHelper.sendNewWorkspaceFromWindow
+     * 
+     * The popup script doesn't send the list of tabs to the background script,
+     * rather the background script gets the tabs from the windowId.
+     */
+    public static MSG_NEW_WORKSPACE_FROM_WINDOW = "NEW_WORKSPACE_FROM_WINDOW";
     /**
      * 
      * Send a message to the background script requesting all workspace data.

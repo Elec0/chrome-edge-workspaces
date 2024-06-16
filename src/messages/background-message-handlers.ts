@@ -1,8 +1,9 @@
 import { Messages } from "../constants/messages";
-import { IRequest, IRequestWithUuid, IRequestNewWorkspace, IRequestOpenWorkspace, IRequestRenameWorkspace } from "../interfaces/messages";
+import { IRequest, IRequestWithUuid, IRequestWithNameId, IRequestOpenWorkspace, IRequestRenameWorkspace } from "../interfaces/messages";
 import { StorageHelper } from "../storage-helper";
 import { Background } from "../background";
 import { MessageResponse, MessageResponses } from "../constants/message-responses";
+import { Utils } from "../utils";
 
 /**
  * Class representing the message handlers for background operations.
@@ -28,7 +29,7 @@ export class BackgroundMessageHandlers {
      * @param request - The request object containing the workspace name and window ID.
      * @returns A promise that resolves to a MessageResponse indicating the success or failure of the operation.
      */
-    public static async processNewWorkspace(request: IRequestNewWorkspace): Promise<MessageResponse> {
+    public static async processNewWorkspace(request: IRequestWithNameId): Promise<MessageResponse> {
         const result = await StorageHelper.addWorkspace(request.payload.workspaceName, request.payload.windowId);
         if (!result) {
             return MessageResponses.ERROR;
@@ -37,10 +38,34 @@ export class BackgroundMessageHandlers {
     }
 
     /**
+     * Processes a new workspace from window request.
+     * Create a new workspace via `processNewWorkspace`, then save the tabs from the window to the workspace.
+     * 
+     * @param request - The request object containing the workspace name and window ID.
+     * @returns A promise that resolves to a MessageResponse indicating the success or failure of the operation.
+     */
+    public static async processNewWorkspaceFromWindow(request: IRequestWithNameId): Promise<MessageResponse> {
+        // Reuse the existing workspace creation logic
+        if (await this.processNewWorkspace(request) === MessageResponses.ERROR) {
+            return MessageResponses.ERROR;
+        }
+
+        await Background.saveWindowTabsToWorkspace(request.payload.windowId);
+        return MessageResponses.SUCCESS;
+    }
+
+    /**
      * Processes a request to delete a workspace.
      * @param request - The request object containing the workspace UUID to delete.
      */
     public static async processDeleteWorkspace(request: IRequestWithUuid): Promise<MessageResponse> {
+        // Get the windowId from the workspace before we delete it, so we can clear the badge
+        // just in case the workspace is open when it's deleted.
+        const workspace = await StorageHelper.getWorkspace(request.payload.uuid);
+        if (workspace) {
+            Utils.clearBadgeForWindow(workspace.windowId);
+        }
+
         const result = await StorageHelper.removeWorkspace(request.payload.uuid);
         if (!result) {
             return MessageResponses.ERROR;
@@ -107,7 +132,11 @@ export class BackgroundMessageHandlers {
                 return true;
 
             case Messages.MSG_NEW_WORKSPACE:
-                BackgroundMessageHandlers.processNewWorkspace(request as IRequestNewWorkspace).then(sendResponse);
+                BackgroundMessageHandlers.processNewWorkspace(request as IRequestWithNameId).then(sendResponse);
+                return true;
+
+                case Messages.MSG_NEW_WORKSPACE_FROM_WINDOW:
+                BackgroundMessageHandlers.processNewWorkspaceFromWindow(request as IRequestWithNameId).then(sendResponse);
                 return true;
 
             case Messages.MSG_OPEN_WORKSPACE:

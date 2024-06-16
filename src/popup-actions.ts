@@ -1,15 +1,40 @@
 import { LogHelper } from "./log-helper";
 import { PopupMessageHelper } from "./messages/popup-message-helper";
 import { Workspace } from './obj/workspace';
-import { MessageResponses } from "./constants/message-responses";
+import { MessageResponse, MessageResponses } from "./constants/message-responses";
 import { WorkspaceEntryLogic } from "./workspace-entry-logic";
 import { StorageHelper } from "./storage-helper";
 import { TabUtils } from "./utils/tab-utils";
+import { getWorkspaceStorage } from "./popup";
+import { Utils } from "./utils";
 
 /**
  * Actions that can be performed by the popup.
  */
 export class PopupActions {
+
+    public static async addNewWorkspaceFromWindow(workspaceName: string, windowId: number): Promise<void> {
+        console.log("New workspace from window");
+        const response = await PopupMessageHelper.sendAddNewWorkspaceFromWindow(workspaceName, windowId);
+        this.handleNewWorkspaceResponse(response, windowId);
+    }
+
+    public static async addNewWorkspace(workspaceName: string, windowId: number): Promise<void> {
+        const response = await PopupMessageHelper.sendAddNewWorkspace(workspaceName, windowId);
+        this.handleNewWorkspaceResponse(response, windowId);
+    }
+
+    private static async handleNewWorkspaceResponse(response: MessageResponse, windowId: number): Promise<void> {
+        if (response.message === MessageResponses.SUCCESS.message) {
+            console.debug("Workspace added successfully, refreshing list");
+            WorkspaceEntryLogic.listWorkspaces(await getWorkspaceStorage());
+        }
+        else {
+            LogHelper.errorAlert("Workspace could not be added\n" + response.message);
+            // Close the window
+            chrome.windows.remove(windowId);
+        }
+    }
 
     /**
      * Open the provided workspace in a new window.
@@ -29,7 +54,7 @@ export class PopupActions {
             LogHelper.errorAlert("Error opening workspace. Check the console for more details.");
             return;
         }
-        
+
         // Doing it this way creates the window before we add tabs to it, which seems like it
         // is messing up the active tab.
         // We don't have to create the window first, as I originally thought.

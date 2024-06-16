@@ -1,7 +1,8 @@
+import { BaseDialog } from "../dialogs/base-dialog";
 import DIALOG_TEMPLATE from "../templates/dialogPopupTemplate.html";
 import { Utils } from "../utils";
 
-export class Prompt {
+export class Prompt extends BaseDialog {
     /**
      * A utility function that creates a dialog prompt and returns a Promise. 
      * The Promise resolves with the input value when the form is submitted, 
@@ -25,11 +26,11 @@ export class Prompt {
 
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = dialog;
-            const dialogElement = tempDiv.firstElementChild as HTMLElement;
+            const dialogElement = tempDiv.firstElementChild as HTMLDialogElement;
 
-            const formElement = dialogElement.querySelector(formSelector);
+            const formElement = dialogElement.querySelector(formSelector) as HTMLFormElement;
             const inputElement = dialogElement.querySelector(inputSelector) as HTMLInputElement;
-            const cancelButton = dialogElement.querySelector(cancelSelector);
+            const cancelButton = dialogElement.querySelector(cancelSelector) as HTMLButtonElement;
 
             if (!formElement || !inputElement || !cancelButton) {
                 reject('Missing required elements');
@@ -39,20 +40,23 @@ export class Prompt {
             formElement.addEventListener("submit", (e) => {
                 e.preventDefault();
                 const inputValue = inputElement.value;
-                document.querySelector("dialog")?.close();
+                dialogElement.close();
                 resolve(inputValue);
                 // Remove the dialog from the DOM or it will persist after closing
                 dialogElement.remove();
             });
 
+            // If the dialog is closed without submitting the form, resolve with null
+            dialogElement.addEventListener("cancel", () => {
+                Prompt.cancelCloseDialog(dialogElement, resolve);
+            });
+
             cancelButton.addEventListener("click", () => {
-                document.querySelector("dialog")?.close();
-                resolve(null);
-                dialogElement.remove();
+                Prompt.cancelCloseDialog(dialogElement, resolve);
             });
 
             document.body.appendChild(dialogElement);
-            document.querySelector("dialog")?.showModal();
+            dialogElement.showModal();
         });
     }
 }

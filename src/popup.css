@@ -1,4 +1,3 @@
-
 /* normalize css starts here */
 *,
 *::before,
@@ -11,31 +10,49 @@
 /* normalize css ends here */
 
 :root {
-    --primary-color: #3f51b5; /* Indigo */
-    --primary-variant-color: #303f9f; /* Indigo variant */
-    --secondary-color: #ff4081; /* Pink */
-    --on-primary-color: #ffffff; /* White */
-    --on-secondary-color: #000000; /* Black */
+    --primary-color: #3f51b5;
+    /* Indigo */
+    --primary-variant-color: #303f9f;
+    /* Indigo variant */
+    --secondary-color: #ff4081;
+    /* Pink */
+    --on-primary-color: #ffffff;
+    /* White */
+    --on-secondary-color: #000000;
+    /* Black */
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --background-color: #121212; /* Dark */
-        --surface-color: #121212; /* Dark */
-        --error-color: #cf6679; /* Red */
-        --on-background-color: #ffffff; /* White */
-        --on-surface-color: #ffffff; /* White */
-        --on-error-color: #000000; /* Black */
+        --background-color: #121212;
+        /* Dark */
+        --surface-color: #121212;
+        /* Dark */
+        --error-color: #cf6679;
+        /* Red */
+        --on-background-color: #ffffff;
+        /* White */
+        --on-surface-color: #ffffff;
+        /* White */
+        --on-error-color: #000000;
+        /* Black */
     }
 }
+
 @media (prefers-color-scheme: light) {
     :root {
-        --background-color: #ffffff; /* White */
-        --surface-color: #ffffff; /* White */
-        --error-color: #b00020; /* Red */
-        --on-background-color: #000000; /* Black */
-        --on-surface-color: #000000; /* Black */
-        --on-error-color: #ffffff; /* White */
+        --background-color: #ffffff;
+        /* White */
+        --surface-color: #ffffff;
+        /* White */
+        --error-color: #b00020;
+        /* Red */
+        --on-background-color: #000000;
+        /* Black */
+        --on-surface-color: #000000;
+        /* Black */
+        --on-error-color: #ffffff;
+        /* White */
     }
 }
 
@@ -197,15 +214,29 @@ img#addIcon:hover {
     -moz-transform: translateX(-50%) translateY(-50%);
     -ms-transform: translateX(-50%) translateY(-50%);
     transform: translateX(-50%) translateY(-50%);
-  }
-  
+    /* TRBL */
+    padding: 0px 5px 5px 5px;
+}
+
+.modal h2, .modal h2 {
+    margin-bottom: 2px;
+}
+
+.modal #modal-settings-close {
+    width: 100%;
+}
+.modal .modal-settings-bottom {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3%;
+
+}
+
 ::backdrop {
-    background-image: linear-gradient(
-      45deg,
-      magenta,
-      rebeccapurple,
-      dodgerblue,
-      green
-    );
+    background-image: linear-gradient(45deg,
+            magenta,
+            rebeccapurple,
+            dodgerblue,
+            green);
     opacity: 0.75;
-  }
+}

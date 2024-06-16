@@ -2,12 +2,13 @@
 
 import { MessageResponses } from "./constants/message-responses";
 import { LogHelper } from "./log-helper";
-import { PopupActions } from "./popup-actions";
-import { WorkspaceEntryLogic } from "./workspace-entry-logic";
 import { PopupMessageHelper } from "./messages/popup-message-helper";
+import { PageSettings } from "./pages/page-settings";
+import { PopupActions } from "./popup-actions";
 import "./popup.css";
-import { Prompt } from "./utils/prompt";
 import { StorageHelper } from "./storage-helper";
+import { Prompt } from "./utils/prompt";
+import { WorkspaceEntryLogic } from "./workspace-entry-logic";
 import { WorkspaceStorage } from "./workspace-storage";
 
 /**
@@ -65,21 +66,15 @@ async function addWorkspaceButtonClicked() {
    // Present popup asking for workspace name
    const workspaceName = await Prompt.createPrompt("Enter a name for the new workspace");
 
-   let window = await chrome.windows.create({});
+   if (workspaceName === null) {
+      console.debug("New workspace prompt cancelled");
+      return;
+   }
 
+   let window = await chrome.windows.create({});
    console.log(`window created, adding to workspace ${workspaceName}`);
 
-   let response = await PopupMessageHelper.sendAddNewWorkspace(workspaceName, window.id);
-
-   if (response.message === MessageResponses.SUCCESS.message) {
-      console.debug("Workspace added successfully, refreshing list");
-      WorkspaceEntryLogic.listWorkspaces(await getWorkspaceStorage());
-   }
-   else {
-      LogHelper.errorAlert("Workspace could not be added\n" + response.message);
-      // Close the window
-      chrome.windows.remove(window.id);
-   }
+   PopupActions.addNewWorkspace(workspaceName, window.id);
 }
 
 /**
@@ -96,10 +91,12 @@ function isWindowWorkspace(windowId, workspaceStorage) {
  * Present a popup asking for confirmation, then clear all workspace data.
  */
 async function settingsButtonClicked() {
+   PageSettings.openSettings();
+   
    // Open basic javascript ok cancel prompt
-   if (confirm("Clear all workspace data?")) {
-      PopupActions.clearWorkspaceData();
-   }
+   // if (confirm("Clear all workspace data?")) {
+   //    PopupActions.clearWorkspaceData();
+   // }
 }
 
 /**
@@ -115,7 +112,7 @@ async function windowRemoved(window) {
  * Get the full workspace storage object from the background script
  * @returns {Promise<WorkspaceStorage>}
  */
-async function getWorkspaceStorage() {
+export async function getWorkspaceStorage() {
    return StorageHelper.workspacesFromJson(await PopupMessageHelper.sendGetWorkspaces());
 }
 

@@ -131,10 +131,13 @@ export class Background {
     }
 
     /**
-     * Save all the tabs from a window to a workspace, just to be thorough and simple.
+     * Save all the tabs from a window to a workspace, just to be thorough and simple.  
+     * Also updates the badge text for the workspace.
+     * 
+     * This is called when a tab is removed, attached, or detached, and when a tab is updated.
      * @param windowId - The ID of the window to save tabs from.
      */
-    private static async saveWindowTabsToWorkspace(windowId: number): Promise<void> {
+    public static async saveWindowTabsToWorkspace(windowId: number): Promise<void> {
         const workspace = await StorageHelper.getWorkspace(windowId);
         const tabs = await Utils.getTabsFromWindow(windowId);
         await Utils.setWorkspaceTabs(workspace, tabs);
