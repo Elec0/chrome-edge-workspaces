@@ -1,4 +1,5 @@
 import { BaseDialog } from "../dialogs/base-dialog";
+import { VERSION } from "../globals";
 import { LogHelper } from "../log-helper";
 import { PopupActions } from "../popup-actions";
 import SETTINGS_TEMPLATE from "../templates/settingsModalTemplate.html";
@@ -15,7 +16,7 @@ export class PageSettings extends BaseDialog {
      * This method creates the dialog element, attaches event listeners, and shows the dialog.
      */
     public static openSettings() {
-        const dialog = Utils.interpolateTemplate(SETTINGS_TEMPLATE, {});
+        const dialog = Utils.interpolateTemplate(SETTINGS_TEMPLATE, {"version": VERSION});
 
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = dialog;
