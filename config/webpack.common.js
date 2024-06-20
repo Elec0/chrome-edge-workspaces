@@ -85,6 +85,10 @@ const common = {
     new webpack.ProvidePlugin({
       process: 'process/browser',
     }),
+    // Let us use the version from package.json in our code
+    new webpack.DefinePlugin({
+      VERSION: JSON.stringify(require("../package.json").version)
+    })
   ],
 };
 
