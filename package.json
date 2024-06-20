@@ -1,9 +1,10 @@
 {
   "name": "edge-workspaces",
-  "version": "0.3.0",
+  "version": "0.4.1",
   "description": "Edge workspaces for Chrome",
   "private": true,
   "scripts": {
+    "prebuild": "node scripts/sync-version.js",
     "watch": "node ./node_modules/webpack/bin/webpack.js --mode=development --watch --config config/webpack.config.js",
     "build": "node ./node_modules/webpack/bin/webpack.js --mode=production --config config/webpack.config.js",
     "build-copy": "npm run build && cp -rf ./build/* ../chrome-edge-workspaces.vscode/test-build",
