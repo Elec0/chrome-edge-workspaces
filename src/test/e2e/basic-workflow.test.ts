@@ -1,5 +1,3 @@
-import { Constants } from "../../constants/constants";
-import { StorageHelper } from "../../storage-helper";
 import { E2ECommon } from "./utils/e2e-common";
 
 let common: E2ECommon;
@@ -121,8 +119,7 @@ test("creating a new workspace from the current window adds it to the list with 
         const newPage = await common.browser.newPage();
         await newPage.goto(url, { waitUntil: 'domcontentloaded' });
     }
-
-    page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+    
     // Switch to the popup page
     await page.bringToFront();
 
