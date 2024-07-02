@@ -18,10 +18,7 @@ export class Utils {
     public static async setBadgeForWindow(windowId: number, text: string, color?: string | chrome.action.ColorArray): Promise<void> {
         const tabs = await this.getTabsFromWindow(windowId);
         for (const tab of tabs) {
-            chrome.action.setBadgeText({ text: text, tabId: tab.id });
-            if (color !== undefined) {
-                chrome.action.setBadgeBackgroundColor({ color: color, tabId: tab.id });
-            }
+            this.setBadgeForTab(text, tab.id, color);
         }
     }
 
@@ -31,7 +28,17 @@ export class Utils {
     public static async clearBadgeForWindow(windowId: number): Promise<void> {
         const tabs = await this.getTabsFromWindow(windowId);
         for (const tab of tabs) {
-            chrome.action.setBadgeText({ text: "", tabId: tab.id });
+            this.setBadgeForTab("", tab.id);
+        }
+    }
+
+    /**
+     * Sets the extension badge text for a tab.
+     */
+    public static async setBadgeForTab(text: string, tabId?: number, color?: string | chrome.action.ColorArray): Promise<void> {
+        chrome.action.setBadgeText({ text: text, tabId: tabId });
+        if (color !== undefined) {
+            chrome.action.setBadgeBackgroundColor({ color: color, tabId: tabId });
         }
     }
 
