@@ -48,7 +48,7 @@ export class Background {
         if (removeInfo.isWindowClosing || removeInfo.windowId == null || removeInfo.windowId == undefined) {
             return; // Window is closing, not saving tabs; they've already been saved.
         }
-        // Can't check if the URL is untrackable here, as there's no way to get the tab URL from the removeInfo.
+        // Can't check if the URL is untrackable here, as there's no way to get the tab URL from removeInfo.
         if (!await StorageHelper.isWindowWorkspace(removeInfo.windowId)) return;
 
         console.debug(`Tab ${ tabId } removed`);
@@ -62,7 +62,7 @@ export class Background {
     }
 
     /**
-     * A tab has been updated. We need to save the tabs to the workspace.
+     * A tab has been updated. This is called many times as the tab is loading, so we need to be careful.
      * 
      * @param tabId - The ID of the tab that was updated.
      * @param changeInfo - Information about the tab change.
@@ -93,14 +93,21 @@ export class Background {
 
     /**
      * A tab has been detached from a window. This should be treated as if the tab is being closed.
+     * If the window the tab is being detached from is a workspace, and the new window is not a workspace,
+     * we need to ensure the tab is updated and badge text is removed.  
+     * Adding the tab to the new workspace is handled in tabAttached, which will handle updating the badge text if needed.
      * 
      * Note that this event is not fired when a tab is just closing. Nor is tabRemoved fired when a tab is moved to another window.
      * @param tabId - The ID of the tab that was detached.
      * @param detachInfo - Information about the tab detachment.
      */
-    public static async tabDetatched(tabId: number, detachInfo: chrome.tabs.TabDetachInfo): Promise<void> {
+    public static async tabDetached(tabId: number, detachInfo: chrome.tabs.TabDetachInfo): Promise<void> {
         console.debug(`Tab ${ tabId } detached from window ${ detachInfo.oldWindowId }`);
+        // Removing the tab from the workspace is handled in tabRemoved.
         Background.tabRemoved(tabId, { isWindowClosing: false, windowId: detachInfo.oldWindowId });
+        
+        // No matter what window the tab is being moved to, we need to update the badge text of this tab.
+        Utils.setBadgeForTab("", tabId);
     }
 
 
@@ -194,7 +201,7 @@ function setupListeners() {
     chrome.tabs.onRemoved.addListener(Background.tabRemoved);
     chrome.tabs.onUpdated.addListener(Background.tabUpdated);
     chrome.tabs.onReplaced.addListener(Background.tabReplaced);
-    chrome.tabs.onDetached.addListener(Background.tabDetatched);
+    chrome.tabs.onDetached.addListener(Background.tabDetached);
     chrome.tabs.onAttached.addListener(Background.tabAttached);
     chrome.tabs.onActivated.addListener(Background.tabActivated);
 }
