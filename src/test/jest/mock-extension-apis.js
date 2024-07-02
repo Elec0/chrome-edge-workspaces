@@ -31,5 +31,8 @@ global.chrome = {
         onMessage: {
             addListener: () => { jest.fn(); }
         }
+    },
+    action: {
+        setBadgeText: jest.fn()
     }
 };
