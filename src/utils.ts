@@ -7,6 +7,32 @@ import { StorageHelper } from "./storage-helper";
  */
 export class Utils {
     /**
+     * Retrieves a Chrome window by its ID.
+     * @param windowId - The ID of the window to retrieve.
+     * @returns A Promise that resolves with the retrieved window, or undefined if not found.
+     */
+    public static async getWindowById(windowId: number): Promise<chrome.windows.Window | undefined> {
+        return new Promise((resolve) => {
+            chrome.windows.get(windowId).then((window) => {
+                resolve(window);
+            })
+            // If the window is not found, the promise will still resolve, just with an undefined value.
+            // Catch the error to prevent the console from logging it.
+            .catch(() => {
+                resolve(undefined);
+            });
+        });
+    }
+
+    /**
+     * Focuses a Chrome window by its ID.
+     * @param windowId - The ID of the window to focus.
+     */
+    public static async focusWindow(windowId: number): Promise<void> {
+        chrome.windows.update(windowId, { focused: true });
+    }
+
+    /**
      * Sets the extension badge text for all tabs in a window.
      * 
      * There are only two options for badge text: per tab and globally. We can't set the badge text for a window, 
