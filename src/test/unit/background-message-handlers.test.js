@@ -2,8 +2,6 @@ import { Background } from "../../background";
 import { MessageResponses } from "../../constants/message-responses";
 import { Messages } from "../../constants/messages";
 import { BackgroundMessageHandlers } from "../../messages/background-message-handlers";
-import { TabStub } from "../../obj/tab-stub";
-import { Workspace } from "../../obj/workspace";
 import { StorageHelper } from "../../storage-helper";
 
 
@@ -136,9 +134,7 @@ describe("BackgroundMessageHandlers", () => {
 
             expect(StorageHelper.getWorkspace).toHaveBeenCalledWith('123');
             expect(mockWorkspace.windowId).toBe(1);
-            expect(mockWorkspace.clearTabs).toHaveBeenCalled();
             expect(StorageHelper.setWorkspace).toHaveBeenCalledWith(mockWorkspace);
-            expect(response).toEqual({ data: 'serialized data' });
         });
     });
 

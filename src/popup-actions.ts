@@ -40,11 +40,9 @@ export class PopupActions {
      * Open the provided workspace in a new window.
      * 
      * <ol>
-     * <li>Create a new window</li>
-     * <li>Send a message to the background script that we are opening a workspace.uuid in the new windowId</li>
-     * <li>Background script will update the workspace with the new windowId</li>
-     * <li>Then it will respond with the most up-to-date version of the workspace</li>
-     * <li>Then we will open the tabs in the new window</li>
+     * <li>Send a message to the background script requesting the workspace data</li>
+     * <li>Create a new window with workspace's tabs in the correct order</li>
+     * <li>Tell the background script to update the workspace with the new windowId</li>
      * </ol>
      * @param workspace -
      */
@@ -55,10 +53,9 @@ export class PopupActions {
             return;
         }
 
-        // Doing it this way creates the window before we add tabs to it, which seems like it
-        // is messing up the active tab.
-        // We don't have to create the window first, as I originally thought.
-
+        // Creating the window before we add tabs to it seems like it is messing up the active tab.
+        // But we don't have to create the window first, as I originally thought.
+        // So we will create the window after we have the tabs ready to go.
         PopupMessageHelper.sendGetWorkspace(workspace.uuid).then(async response => {
             if (!response || response.message === MessageResponses.UNKNOWN_MSG.message) {
                 console.error("Response returned invalid!", "response:", response);
@@ -67,6 +64,18 @@ export class PopupActions {
             }
 
             const workspace = Workspace.deserialize(response.data);
+
+            // -------------
+            // Check if workspace.windowId is an existing window
+            const existingWindow = await Utils.getWindowById(workspace.windowId);
+
+            if (existingWindow && existingWindow.id) {
+                console.debug(`Workspace '${workspace.name}' is already open in window ${ existingWindow.id }. Focusing...`);
+                
+                await Utils.focusWindow(existingWindow.id);
+                return;
+            }
+            // -------------
 
             // Then we will open the tabs in the new window
             chrome.windows.create({

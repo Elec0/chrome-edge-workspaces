@@ -21,7 +21,7 @@ export class BackgroundMessageHandlers {
             return MessageResponses.ERROR;
         }
 
-        return await Background.openWorkspace(request.payload.uuid, request.payload.windowId);
+        return await Background.updateWorkspaceWindowId(request.payload.uuid, request.payload.windowId);
     }
 
     /**

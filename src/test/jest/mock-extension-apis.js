@@ -15,7 +15,9 @@ global.chrome = {
         },
         onCreated: {
             addListener: () => { jest.fn(); }
-        }
+        },
+        update: jest.fn(),
+        get: jest.fn()
     },
     tabs: {
         onRemoved: {
