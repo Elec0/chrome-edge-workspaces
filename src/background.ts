@@ -164,27 +164,23 @@ export class Background {
     }
 
     /**
-     * We need to update the workspace with the new window ID.
+     * This method is called after the client has opened a new window with the workspace's tabs.
      * 
-     * Then we need to send a message back to the content script with the updated workspace.
+     * We need to update the workspace with the new window ID.
+     * Also clear the workspace's tabs, since more are about to be opened in a new window.
+     * 
+     * 
      * @param uuid - The UUID of the workspace to open.
      * @param windowId - The ID of the window that the workspace is being opened in.
      * @returns 
      */
-    public static async openWorkspace(uuid: string, windowId: number): Promise<MessageResponse> {
+    public static async updateWorkspaceWindowId(uuid: string, windowId: number): Promise<MessageResponse> {
         try {
             const workspace = await StorageHelper.getWorkspace(uuid);
             workspace.windowId = windowId;
-            // Serialize the workspace before we make any other changes
-            const data = workspace.serialize();
-
-            // The workspace is just about to get a bunch of tabs opened.
-            // The tabs are going to have unique IDs again, so we need to clear the tabs map
-            // to avoid duplicate tabs.
-            workspace.clearTabs();
             await StorageHelper.setWorkspace(workspace);
+            return MessageResponses.SUCCESS;
 
-            return { "data": data };
         }
         catch (error) {
             LogHelper.errorAlert(error as string);
