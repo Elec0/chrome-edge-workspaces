@@ -23,7 +23,7 @@ export class WorkspaceEntryLogic {
         // Add each workspace to the list, and add event listeners to the buttons.
         for (const workspace of Array.from(workspaces.values())) {
             const workspaceElement = this.addWorkspace(workspaceDiv, workspace);
-            const openWorkspace = workspaceElement.querySelector('.workspace-button');
+            const openWorkspace = workspaceElement.querySelector('.workspace-item-interior');
             // const settingsWorkspace = workspaceElement.querySelector('#settings-button');
             const editWorkspace = workspaceElement.querySelector('#edit-button');
             const deleteWorkspace = workspaceElement.querySelector('#delete-button');
@@ -43,11 +43,13 @@ export class WorkspaceEntryLogic {
             //     this.workspaceSettingsClicked(workspace);
             // });
 
-            editWorkspace?.addEventListener('click', () => {
+            editWorkspace?.addEventListener('click', (event) => {
+                event.stopPropagation();
                 this.workspaceEditClicked(workspace);
             });
 
-            deleteWorkspace?.addEventListener('click', () => {
+            deleteWorkspace?.addEventListener('click', (event) => {
+                event.stopPropagation();
                 this.workspaceDeleteClicked(workspace);
             });
         }

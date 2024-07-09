@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Edge Workspaces",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Edge Workspaces is a Chrome extension that helps you manage your tabs.",
   "icons": {
     "16": "icons/icon_16.png",
