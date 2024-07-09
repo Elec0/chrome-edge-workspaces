@@ -12,7 +12,7 @@
 :root {
     /* Colors */
     /* Green = should be overridden */
-    --primary-color: #00ff00;
+    --primary-color: #757575;
     --primary-variant-color: #00ff00;
     --secondary-color: #00ff00;
     --surface-color: #00ff00;
@@ -21,6 +21,7 @@
     --on-primary-color: #00ff00;
     --on-secondary-color: #00ff00;
     --on-surface-color: #00ff00;
+    --on-surface-variant-color: #00ff00;
     --on-error-color: #00ff00;
 
     /* Dimensions */
@@ -31,7 +32,7 @@
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --primary-color: #00ff00;
+        /* --primary-color: #00ff00; */
         --secondary-color: #00ff00;
         --surface-color: #121212;
         --surface-container-color: #424242;
@@ -40,13 +41,14 @@
         --on-primary-color: #00ff00;
         --on-secondary-color: #00ff00;
         --on-surface-color: #ffffff;
+        --on-surface-variant-color: #b3b3b3;
         --on-error-color: #00ff00;
     }
 }
 
 @media (prefers-color-scheme: light) {
     :root {       
-        --primary-color: #000000;
+        /* --primary-color: #000000; */
         --secondary-color: #00ff00;
         --surface-color: #ffffff;
         --surface-container-color: #b8b6b6;
@@ -55,6 +57,7 @@
         --on-primary-color: #00ff00;
         --on-secondary-color: #00ff00;
         --on-surface-color: #000000;
+        --on-surface-variant-color: #363636;
         --on-error-color: #ffffff;
     }
 }
@@ -130,7 +133,7 @@ img#addIcon:hover {
     cursor: pointer;
 }
 .icon-button:hover {
-    /* fill: var(--on-background-color); */
+    color: var(--primary-color);
 }
 
 .divider {
@@ -187,7 +190,7 @@ img#addIcon:hover {
 
 .workspace-button-tabs {
     margin: 0px 0px var(--subitem-margin) var(--subitem-margin);
-    /* color: var(--secondary-color); */
+    color: var(--on-surface-variant-color);
 }
 
 .workspace-item-right {

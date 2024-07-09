@@ -1,6 +1,6 @@
 {
   "name": "edge-workspaces",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Edge workspaces for Chrome",
   "private": true,
   "scripts": {
