@@ -44,11 +44,11 @@ export class PopupActions {
      * <li>Create a new window with workspace's tabs in the correct order</li>
      * <li>Tell the background script to update the workspace with the new windowId</li>
      * </ol>
-     * @param workspace -
+     * @param workspaceToOpen -
      */
-    public static openWorkspace(workspace: Workspace): void {
-        if (!workspace) {
-            console.error("Workspace is invalid!", "workspace:", workspace);
+    public static openWorkspace(workspaceToOpen: Workspace): void {
+        if (!workspaceToOpen) {
+            console.error("Workspace is invalid!", "workspace:", workspaceToOpen);
             LogHelper.errorAlert("Error opening workspace. Check the console for more details.");
             return;
         }
@@ -56,7 +56,7 @@ export class PopupActions {
         // Creating the window before we add tabs to it seems like it is messing up the active tab.
         // But we don't have to create the window first, as I originally thought.
         // So we will create the window after we have the tabs ready to go.
-        PopupMessageHelper.sendGetWorkspace(workspace.uuid).then(async response => {
+        PopupMessageHelper.sendGetWorkspace(workspaceToOpen.uuid).then(async response => {
             if (!response || response.message === MessageResponses.UNKNOWN_MSG.message) {
                 console.error("Response returned invalid!", "response:", response);
                 LogHelper.errorAlert("Error opening workspace. Check the console for more details.");

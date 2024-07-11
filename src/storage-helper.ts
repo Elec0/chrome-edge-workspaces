@@ -4,6 +4,7 @@ import { Workspace } from "./obj/workspace";
 import { WorkspaceStorage } from "./workspace-storage";
 
 export class StorageHelper {
+    private static logStorageChanges = false;
     private static _storage = chrome.storage.local;
     private static _loadedWorkspaces: WorkspaceStorage = new WorkspaceStorage();
 
@@ -19,10 +20,15 @@ export class StorageHelper {
      */
     public static async getValue(key: string, defaultValue: string = ""): Promise<string> {
         const result = await this._storage.get(key);
+        if (StorageHelper.logStorageChanges) 
+            console.log(`Get ${ key }: ${ result[key] || defaultValue }`);
         return result[key] || defaultValue;
     }
 
     public static setValue(key: string, val: string): Promise<void> {
+        // Being called from tabUpdated after a window with a tab group is closed, for some reason. With 0 tabs, clearing the storage.
+        if (StorageHelper.logStorageChanges) 
+            console.log(`Set ${ key }: ${ val }`);
         return this._storage.set({ [key]: val });
     }
 
@@ -122,6 +128,7 @@ export class StorageHelper {
      * @returns A promise that resolves to true if the workspace was removed successfully, or rejects if the workspace could not be removed.
      */
     public static async removeWorkspace(uuid: string): Promise<boolean> {
+        console.debug("removeWorkspace: ", uuid);
         const workspaces = await this.getWorkspaces();
         if (workspaces.delete(uuid)) {
             await this.setWorkspaces(workspaces);
@@ -137,6 +144,7 @@ export class StorageHelper {
      * @returns A promise that resolves to true if the workspace was renamed successfully, or rejects if the workspace could not be renamed.
      */
     public static async renameWorkspace(uuid: string, newName: string): Promise<boolean> {
+        console.debug("renameWorkspace: ", uuid, newName);
         const workspace = await this.getWorkspace(uuid);
         if (workspace) {
             workspace.updateName(newName);

@@ -64,6 +64,8 @@ export class Background {
     /**
      * A tab has been updated. This is called many times as the tab is loading, so we need to be careful.
      * 
+     * This is also called when a tab is in a group and the window is closed. The tab is updated to remove it from the group.
+     * 
      * @param tabId - The ID of the tab that was updated.
      * @param changeInfo - Information about the tab change.
      * @param tab - The tab that was updated.
@@ -75,6 +77,8 @@ export class Background {
         if (Utils.isUrlUntrackable(tab.url)) {
             return;
         }
+        // console.debug(`Tab ${ tabId } updated. Change info:`, changeInfo);
+        
         Background.saveWindowTabsToWorkspace(tab.windowId);
     }
 
@@ -147,6 +151,14 @@ export class Background {
     public static async saveWindowTabsToWorkspace(windowId: number): Promise<void> {
         const workspace = await StorageHelper.getWorkspace(windowId);
         const tabs = await Utils.getTabsFromWindow(windowId);
+
+        // If we're getting an update at a point where there are no tabs considered attached to the window,
+        // we should just ignore it, since it's likely the window is closing. 
+        // Also, I can't think of a reason we would want to save an empty workspace.
+        if (tabs.length !== 0) {
+            console.warn(`Window ${ windowId } has no tabs. Ignoring update.`);
+            return;
+        }
         await Utils.setWorkspaceTabs(workspace, tabs);
 
         // Update the badge text
