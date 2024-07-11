@@ -1,8 +1,10 @@
+import { IStub } from "../interfaces/i-stub";
+
 /**
  * Instead of trying to serialize the entire Tab object, we just serialize the
  * properties we need.
  */
-export class TabStub {
+export class TabStub implements IStub {
     public id: number = -1;
     public index: number = -1;
     public title: string = "";
@@ -12,6 +14,7 @@ export class TabStub {
     public windowId: number = -1;
     public active: boolean = false;
     public mutedInfo?: chrome.tabs.MutedInfo;
+    public groupId?: number = chrome.tabGroups?.TAB_GROUP_ID_NONE;
 
     [key: string]: unknown;
 
@@ -24,7 +27,8 @@ export class TabStub {
         "pinned",
         "windowId",
         "active",
-        "mutedInfo"
+        "mutedInfo",
+        "groupId"
     ];
 
     private constructor(tab: Partial<chrome.tabs.Tab>) {
