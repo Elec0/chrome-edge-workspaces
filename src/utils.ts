@@ -1,3 +1,4 @@
+import { TabGroupStub } from "./obj/tab-group-stub";
 import { TabStub } from "./obj/tab-stub";
 import { Workspace } from "./obj/workspace";
 import { StorageHelper } from "./storage-helper";
@@ -77,13 +78,35 @@ export class Utils {
     }
 
     /**
+     * Retrieve all the tab groups from a window.
+     */
+    public static async getTabGroupsFromWindow(windowId: number): Promise<chrome.tabGroups.TabGroup[]> {
+        return chrome.tabGroups.query({ windowId: windowId });
+    }
+
+    /**
      * Sets the tabs of a workspace and saves it to storage.
      * @param workspace - The workspace to update.
      * @param tabs - The tabs to set for the workspace.
      * @returns - A promise that resolves when the workspace is updated and saved.
      */
     public static async setWorkspaceTabs(workspace: Workspace, tabs: chrome.tabs.Tab[]): Promise<void> {
+        
         workspace.setTabs(TabStub.fromTabs(tabs));
+        await StorageHelper.setWorkspace(workspace);
+    }
+
+    /**
+     * Sets the tabs and tab groups of a workspace and saves it to storage.
+     * @param workspace - The workspace to update.
+     * @param tabs - The tabs to set for the workspace.
+     * @param tabGroups - The tab groups to set for the workspace.
+     * @returns - A promise that resolves when the workspace is updated and saved.
+     */
+    public static async setWorkspaceTabsAndGroups(workspace: Workspace, tabs: chrome.tabs.Tab[], tabGroups: chrome.tabGroups.TabGroup[]): Promise<void> {
+        console.log(`Setting tabs and groups: `, tabs, tabGroups);
+        workspace.setTabs(TabStub.fromTabs(tabs));
+        workspace.setTabGroups(TabGroupStub.fromTabGroups(tabGroups));
         await StorageHelper.setWorkspace(workspace);
     }
 
