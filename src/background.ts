@@ -142,6 +142,19 @@ export class Background {
     }
 
     /**
+     * A tab group event is fired. Update the workspace with the new tab group.
+     * 
+     * @param group - Information about the updated tab group.
+     */
+    public static async tabGroupEvent(group: chrome.tabGroups.TabGroup): Promise<void> {
+        console.debug(`Tab group ${ group.id } changed in window ${ group.windowId }`);
+        if (!await StorageHelper.isWindowWorkspace(group.windowId)) return;
+
+        // No await is intentional, as we don't need to wait for this to finish.
+        Background.saveWindowTabsToWorkspace(group.windowId);
+    }
+
+    /**
      * Save all the tabs from a window to a workspace, just to be thorough and simple.  
      * Also updates the badge text for the workspace.
      * 
@@ -151,15 +164,16 @@ export class Background {
     public static async saveWindowTabsToWorkspace(windowId: number): Promise<void> {
         const workspace = await StorageHelper.getWorkspace(windowId);
         const tabs = await Utils.getTabsFromWindow(windowId);
+        const tabGroups = await Utils.getTabGroupsFromWindow(windowId);
 
         // If we're getting an update at a point where there are no tabs considered attached to the window,
         // we should just ignore it, since it's likely the window is closing. 
         // Also, I can't think of a reason we would want to save an empty workspace.
-        if (tabs.length !== 0) {
+        if (tabs.length === 0) {
             console.warn(`Window ${ windowId } has no tabs. Ignoring update.`);
             return;
         }
-        await Utils.setWorkspaceTabs(workspace, tabs);
+        await Utils.setWorkspaceTabsAndGroups(workspace, tabs, tabGroups);
 
         // Update the badge text
         Utils.setBadgeForWindow(windowId, Background.getBadgeTextForWorkspace(workspace));
@@ -212,5 +226,8 @@ function setupListeners() {
     chrome.tabs.onDetached.addListener(Background.tabDetached);
     chrome.tabs.onAttached.addListener(Background.tabAttached);
     chrome.tabs.onActivated.addListener(Background.tabActivated);
+    chrome.tabGroups.onCreated.addListener(Background.tabGroupEvent);
+    chrome.tabGroups.onUpdated.addListener(Background.tabGroupEvent);
+    chrome.tabGroups.onRemoved.addListener(Background.tabGroupEvent);
 }
 setupListeners();

@@ -118,6 +118,16 @@ export class Workspace {
     }
 
     /**
+     * Replace the tab groups in the workspace with the provided tab groups.
+     */
+    public setTabGroups(tabGroups: TabGroupStub[]): void {
+        this.tabGroups.clear();
+        tabGroups.forEach((tabGroup: TabGroupStub) => {
+            this.addTabGroup(tabGroup);
+        });
+    }
+
+    /**
      * Renames the workspace.
      * @param newName - The new name of the workspace.
      */
@@ -170,6 +180,11 @@ export class Workspace {
         if (json.tabs != null && json.tabs instanceof Array) {
             json.tabs.forEach((tab: string) => {
                 workspace.addTab(TabStub.fromJson(tab));
+            });
+        }
+        if (json.tabGroups != null && json.tabGroups instanceof Array) {
+            json.tabGroups.forEach((tabGroup: string) => {
+                workspace.addTabGroup(TabGroupStub.fromJson(tabGroup));
             });
         }
         return workspace;
