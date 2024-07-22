@@ -46,7 +46,7 @@ export class PopupActions {
      * </ol>
      * @param workspaceToOpen -
      */
-    public static openWorkspace(workspaceToOpen: Workspace): void {
+    public static async openWorkspace(workspaceToOpen: Workspace): Promise<void> {
         if (!workspaceToOpen) {
             console.error("Workspace is invalid!", "workspace:", workspaceToOpen);
             LogHelper.errorAlert("Error opening workspace. Check the console for more details.");
@@ -56,55 +56,56 @@ export class PopupActions {
         // Creating the window before we add tabs to it seems like it is messing up the active tab.
         // But we don't have to create the window first, as I originally thought.
         // So we will create the window after we have the tabs ready to go.
-        PopupMessageHelper.sendGetWorkspace(workspaceToOpen.uuid).then(async response => {
+        const response = await PopupMessageHelper.sendGetWorkspace(workspaceToOpen.uuid);
+        if (!response || response.message === MessageResponses.UNKNOWN_MSG.message) {
+            console.error("Response returned invalid!", "response:", response);
+            LogHelper.errorAlert("Error opening workspace. Check the console for more details.");
+            return;
+        }
+
+        const workspace = Workspace.deserialize(response.data);
+
+        // -------------
+        // Check if workspace.windowId is an existing window
+        const existingWindow = await Utils.getWindowById(workspace.windowId);
+
+        if (existingWindow && existingWindow.id) {
+            console.debug(`Workspace '${ workspace.name }' is already open in window ${ existingWindow.id }. Focusing...`);
+
+            await Utils.focusWindow(existingWindow.id);
+            return;
+        }
+        // -------------
+
+        // Then we will open the tabs in the new window
+        chrome.windows.create({
+            focused: true,
+            url: workspace.getTabs().map(tab => tab.url)
+        }).then(async newWindow => {
+            if (!newWindow?.id) {
+                console.error("New window id is invalid!", "newWindow:", newWindow);
+                LogHelper.errorAlert("Error opening workspace window. Check the console for more details.");
+                return;
+            }
+
+            // The window should be created with the tabs in the correct order,
+            // but now we need to update the newly created tabs to match the workspace tabs extra
+            // data (active, pinned, etc).
+            await TabUtils.updateTabStubIdsFromTabs(workspace.getTabs(), newWindow.tabs as chrome.tabs.Tab[]);
+            await TabUtils.updateNewWindowTabsFromTabStubs(workspace.getTabs());
+
+            console.log("Tab groups:", workspace.getTabGroups());
+
+            // Update the workspace with the new windowId in storage
+            const response = await PopupMessageHelper.sendOpenWorkspace(workspace.uuid, newWindow.id);
+
             if (!response || response.message === MessageResponses.UNKNOWN_MSG.message) {
                 console.error("Response returned invalid!", "response:", response);
-                LogHelper.errorAlert("Error opening workspace. Check the console for more details.");
+                LogHelper.errorAlert("Your changes might not be saved. Check the console for more details.");
                 return;
             }
+            // We don't need to do anything with the response, since all the data should now be in sync
 
-            const workspace = Workspace.deserialize(response.data);
-
-            // -------------
-            // Check if workspace.windowId is an existing window
-            const existingWindow = await Utils.getWindowById(workspace.windowId);
-
-            if (existingWindow && existingWindow.id) {
-                console.debug(`Workspace '${workspace.name}' is already open in window ${ existingWindow.id }. Focusing...`);
-                
-                await Utils.focusWindow(existingWindow.id);
-                return;
-            }
-            // -------------
-
-            // Then we will open the tabs in the new window
-            chrome.windows.create({
-                focused: true,
-                url: workspace.getTabs().map(tab => tab.url)
-            }).then(async newWindow => {
-                if (!newWindow?.id) {
-                    console.error("New window id is invalid!", "newWindow:", newWindow);
-                    LogHelper.errorAlert("Error opening workspace window. Check the console for more details.");
-                    return;
-                }
-
-                // The window should be created with the tabs in the correct order,
-                // but now we need to update the newly created tabs to match the workspace tabs extra
-                // data (active, pinned, etc).
-                await TabUtils.updateTabStubIdsFromTabs(workspace.getTabs(), newWindow.tabs as chrome.tabs.Tab[]);
-                await TabUtils.updateNewWindowTabsFromTabStubs(workspace.getTabs());
-
-                // Update the workspace with the new windowId in storage
-                const response = await PopupMessageHelper.sendOpenWorkspace(workspace.uuid, newWindow.id);
-
-                if (!response || response.message === MessageResponses.UNKNOWN_MSG.message) {
-                    console.error("Response returned invalid!", "response:", response);
-                    LogHelper.errorAlert("Your changes might not be saved. Check the console for more details.");
-                    return;
-                }
-                // We don't need to do anything with the response, since all the data should now be in sync
-
-            });
         });
     }
 
