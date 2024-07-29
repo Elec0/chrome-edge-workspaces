@@ -15,7 +15,7 @@
     "jest-unit": "jest --testMatch='**/unit/*.test.[tj]s'"
   },
   "devDependencies": {
-    "@types/chrome": "^0.0.248",
+    "@types/chrome": "^0.0.268",
     "@types/jest": "^29.5.8",
     "@types/node": "^20.8.3",
     "@types/uuid": "^9.0.7",
