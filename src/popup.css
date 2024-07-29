@@ -68,6 +68,7 @@ html {
 
 body {
     width: 350px;
+    min-height: 120px;
     /* height: 300px; */
 
     color: var(--on-surface-color);
