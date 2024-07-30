@@ -5,5 +5,6 @@ export interface IWorkspaceJson {
     name: string;
     uuid: string;
     tabs: string[];
+    tabGroups: string[];
 }
 

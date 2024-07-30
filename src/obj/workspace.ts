@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { IWorkspaceJson } from "../interfaces/i-workspace-json";
 import { TabStub } from "./tab-stub";
+import { TabGroupStub } from "./tab-group-stub";
 
 
 /**
@@ -12,14 +13,17 @@ export class Workspace {
     public windowId: number;
     public name: string;
     private tabs: Map<number, TabStub>;
-    // Future: May need a tab index => tab id map.
+    /** The tab groups that exist in this workspace/window, mapped by their IDs */
+    private tabGroups: Map<number, TabGroupStub>;
 
     constructor(windowId: number, name: string, tabs: chrome.tabs.Tab[] | undefined = undefined,
-        tabStubs: TabStub[] | undefined = undefined, uuid: string | undefined = uuidv4()) {
+        tabStubs: TabStub[] | undefined = undefined, uuid: string | undefined = uuidv4(), 
+        tabGroups: Map<number, TabGroupStub> | undefined = undefined) {
         this.windowId = windowId;
         this.name = name;
         this.uuid = uuid;
         this.tabs = new Map<number, TabStub>();
+        this.tabGroups = new Map<number, TabGroupStub>();
 
         if (tabs != undefined) {
             tabs.forEach((tab: chrome.tabs.Tab) => {
@@ -29,6 +33,10 @@ export class Workspace {
             tabStubs.forEach((tabStub: TabStub) => {
                 this.tabs.set(tabStub.id, tabStub);
             });
+        }
+
+        if (tabGroups != undefined) {
+            this.tabGroups = tabGroups;
         }
     }
 
@@ -86,6 +94,40 @@ export class Workspace {
     }
 
     /**
+     * Retrieves the tab groups in the workspace.
+     * @returns An array of TabGroupStub objects.
+     */
+    public getTabGroups(): TabGroupStub[] {
+        return Array.from(this.tabGroups.values());
+    }
+
+    /**
+     * Adds a tab group to the workspace.
+     * @param tabGroup - The tab group to add.
+     */
+    public addTabGroup(tabGroup: TabGroupStub): void {
+        this.tabGroups.set(tabGroup.id, tabGroup);
+    }
+
+    /**
+     * Removes a tab group from the workspace.
+     * @param tabGroupId - The ID of the tab group to remove.
+     */
+    public removeTabGroup(tabGroupId: number): void {
+        this.tabGroups.delete(tabGroupId);
+    }
+
+    /**
+     * Replace the tab groups in the workspace with the provided tab groups.
+     */
+    public setTabGroups(tabGroups: TabGroupStub[]): void {
+        this.tabGroups.clear();
+        tabGroups.forEach((tabGroup: TabGroupStub) => {
+            this.addTabGroup(tabGroup);
+        });
+    }
+
+    /**
      * Renames the workspace.
      * @param newName - The new name of the workspace.
      */
@@ -123,7 +165,8 @@ export class Workspace {
             id: this.windowId,
             name: this.name,
             uuid: this.uuid,
-            tabs: this.getTabs().map((tab: TabStub) => tab.toJson())
+            tabs: this.getTabs().map((tab: TabStub) => tab.toJson()),
+            tabGroups: this.getTabGroups().map((tabGroup: TabGroupStub) => tabGroup.toJson())
         };
     }
 
@@ -137,6 +180,11 @@ export class Workspace {
         if (json.tabs != null && json.tabs instanceof Array) {
             json.tabs.forEach((tab: string) => {
                 workspace.addTab(TabStub.fromJson(tab));
+            });
+        }
+        if (json.tabGroups != null && json.tabGroups instanceof Array) {
+            json.tabGroups.forEach((tabGroup: string) => {
+                workspace.addTabGroup(TabGroupStub.fromJson(tabGroup));
             });
         }
         return workspace;
