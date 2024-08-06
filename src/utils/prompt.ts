@@ -48,15 +48,19 @@ export class Prompt extends BaseDialog {
 
             // If the dialog is closed without submitting the form, resolve with null
             dialogElement.addEventListener("cancel", () => {
-                Prompt.cancelCloseDialog(dialogElement, resolve);
+                BaseDialog.cancelCloseDialog(dialogElement, resolve);
             });
 
             cancelButton.addEventListener("click", () => {
-                Prompt.cancelCloseDialog(dialogElement, resolve);
+                BaseDialog.cancelCloseDialog(dialogElement, resolve);
             });
 
             document.body.appendChild(dialogElement);
             dialogElement.showModal();
         });
+    }
+
+    public open(): void {
+        throw new Error("Method not implemented.");
     }
 }

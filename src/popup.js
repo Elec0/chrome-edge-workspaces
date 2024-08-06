@@ -1,13 +1,10 @@
 "use strict";
 
-import { MessageResponses } from "./constants/message-responses";
-import { LogHelper } from "./log-helper";
 import { PopupMessageHelper } from "./messages/popup-message-helper";
+import { PageAddWorkspace } from "./pages/page-add-workspace";
 import { PageSettings } from "./pages/page-settings";
-import { PopupActions } from "./popup-actions";
 import "./popup.css";
 import { StorageHelper } from "./storage-helper";
-import { Prompt } from "./utils/prompt";
 import { WorkspaceEntryLogic } from "./workspace-entry-logic";
 import { WorkspaceStorage } from "./workspace-storage";
 
@@ -63,18 +60,8 @@ async function loadWorkspacePopup(workspaceStorage, curWindowId) {
  * @returns {Promise<void>}
  */
 async function addWorkspaceButtonClicked() {
-   // Present popup asking for workspace name
-   const workspaceName = await Prompt.createPrompt("Enter a name for the new workspace");
-
-   if (workspaceName === null) {
-      console.debug("New workspace prompt cancelled");
-      return;
-   }
-
-   let window = await chrome.windows.create({});
-   console.log(`window created, adding to workspace ${workspaceName}`);
-
-   PopupActions.addNewWorkspace(workspaceName, window.id);
+   const pageAddWorkspace = new PageAddWorkspace();
+   pageAddWorkspace.open();
 }
 
 /**
@@ -91,7 +78,8 @@ function isWindowWorkspace(windowId, workspaceStorage) {
  * Present a popup asking for confirmation, then clear all workspace data.
  */
 async function settingsButtonClicked() {
-   PageSettings.openSettings();
+   const pageSettings = new PageSettings();
+   pageSettings.open();
    
    // Open basic javascript ok cancel prompt
    // if (confirm("Clear all workspace data?")) {

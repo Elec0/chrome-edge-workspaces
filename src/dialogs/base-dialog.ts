@@ -2,7 +2,9 @@
 /**
  * Represents a base dialog.
  */
-export class BaseDialog {
+export abstract class BaseDialog {
+
+    public abstract open(): void;
 
     /**
      * Closes the dialog and optionally resolves a value.
