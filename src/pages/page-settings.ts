@@ -2,7 +2,7 @@ import { BaseDialog } from "../dialogs/base-dialog";
 import { VERSION } from "../globals";
 import { LogHelper } from "../log-helper";
 import { PopupActions } from "../popup-actions";
-import SETTINGS_TEMPLATE from "../templates/settingsModalTemplate.html";
+import SETTINGS_TEMPLATE from "../templates/dialogSettingsTemplate.html";
 import { Utils } from "../utils";
 import { Prompt } from "../utils/prompt";
 
