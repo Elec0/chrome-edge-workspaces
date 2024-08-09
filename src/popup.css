@@ -205,12 +205,15 @@ img#addIcon:hover {
 .modal {
     top: 50%;
     left: 50%;
+    background-color: var(--surface-color);
+    color: var(--on-surface-color);
     -webkit-transform: translateX(-50%) translateY(-50%);
     -moz-transform: translateX(-50%) translateY(-50%);
     -ms-transform: translateX(-50%) translateY(-50%);
     transform: translateX(-50%) translateY(-50%);
     /* TRBL */
-    padding: 0px 5px 5px 5px;
+    padding: 5px;
+    border: 0px;
 }
 
 .modal h2,
@@ -226,7 +229,30 @@ img#addIcon:hover {
     display: flex;
     justify-content: space-between;
     margin-top: 3%;
+}
 
+#modal-add-workspace {    
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    align-content: center;
+    align-items: center;
+    justify-content: center;
+
+}
+
+/*
+Make the input buttons inside the modal look like a modern button
+*/
+.modal input {
+    background-color: var(--surface-container-color);
+    color: var(--on-surface-color);
+    border: none;
+    padding: 5px 10px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    align-self: center;
 }
 
 ::backdrop {
