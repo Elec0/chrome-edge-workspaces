@@ -18,8 +18,8 @@ export class PageAddWorkspace extends BaseDialog {
         tempDiv.innerHTML = dialog;
 
         const dialogElement = tempDiv.firstElementChild as HTMLDialogElement;
-        const newWorkspaceButton = dialogElement.querySelector("#modal-settings-new-workspace") as HTMLButtonElement;
-        const newWorkspaceFromWindowButton = dialogElement.querySelector("#modal-settings-new-workspace-from-window") as HTMLButtonElement;
+        const newWorkspaceButton = dialogElement.querySelector("#modal-new-workspace") as HTMLButtonElement;
+        const newWorkspaceFromWindowButton = dialogElement.querySelector("#modal-new-workspace-from-window") as HTMLButtonElement;
 
         newWorkspaceButton?.addEventListener("click", (e) => {
             this.clickNewWorkspaceButton(e, dialogElement);
