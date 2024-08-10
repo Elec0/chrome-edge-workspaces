@@ -2,6 +2,8 @@ import { E2ECommon } from "./utils/e2e-common";
 
 let common: E2ECommon;
 
+jest.setTimeout(30 * 1000);
+
 beforeEach(async () => {
     common = new E2ECommon();
     await common.beforeEach();
@@ -20,12 +22,20 @@ test("creating a new workspace adds it to the list", async () => {
     const page = common.page;
 
     // Click the button to add a workspace
-    const btn = await page.$("#addWorkspace");
+    let btn = await page.waitForSelector("#addWorkspace");
+    expect(await btn?.isVisible()).toBe(true);
+    await btn?.click();
+    // Verify the dialog is visible
+    let dialog = await page.waitForSelector("dialog");
+    expect(await dialog?.isVisible()).toBe(true);
+
+    // Click the button to add a new workspace
+    btn = await page.waitForSelector("#modal-new-workspace");
     expect(await btn?.isVisible()).toBe(true);
     await btn?.click();
 
     // Verify the dialog is visible
-    const dialog = await page.$("dialog");
+    dialog = await page.waitForSelector("dialog");
     expect(await dialog?.isVisible()).toBe(true);
 
     // Enter the name of the new workspace
@@ -45,7 +55,7 @@ test("creating a new workspace adds it to the list", async () => {
     await newPage?.close();
 
     // Verify there is a new workspace in the list, and that it has the correct name
-    const list = await page.$("#workspaces-list");
+    const list = await page.waitForSelector("#workspaces-list");
     expect(await list?.isVisible()).toBe(true);
 
     // Use ElementHandler.waitForSelector to wait for the new workspace text to appear
@@ -59,14 +69,25 @@ test("clicking a workspace opens it", async () => {
     const page = common.page;
 
     // Add a workspace
-    const btn = await page.$("#addWorkspace");
+    let btn = await page.waitForSelector("#addWorkspace");
+    expect(await btn?.isVisible()).toBe(true);
+    await btn?.click();
+
+
+    // Verify the dialog is visible
+    let dialog = await page.waitForSelector("dialog");
+    expect(await dialog?.isVisible()).toBe(true);
+
+    
+    // Click the button to add a new workspace
+    btn = await page.waitForSelector("#modal-new-workspace");
     expect(await btn?.isVisible()).toBe(true);
     await btn?.click();
 
     // Verify the dialog is visible
-    const dialog = await page.$("dialog");
+    dialog = await page.waitForSelector("dialog");
     expect(await dialog?.isVisible()).toBe(true);
-
+    
     // Enter the name of the new workspace
     await page.type("#modal-input-name", "test workspace");
 
@@ -84,7 +105,7 @@ test("clicking a workspace opens it", async () => {
     await newPage?.close();
 
     // Verify there is a new workspace in the list, and that it has the correct name
-    const list = await page.$("#workspaces-list");
+    const list = await page.waitForSelector("#workspaces-list");
     expect(await list?.isVisible()).toBe(true);
 
     // Use ElementHandler.waitForSelector to wait for the new workspace text to appear
@@ -107,7 +128,7 @@ test("creating a new workspace from the current window adds it to the list with 
     // 1. Open a few new tabs to specific URLs
     // 2. Switch to the popup page
     // 3. Click the '#settings-button' button
-    // 4. Click the '#modal-settings-new-workspace-from-window' button
+    // 4. Click the '#modal-new-workspace-from-window' button
     // 5. Enter a name for the new workspace in the prompt
     // 6. Verify the new workspace is in the list with the correct name and number of tabs
 
@@ -119,17 +140,17 @@ test("creating a new workspace from the current window adds it to the list with 
         const newPage = await common.browser.newPage();
         await newPage.goto(url, { waitUntil: 'domcontentloaded' });
     }
-    
+
     // Switch to the popup page
     await page.bringToFront();
 
     // Click the settings button
-    const settingsBtn = await page.$("#settings-button");
+    const settingsBtn = await page.waitForSelector("#addWorkspace");
     expect(await settingsBtn?.isVisible()).toBe(true);
     await settingsBtn?.click();
 
     // Click the new workspace from window button
-    const newWorkspaceBtn = await page.$("#modal-settings-new-workspace-from-window");
+    const newWorkspaceBtn = await page.waitForSelector("#modal-new-workspace-from-window");
     expect(await newWorkspaceBtn?.isVisible()).toBe(true);
     await newWorkspaceBtn?.click();
 
@@ -143,7 +164,7 @@ test("creating a new workspace from the current window adds it to the list with 
     await page.waitForSelector("dialog", { hidden: true });
 
     // Verify there is a new workspace in the list, and that it has the correct name
-    const list = await page.$("#workspaces-list");
+    const list = await page.waitForSelector("#workspaces-list");
     expect(await list?.isVisible()).toBe(true);
 
     // Use ElementHandler.waitForSelector to wait for the new workspace text to appear

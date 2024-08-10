@@ -34,16 +34,18 @@ export class E2ECommon {
 
         await this.page.goto(`chrome-extension://${ E2EConstants.EXTENSION_ID }/popup.html`);
 
-        if (!this.page) {
-            assert(this.page);
-            return;
-        }
-        
         // Clear the local and sync storage before each test
         await this.page.evaluate(() => {
             chrome.storage.local.clear();
             chrome.storage.sync.clear();
         });
+
+        await this.page.reload();
+
+        if (!this.page) {
+            assert(this.page);
+            return;
+        }
     }
 
     public async afterEach() {

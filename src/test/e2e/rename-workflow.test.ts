@@ -2,6 +2,8 @@ import { E2ECommon } from "./utils/e2e-common";
 
 let common: E2ECommon;
 
+jest.setTimeout(30 * 1000);
+
 beforeEach(async () => {
     common = new E2ECommon();
     await common.beforeEach();
@@ -20,12 +22,21 @@ test("creating workspace and renaming it works", async () => {
     const page = common.page;
 
     // Click the button to add a workspace
-    const btn = await page.$("#addWorkspace");
+    let btn = await page.waitForSelector("#addWorkspace");
     expect(await btn?.isVisible()).toBe(true);
     await btn?.click();
 
     // Verify the dialog is visible
-    const dialog = await page.$("dialog");
+    let dialog = await page.waitForSelector("dialog");
+    expect(await dialog?.isVisible()).toBe(true);
+
+    // Click the button to add a new workspace
+    btn = await page.waitForSelector("#modal-new-workspace");
+    expect(await btn?.isVisible()).toBe(true);
+    await btn?.click();
+
+    // Verify the dialog is visible
+    dialog = await page.waitForSelector("dialog");
     expect(await dialog?.isVisible()).toBe(true);
 
     // Enter the name of the new workspace
@@ -45,7 +56,7 @@ test("creating workspace and renaming it works", async () => {
     await newPage?.close();
 
     // Verify there is a new workspace in the list, and that it has the correct name
-    const list = await page.$("#workspaces-list");
+    const list = await page.waitForSelector("#workspaces-list");
     expect(await list?.isVisible()).toBe(true);
 
     // Use ElementHandler.waitForSelector to wait for the new workspace text to appear
@@ -53,12 +64,12 @@ test("creating workspace and renaming it works", async () => {
     expect(await workspaceBtn?.evaluate((el) => el.textContent)).toContain("1 tabs");
 
     // Edit the workspace name
-    const editBtn = await page.$("#edit-button");
+    const editBtn = await page.waitForSelector("#edit-button");
     expect(await editBtn?.isVisible()).toBe(true);
     await editBtn?.click();
 
     // Verify the dialog is visible
-    const renameDialog = await page.$("dialog");
+    const renameDialog = await page.waitForSelector("dialog");
     expect(await renameDialog?.isVisible()).toBe(true);
 
     // Enter the name of the new workspace
