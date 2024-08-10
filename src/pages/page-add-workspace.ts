@@ -93,6 +93,10 @@ export class PageAddWorkspace extends BaseDialog {
             console.debug("New workspace prompt cancelled");
             return;
         }
+        if (workspaceName === "") {
+            LogHelper.errorAlert("Workspace name cannot be empty");
+            return;
+        }
         // Get the current window ID
         const currentWindow = await chrome.windows.getCurrent();
         if (currentWindow === undefined || currentWindow.id === undefined) {
