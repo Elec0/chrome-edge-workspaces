@@ -68,7 +68,7 @@ html {
 
 body {
     width: 350px;
-    min-height: 120px;
+    min-height: 150px;
     /* height: 300px; */
 
     color: var(--on-surface-color);
@@ -253,6 +253,10 @@ Make the input buttons inside the modal look like a modern button
     border-radius: 5px;
     cursor: pointer;
     align-self: center;
+}
+
+#modal-input-name {
+    margin-top: 3px;
 }
 
 ::backdrop {
