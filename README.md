@@ -7,6 +7,7 @@
 ## Key Features
 
 - **Automatic Saving**: The extension automatically saves your workspace as you work, eliminating the need to manually save open tabs.
+- **Import/Export**: Workspaces can be exported to a file and imported later on another device.
 - **Internal Tab Exclusion**: Internal Chrome tabs, such as the new tab page, settings, or extensions, are not saved to workspaces.
 
 ## Usage
@@ -33,10 +34,21 @@
 - Click the trashcan icon to delete a workspace.
 - Click the pencil icon to rename a workspace.
 
+### Importing/Exporting Workspaces
+
+1. Open the extension popup.
+2. Click the hamburger icon to open the settings window.
+3. Click "Export" to save all workspaces to a file.
+4. Click "Import" to load workspaces from a file.
+
 ## Images
 <img src="images/1-main-window.png">
+
 <img src="images/2-new-workspace-dialog.png">
+
 <img src="images/3-new-workspace-dialog-name.png">
+
+<img src="images/4-settings-import-export-window.png">
 
 ## Install
 ### Alpha version

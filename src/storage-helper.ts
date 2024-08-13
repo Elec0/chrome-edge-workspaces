@@ -50,7 +50,7 @@ export class StorageHelper {
      */
     public static async getWorkspaces(): Promise<WorkspaceStorage> {
         // return await BookmarkStorageHelper.getWorkspaces();
-        const result = await this.getValue(Constants.KEY_STORAGE_WORKSPACES, "{}")
+        const result = await this.getRawWorkspaces();
         return this.workspacesFromJson({"data": result});
     }
 
@@ -61,6 +61,14 @@ export class StorageHelper {
     public static async setWorkspaces(workspaces: WorkspaceStorage): Promise<void> {
         await this.setValue(Constants.KEY_STORAGE_WORKSPACES, workspaces.serialize());
         this._loadedWorkspaces = workspaces;
+    }
+
+    /**
+     * Get the raw workspaces from storage.
+     * @returns 
+     */
+    public static async getRawWorkspaces(): Promise<string> {
+        return await this.getValue(Constants.KEY_STORAGE_WORKSPACES, "{}");
     }
 
     /**
