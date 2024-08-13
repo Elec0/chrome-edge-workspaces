@@ -94,6 +94,13 @@ export class PageSettings extends BaseDialog {
                     //     throw new Error("Version mismatch");
                     // }
 
+                    // Prompt the user to confirm if they are sure they want to import data, as it will overwrite all existing data.
+                    const forSure = confirm("Importing settings will overwrite all existing settings. Are you sure you want to continue?");
+                    if (!forSure) {
+                        LogHelper.successAlert("Import cancelled");
+                        return;
+                    }
+
                     const parsed = await StorageHelper.workspacesFromJson(data as MessageResponse);
                     await StorageHelper.setWorkspaces(parsed);
 
