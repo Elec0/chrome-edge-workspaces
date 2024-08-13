@@ -36,8 +36,12 @@
 
 ## Images
 <img src="images/1-main-window.png">
+
 <img src="images/2-new-workspace-dialog.png">
+
 <img src="images/3-new-workspace-dialog-name.png">
+
+<img src="images/4-settings-import-export-window.png">
 
 ## Install
 ### Alpha version
