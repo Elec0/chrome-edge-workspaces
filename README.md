@@ -7,6 +7,7 @@
 ## Key Features
 
 - **Automatic Saving**: The extension automatically saves your workspace as you work, eliminating the need to manually save open tabs.
+- **Import/Export**: Workspaces can be exported to a file and imported later on another device.
 - **Internal Tab Exclusion**: Internal Chrome tabs, such as the new tab page, settings, or extensions, are not saved to workspaces.
 
 ## Usage

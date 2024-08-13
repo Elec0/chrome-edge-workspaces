@@ -1,6 +1,8 @@
 import { Constants } from "../constants/constants";
+import { MessageResponse } from "../constants/message-responses";
 import { BaseDialog } from "../dialogs/base-dialog";
 import { VERSION } from "../globals";
+import { LogHelper } from "../log-helper";
 import { StorageHelper } from "../storage-helper";
 import SETTINGS_TEMPLATE from "../templates/dialogSettingsTemplate.html";
 import { Utils } from "../utils";
@@ -30,6 +32,9 @@ export class PageSettings extends BaseDialog {
         dialogElement.querySelector("#modal-settings-export")?.addEventListener("click", () => {
             PageSettings.exportSettings();
         });
+        dialogElement.querySelector("#modal-settings-import")?.addEventListener("click", () => {
+            PageSettings.importSettings();
+        });
 
         dialogElement.querySelector("#modal-settings-close")?.addEventListener("click", () => {
             PageSettings.cancelCloseDialog(dialogElement);
@@ -44,8 +49,9 @@ export class PageSettings extends BaseDialog {
 
     /**
      * Exports the settings to a JSON file.
+     * Just a raw dump of the storage json data.
      */
-    public static async exportSettings() {
+    private static async exportSettings(): Promise<void> {
         const data = await StorageHelper.getRawWorkspaces();
 
         const toExport = {
@@ -62,5 +68,46 @@ export class PageSettings extends BaseDialog {
         a.href = settingsURL;
         a.download = Constants.DOWNLOAD_FILENAME;
         a.click();
+    }
+
+    /**
+     * Prompt the user to import settings from a JSON file.
+     * This method opens a file input dialog and reads the file contents.
+     */
+    private static async importSettings(): Promise<void> {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".json";
+        input.style.display = "none";
+        input.addEventListener("change", async () => {
+            if (!input.files || input.files.length === 0) {
+                return;
+            }
+
+            const file = input.files[0];
+            const reader = new FileReader();
+            console.debug("Importing file", file);
+            reader.onload = async () => {
+                try {
+                    const data = JSON.parse(reader.result as string);
+                    // if (data.version !== VERSION) {
+                    //     throw new Error("Version mismatch");
+                    // }
+
+                    const parsed = await StorageHelper.workspacesFromJson(data as MessageResponse);
+                    await StorageHelper.setWorkspaces(parsed);
+
+                    LogHelper.successAlert("Settings imported successfully, reloading...");
+                    window.location.reload();
+                } catch (e) {
+                    LogHelper.errorAlert("Error importing settings", e);
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        document.body.appendChild(input);
+        input.click();
+        document.body.removeChild(input);
     }
 }
