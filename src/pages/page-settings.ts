@@ -1,5 +1,7 @@
+import { Constants } from "../constants/constants";
 import { BaseDialog } from "../dialogs/base-dialog";
 import { VERSION } from "../globals";
+import { StorageHelper } from "../storage-helper";
 import SETTINGS_TEMPLATE from "../templates/dialogSettingsTemplate.html";
 import { Utils } from "../utils";
 
@@ -25,6 +27,10 @@ export class PageSettings extends BaseDialog {
 
         const dialogElement = tempDiv.firstElementChild as HTMLDialogElement;
 
+        dialogElement.querySelector("#modal-settings-export")?.addEventListener("click", () => {
+            PageSettings.exportSettings();
+        });
+
         dialogElement.querySelector("#modal-settings-close")?.addEventListener("click", () => {
             PageSettings.cancelCloseDialog(dialogElement);
         });
@@ -34,5 +40,27 @@ export class PageSettings extends BaseDialog {
 
         document.body.appendChild(dialogElement);
         document.querySelector("dialog")?.showModal();
+    }
+
+    /**
+     * Exports the settings to a JSON file.
+     */
+    public static async exportSettings() {
+        const data = await StorageHelper.getRawWorkspaces();
+
+        const toExport = {
+            "version": VERSION,
+            data
+        };
+
+        console.info("Exporting settings");
+
+        const settingsBlob = new Blob([JSON.stringify(toExport)], {type: "application/json"});
+        const settingsURL = URL.createObjectURL(settingsBlob);
+
+        const a = document.createElement("a");
+        a.href = settingsURL;
+        a.download = Constants.DOWNLOAD_FILENAME;
+        a.click();
     }
 }
