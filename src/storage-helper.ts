@@ -20,28 +20,26 @@ export class StorageHelper {
      */
     public static async getValue(key: string, defaultValue: string = ""): Promise<string> {
         const result = await this._storage.get(key);
-        if (StorageHelper.logStorageChanges) 
+        if (StorageHelper.logStorageChanges)
             console.log(`Get ${ key }: ${ result[key] || defaultValue }`);
         return result[key] || defaultValue;
     }
 
     public static setValue(key: string, val: string): Promise<void> {
         // Being called from tabUpdated after a window with a tab group is closed, for some reason. With 0 tabs, clearing the storage.
-        if (StorageHelper.logStorageChanges) 
+        if (StorageHelper.logStorageChanges)
             console.log(`Set ${ key }: ${ val }`);
         return this._storage.set({ [key]: val });
     }
 
-    public static getSyncValue(key: string, callback: (value: unknown) => void): void {
-        chrome.storage.sync.get(key, function (result) {
-            callback(result[key]);
-        });
+    public static async getSyncValue(key: string, defaultValue: string = ""): Promise<string> {
+        const result = await chrome.storage.sync.get(key);
+        return result[key] || defaultValue;
     }
 
-    public static setSyncValue(key: string, val: string) {
-        chrome.storage.sync.set({ [key]: val }, function () {
-            console.log(`Set ${ key }: ${ val }`);
-        });
+    public static setSyncValue(key: string, val: string): Promise<void> {
+        console.log(`Sync set ${ key }`);
+        return chrome.storage.sync.set({ [key]: val });
     }
 
     /**
@@ -51,7 +49,7 @@ export class StorageHelper {
     public static async getWorkspaces(): Promise<WorkspaceStorage> {
         // return await BookmarkStorageHelper.getWorkspaces();
         const result = await this.getRawWorkspaces();
-        return this.workspacesFromJson({"data": result});
+        return this.workspacesFromJson({ "data": result });
     }
 
     /**
@@ -61,6 +59,10 @@ export class StorageHelper {
     public static async setWorkspaces(workspaces: WorkspaceStorage): Promise<void> {
         await this.setValue(Constants.KEY_STORAGE_WORKSPACES, workspaces.serialize());
         this._loadedWorkspaces = workspaces;
+    }
+
+    public static async setWorkspacesSync(workspaces: WorkspaceStorage): Promise<void> {
+        await this.setSyncValue(Constants.KEY_STORAGE_WORKSPACES, workspaces.serialize());
     }
 
     /**
@@ -169,7 +171,7 @@ export class StorageHelper {
         if (windowId == null || windowId == undefined) {
             return false;
         }
-        
+
         const workspaceWindows = await this.getWorkspaces();
         for (const workspace of Array.from(workspaceWindows.values())) {
             if (workspace.windowId === windowId) {

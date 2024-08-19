@@ -120,7 +120,7 @@ export class WorkspaceStorage implements Map<string | number, Workspace> {
         });
         const windowIdToUuidArray = Array.from(this.windowIdToUuid.entries());
         return JSON.stringify({ workspaces: workspacesArray, windowIdToUuid: windowIdToUuidArray });
-    }
+    }   
 
     deserialize(serialized: string): void {
         const data = JSON.parse(serialized);

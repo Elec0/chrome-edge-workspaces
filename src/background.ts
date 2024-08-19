@@ -17,8 +17,7 @@ export class Background {
 
         console.debug(`Window ${ windowId } is a workspace, saving tabs...`);
 
-        console.log("Will save tabs to sync storage here.")
-        // TODO: Update the sync storage with the new workspace.
+        await StorageHelper.setWorkspacesSync(await StorageHelper.getWorkspaces());
     }
 
     /**
