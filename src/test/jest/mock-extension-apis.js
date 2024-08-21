@@ -1,7 +1,4 @@
 global.chrome = {
-    tabs: {
-        query: async () => { throw new Error("Unimplemented.") }
-    },
     storage: {
         local: {
             get: async () => { throw new Error("Unimplemented.") },
@@ -28,6 +25,9 @@ global.chrome = {
         },
         query: jest.fn(),
         get: jest.fn()
+    },
+    tabGroups: {
+        query: jest.fn()
     },
     runtime: {
         onMessage: {

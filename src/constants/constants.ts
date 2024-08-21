@@ -5,4 +5,12 @@ export class Constants {
     public static BOOKMARKS_FOLDER_NAME = "Tab Manager";
 
     public static DOWNLOAD_FILENAME = "workspaces-export.json";
+
+    /** Time in seconds to delay saving a workspace after it has been opened. */
+    public static WORKSPACE_OPEN_SAVE_DELAY = 5;
+
+    /** Time in ms to debounce the saving of the workspace on updates. */
+    public static WORKSPACE_SAVE_DEBOUNCE_TIME = 300;
+
+    public static DEBOUNCE_ALARM_NAME_PREFIX = "debounceSave";
 }

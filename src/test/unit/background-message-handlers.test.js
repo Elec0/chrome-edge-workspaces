@@ -113,7 +113,7 @@ describe("BackgroundMessageHandlers", () => {
             expect(response).toEqual(MessageResponses.ERROR);
         });
 
-        it('should get the workspace, update it, clear its tabs, and return the serialized data', async () => {
+        it('should get the workspace, update it, clear its tabs, and return the seralized data', async () => {
             const request = {
                 payload: {
                     uuid: '123',
