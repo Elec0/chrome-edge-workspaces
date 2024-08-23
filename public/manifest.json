@@ -23,8 +23,6 @@
   "permissions": [
     "storage",
     "tabGroups",
-    "scripting",
-    "activeTab",
-    "bookmarks"
+    "activeTab"
   ]
 }
