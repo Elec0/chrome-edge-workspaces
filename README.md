@@ -51,20 +51,31 @@
 <img src="images/4-settings-import-export-window.png">
 
 ## Install
-### Alpha version
+### Chrome Web Store (Recommended)
+Download and add the extension to Chrome from the [Chrome Web Store page](https://chromewebstore.google.com/detail/edge-workspaces/feehlkcbifmladjmmpkghfokcngfkkkp)
+
+### Manual Install
 1. Download the latest release from the [releases page](https://github.com/Elec0/chrome-edge-workspaces/releases)
 2. Extract the zip file to a permanent location on your computer
 3. Open Extensions -> Manage Extensions
 4. Ensure Developer Mode is enabled in the top right corner
 5. Click Load Unpacked -> Select the extracted folder
 
-### Chrome Web Store
-TODO
-
-
 ## Contribution
 Suggestions and pull requests are welcomed!
 
+## Development
+1. Clone the repository
+2. Run `npm install`
+3. Run `npm run build` to build the extension
+4. Load the extension in Chrome by following the manual install instructions
+5. Run `npm run watch` to automatically rebuild the extension when changes are made
+
+Using VS Code, there are two tasks available:
+* `Run npm watch` - Runs `npm run watch`
+* `Launch Chrome against localhost` - Launches a new Chrome window with the extension loaded
+  * You will need to update extension ID in the `url` in `launch.json` to match the ID of the extension loaded in Chrome
+
 ## Credits
-* Extension icon made by [Yogi Aprelliyanto](https://www.flaticon.com/authors/yogi-aprelliyanto) from [Flaticon](https://www.flaticon.com/)
+* Original extension icon made by [Yogi Aprelliyanto](https://www.flaticon.com/authors/yogi-aprelliyanto) from [Flaticon](https://www.flaticon.com/)
 * This project was bootstrapped with [Chrome Extension CLI](https://github.com/dutiyesh/chrome-extension-cli)
