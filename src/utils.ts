@@ -17,11 +17,11 @@ export class Utils {
             chrome.windows.get(windowId).then((window) => {
                 resolve(window);
             })
-            // If the window is not found, the promise will still resolve, just with an undefined value.
-            // Catch the error to prevent the console from logging it.
-            .catch(() => {
-                resolve(undefined);
-            });
+                // If the window is not found, the promise will still resolve, just with an undefined value.
+                // Catch the error to prevent the console from logging it.
+                .catch(() => {
+                    resolve(undefined);
+                });
         });
     }
 
@@ -91,7 +91,7 @@ export class Utils {
      * @returns - A promise that resolves when the workspace is updated and saved.
      */
     public static async setWorkspaceTabs(workspace: Workspace, tabs: chrome.tabs.Tab[]): Promise<void> {
-        
+
         workspace.setTabs(TabStub.fromTabs(tabs));
         await StorageHelper.setWorkspace(workspace);
     }
@@ -103,10 +103,12 @@ export class Utils {
      * @param tabGroups - The tab groups to set for the workspace.
      * @returns - A promise that resolves when the workspace is updated and saved.
      */
-    public static async setWorkspaceTabsAndGroups(workspace: Workspace, tabs: chrome.tabs.Tab[], tabGroups: chrome.tabGroups.TabGroup[]): Promise<void> {
+    public static async setWorkspaceTabsAndGroups(workspace: Workspace, tabs: chrome.tabs.Tab[], tabGroups?: chrome.tabGroups.TabGroup[]): Promise<void> {
         console.log(`Setting tabs and groups: `, tabs, tabGroups);
         workspace.setTabs(TabStub.fromTabs(tabs));
-        workspace.setTabGroups(TabGroupStub.fromTabGroups(tabGroups));
+        if (tabGroups !== undefined) {
+            workspace.setTabGroups(TabGroupStub.fromTabGroups(tabGroups));
+        }
         await StorageHelper.setWorkspace(workspace);
     }
 
