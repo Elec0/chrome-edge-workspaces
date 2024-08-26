@@ -5,6 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "firefox",
+            "request": "launch",
+            "reAttach": true,
+            "name": "Launch Firefox with add-on",
+            "addonPath": "${workspaceFolder}/build",
+            // "url": "about:debugging#/runtime/this-firefox",
+        },
+        {
             "command": "npm run watch",
             "name": "Run npm watch",
             "request": "launch",
