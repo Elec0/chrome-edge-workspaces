@@ -1,6 +1,8 @@
 # <img src="public/icons/icon_48.png" width="45" align="left"> Edge Workspaces
 
-**Edge Workspaces** is a Chrome extension that replicates the Microsoft Edge Workspaces feature. It allows you to save the state of a window, including all open tabs, and reopen it later as a workspace.
+**Edge Workspaces** is an extension that replicates the Microsoft Edge Workspaces feature. It allows you to save the state of a window, including all open tabs, and reopen it later as a workspace.
+
+<a href="https://chromewebstore.google.com/detail/edge-workspaces/feehlkcbifmladjmmpkghfokcngfkkkp"><img src="images/Google_Play_Store_badge_EN.svg" target="_blank" /></a>
 
 <a href="images/extension-demo.gif" target="_blank" ><img src="images/extension-demo.gif" width="500px"></a>
 
@@ -8,7 +10,7 @@
 
 - **Automatic Saving**: The extension automatically saves your workspace as you work, eliminating the need to manually save open tabs.
 - **Import/Export**: Workspaces can be exported to a file and imported later on another device.
-- **Internal Tab Exclusion**: Internal Chrome tabs, such as the new tab page, settings, or extensions, are not saved to workspaces.
+- **Internal Tab Exclusion**: Internal tabs, such as the new tab page, settings, or extensions, are not saved to workspaces.
 
 ## Usage
 
@@ -19,7 +21,7 @@
 3. Select either "New workspace" or "New workspace from window".
 4. Enter a name for the workspace.
 5. Click "OK".
-6. A new Chrome window will open with the New Tab page.
+6. A new browser window will open with the New Tab page.
 7. All tabs in the current window will be saved to the workspace as you work.
 8. Close the window when finished.
 
@@ -27,7 +29,7 @@
 
 1. Open the extension popup.
 2. Click on a workspace to open it.
-3. The saved tabs will be opened in a new Chrome window.
+3. The saved tabs will be opened in a new browser window.
 
 ### Managing Workspaces
 
