@@ -11,10 +11,16 @@
             "type": "node-terminal"
         },
         {
+            "command": "npm run watch-firefox",
+            "name": "Run npm watch firefox",
+            "request": "launch",
+            "type": "node-terminal"
+        },
+        {
             "type": "chrome",
             "request": "launch",
             "name": "Launch Chrome against localhost",
-            "url": "chrome-extension://laobpiaijpjcdllfnphlmjoaofilopmi/popup.html",
+            "url": "chrome-extension://ognnkoophhofbamdhhgbcaglbmpjcpak/popup.html",
             //chrome://extensions/
             "webRoot": "${workspaceFolder}",
             // "userDataDir": "${workspaceRoot}.vscode/chrome",
@@ -27,7 +33,7 @@
             "request": "launch",
             "reAttach": true,
             "name": "Launch Firefox with add-on",
-            "addonPath": "${workspaceFolder}/build",
+            "addonPath": "${workspaceFolder}/build/firefox",
             "url": "about:debugging#/runtime/this-firefox",
         }
     ]
