@@ -1,7 +1,7 @@
 {
   "name": "edge-workspaces",
-  "version": "1.0.0",
-  "description": "Edge workspaces for Chrome",
+  "version": "1.0.1",
+  "description": "Edge workspaces extension",
   "private": true,
   "scripts": {
     "prebuild": "node scripts/sync-version.js",
