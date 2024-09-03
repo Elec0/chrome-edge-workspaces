@@ -269,8 +269,11 @@ export class Background {
     }
 }
 
-function setupListeners() {
-    if (Utils.areWeTestingWithJest()) return;
+// #region Message Listeners
+// These must be at the top level for Firefox compatibility, otherwise they won't fire
+// when the extension is unloaded.
+if (!Utils.areWeTestingWithJest()) {
+    console.info("Adding message listeners in background script.");
 
     chrome.runtime.onMessage.addListener(BackgroundMessageHandlers.messageListener);
     chrome.windows.onRemoved.addListener(Background.windowRemoved);
@@ -286,4 +289,4 @@ function setupListeners() {
         chrome.tabGroups.onRemoved.addListener(Background.tabGroupEvent);
     }
 }
-setupListeners();
+// #endregion
