@@ -7,6 +7,7 @@ import { StorageHelper } from "./storage-helper";
 import { TabUtils } from "./utils/tab-utils";
 import { getWorkspaceStorage } from "./popup";
 import { Utils } from "./utils";
+import { FeatureDetect } from "./utils/feature-detect";
 
 /**
  * Actions that can be performed by the popup.
@@ -94,7 +95,9 @@ export class PopupActions {
             workspace.windowId = newWindow.id;
             await TabUtils.updateTabStubIdsFromTabs(workspace.getTabs(), newWindow.tabs as chrome.tabs.Tab[]);
             await TabUtils.updateNewWindowTabsFromTabStubs(workspace.getTabs());
-            await this.groupTabs(workspace);
+            if (FeatureDetect.supportsTabGroups()) {
+                await this.groupTabs(workspace);
+            }
 
             // Update the workspace with the new windowId in storage
             const response = await PopupMessageHelper.sendOpenWorkspace(workspace.uuid, newWindow.id);
@@ -132,7 +135,7 @@ export class PopupActions {
             const tabIds = workspace.getTabs().filter(tab => tab.groupId === tabGroupStub.id).map(tab => tab.id);
 
             if (tabIds.length > 0) {
-                const groupId = await chrome.tabs.group({ 
+                const groupId = await chrome.tabs.group({
                     tabIds: tabIds,
                     createProperties: {
                         windowId: workspace.windowId

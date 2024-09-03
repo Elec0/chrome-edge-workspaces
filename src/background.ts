@@ -6,6 +6,7 @@ import { Workspace } from "./obj/workspace";
 import { StorageHelper } from "./storage-helper";
 import { Utils } from "./utils";
 import { DebounceUtil } from "./utils/debounce";
+import { FeatureDetect } from "./utils/feature-detect";
 
 export class Background {
     private static saveDisabledUntil: number = 0;
@@ -18,7 +19,7 @@ export class Background {
     private static disableSavingFor(seconds: number, windowId: number): void {
         Background.saveDisabledUntil = Date.now() + seconds * 1000;
         console.debug(`Saving disabled for ${ seconds } seconds.`);
-        
+
         // Queue up a save for when saving is re-enabled
         if (Utils.areWeTestingWithJest()) return;
 
@@ -121,7 +122,7 @@ export class Background {
             return;
         }
         // console.debug(`Tab ${ tabId } updated. Change info:`, changeInfo);
-        
+
         Background.debounceSave(tab.windowId);
     }
 
@@ -135,7 +136,7 @@ export class Background {
         console.debug(`Tab ${ tabId } attached to window ${ attachInfo.newWindowId }`);
         if (Background.isSavingDisabled()) return;
         if (!await StorageHelper.isWindowWorkspace(attachInfo.newWindowId)) return;
-        
+
         Background.debounceSave(attachInfo.newWindowId);
     }
 
@@ -153,7 +154,7 @@ export class Background {
         console.debug(`Tab ${ tabId } detached from window ${ detachInfo.oldWindowId }`);
         // Removing the tab from the workspace is handled in tabRemoved.
         Background.tabRemoved(tabId, { isWindowClosing: false, windowId: detachInfo.oldWindowId });
-        
+
         // No matter what window the tab is being moved to, we need to update the badge text of this tab.
         Utils.setBadgeForTab("", tabId);
     }
@@ -165,7 +166,7 @@ export class Background {
      */
     public static async tabReplaced(addedTabId: number, removedTabId: number): Promise<void> {
         console.debug(`Tab ${ removedTabId } replaced with tab ${ addedTabId }`);
-        
+
         if (Background.isSavingDisabled()) return;
         const addedTab = await chrome.tabs.get(addedTabId);
         if (!await StorageHelper.isWindowWorkspace(addedTab.windowId)) return;
@@ -211,7 +212,10 @@ export class Background {
     public static async saveWindowTabsToWorkspace(windowId: number): Promise<void> {
         const workspace = await StorageHelper.getWorkspace(windowId);
         const tabs = await Utils.getTabsFromWindow(windowId);
-        const tabGroups = await Utils.getTabGroupsFromWindow(windowId);
+        let tabGroups;
+        if (FeatureDetect.supportsTabGroups()) {
+            tabGroups = await Utils.getTabGroupsFromWindow(windowId);
+        }
 
         // If we're getting an update at a point where there are no tabs considered attached to the window,
         // we should just ignore it, since it's likely the window is closing. 
@@ -265,8 +269,11 @@ export class Background {
     }
 }
 
-function setupListeners() {
-    if (Utils.areWeTestingWithJest()) return;
+// #region Message Listeners
+// These must be at the top level for Firefox compatibility, otherwise they won't fire
+// when the extension is unloaded.
+if (!Utils.areWeTestingWithJest()) {
+    console.info("Adding message listeners in background script.");
 
     chrome.runtime.onMessage.addListener(BackgroundMessageHandlers.messageListener);
     chrome.windows.onRemoved.addListener(Background.windowRemoved);
@@ -276,8 +283,10 @@ function setupListeners() {
     chrome.tabs.onDetached.addListener(Background.tabDetached);
     chrome.tabs.onAttached.addListener(Background.tabAttached);
     chrome.tabs.onActivated.addListener(Background.tabActivated);
-    chrome.tabGroups.onCreated.addListener(Background.tabGroupEvent);
-    chrome.tabGroups.onUpdated.addListener(Background.tabGroupEvent);
-    chrome.tabGroups.onRemoved.addListener(Background.tabGroupEvent);
+    if (FeatureDetect.supportsTabGroups()) {
+        chrome.tabGroups.onCreated.addListener(Background.tabGroupEvent);
+        chrome.tabGroups.onUpdated.addListener(Background.tabGroupEvent);
+        chrome.tabGroups.onRemoved.addListener(Background.tabGroupEvent);
+    }
 }
-setupListeners();
+// #endregion
