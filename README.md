@@ -2,7 +2,8 @@
 
 **Edge Workspaces** is an extension that replicates the Microsoft Edge Workspaces feature. It allows you to save the state of a window, including all open tabs, and reopen it later as a workspace.
 
-<a href="https://chromewebstore.google.com/detail/edge-workspaces/feehlkcbifmladjmmpkghfokcngfkkkp"><img src="images/Google_Play_Store_badge_EN.svg" target="_blank" /></a>
+<a href="https://chromewebstore.google.com/detail/edge-workspaces/feehlkcbifmladjmmpkghfokcngfkkkp"><img src="images/Google_Play_Store_badge_EN.svg" target="_blank" height="55px" /></a>
+<a href="https://addons.mozilla.org/en-US/firefox/addon/edge-workspaces/"><img src="images/Firefox_addon_store_badge_EN.png" target="_blank" height="55px" /></a>
 
 <a href="images/extension-demo.gif" target="_blank" ><img src="images/extension-demo.gif" width="500px"></a>
 
@@ -53,15 +54,11 @@
 <img src="images/4-settings-import-export-window.png">
 
 ## Install
-### Chrome Web Store (Recommended)
-Download and add the extension to Chrome from the [Chrome Web Store page](https://chromewebstore.google.com/detail/edge-workspaces/feehlkcbifmladjmmpkghfokcngfkkkp)
+### Chrome Web Store
+<a href="https://chromewebstore.google.com/detail/edge-workspaces/feehlkcbifmladjmmpkghfokcngfkkkp"><img src="images/Google_Play_Store_badge_EN.svg" target="_blank" height="55px" /></a>
 
-### Manual Install
-1. Download the latest release from the [releases page](https://github.com/Elec0/chrome-edge-workspaces/releases)
-2. Extract the zip file to a permanent location on your computer
-3. Open Extensions -> Manage Extensions
-4. Ensure Developer Mode is enabled in the top right corner
-5. Click Load Unpacked -> Select the extracted folder
+### Firefox Addon Store
+<a href="https://addons.mozilla.org/en-US/firefox/addon/edge-workspaces/"><img src="images/Firefox_addon_store_badge_EN.png" target="_blank" height="55px" /></a>
 
 ## Contribution
 Suggestions and pull requests are welcomed!
@@ -73,10 +70,18 @@ Suggestions and pull requests are welcomed!
 4. Load the extension in Chrome by following the manual install instructions
 5. Run `npm run watch` to automatically rebuild the extension when changes are made
 
-Using VS Code, there are two tasks available:
+### Chrome
+Using VS Code, there are two tasks available for Chrome:
 * `Run npm watch` - Runs `npm run watch`
 * `Launch Chrome against localhost` - Launches a new Chrome window with the extension loaded
   * You will need to update extension ID in the `url` in `launch.json` to match the ID of the extension loaded in Chrome
+
+### Firefox
+Using VS Code, there are two tasks available for Firefox:
+* `Run npm watch firefox` - Runs `npm run watch-firefox`
+* `Launch Firefox with add-on` - Launches a new Firefox window with the extension loaded in debug mode
+  * Firefox only supports temporary installation of addons in debug mode, so data will not be saved between sessions
+
 
 ## Credits
 * Original extension icon made by [Yogi Aprelliyanto](https://www.flaticon.com/authors/yogi-aprelliyanto) from [Flaticon](https://www.flaticon.com/)
