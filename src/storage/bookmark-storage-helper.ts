@@ -5,16 +5,6 @@ import { WorkspaceStorage } from "../workspace-storage";
 
 export class BookmarkStorageHelper {
     /**
-     * Get the workspaces from storage.
-     * @returns A promise that resolves to a map of workspaces, or an empty object if no workspaces exist.
-     */
-    public static async getWorkspaces(): Promise<WorkspaceStorage> {
-        const result = await StorageHelper.getValue(Constants.KEY_STORAGE_WORKSPACES, "{}")
-
-        return StorageHelper.workspacesFromJson({ "data": result });
-    }
-
-    /**
      * Add a new workspace to storage.
      * We assume the window has no tabs, since it was just created.
      * 
@@ -29,48 +19,58 @@ export class BookmarkStorageHelper {
             return Promise.resolve(false) // reject("Window id is null or undefined");
         }
 
-        const workspaces = await this.getWorkspaces();
-        const newWorkspace = new Workspace(windowId, workspaceName, []);
+        // const workspaces = await this.getWorkspaces();
+        // const newWorkspace = new Workspace(windowId, workspaceName, []);
 
-        // additionally, create a bookmark folder for the workspace inside the Constants.BOOKMARKS_FOLDER_NAME
-        const bookmarkFolder = await this.getExtensionBookmarkFolder();
-        console.debug("bookmarkFolder", bookmarkFolder);
-        if (bookmarkFolder === undefined) {
-            return Promise.reject("Could not find the Tab Manager bookmark folder.");
-        }
-        await chrome.bookmarks.create({ parentId: bookmarkFolder.id, title: newWorkspace.name });
+        // // additionally, create a bookmark folder for the workspace inside the Constants.BOOKMARKS_FOLDER_NAME
+        // const bookmarkFolder = await this.getExtensionBookmarkFolder();
+        // console.debug("bookmarkFolder", bookmarkFolder);
+        // if (bookmarkFolder === undefined) {
+        //     return Promise.reject("Could not find the Tab Manager bookmark folder.");
+        // }
+        // await chrome.bookmarks.create({ parentId: bookmarkFolder.id, title: newWorkspace.name });
 
 
-        workspaces.set(newWorkspace.uuid, newWorkspace);
-        await StorageHelper.setWorkspaces(workspaces);
+        // workspaces.set(newWorkspace.uuid, newWorkspace);
+        // await StorageHelper.setWorkspaces(workspaces);
 
         return Promise.resolve(true);
     }
 
+
+    /**
+     * Retrieves the extension bookmark folder. If the folder does not exist, it creates one.
+     *
+     * @returns A promise that resolves to the bookmark folder node, or undefined if it cannot be found or created.
+     */
     private static async getExtensionBookmarkFolder(): Promise<chrome.bookmarks.BookmarkTreeNode | undefined> {
         const otherBookmarksFolder = await this.getOtherBookmarksFolder();
         const bookmarkFolder = otherBookmarksFolder?.children?.find((node) => node.title === Constants.BOOKMARKS_FOLDER_NAME);
         if (bookmarkFolder === undefined) {
-            return await this.createExtensionBookmarkFolder();
+            return await this.createExtensionBookmarkFolder(otherBookmarksFolder);
         }
         return bookmarkFolder; 
     }
 
-    private static async createExtensionBookmarkFolder(): Promise<chrome.bookmarks.BookmarkTreeNode> {
-        const otherBookmarksFolder = await this.getOtherBookmarksFolder();
+    private static async createExtensionBookmarkFolder(otherBookmarksFolder: chrome.bookmarks.BookmarkTreeNode | undefined): Promise<chrome.bookmarks.BookmarkTreeNode> {
         if (otherBookmarksFolder === undefined) {
-            console.error("Could not find the 'Other bookmarks' folder.");
-            return Promise.reject("Could not find the 'Other bookmarks' folder.");
+            console.error(`Could not find the '${Constants.BOOKMARKS_OTHER_NAME}' folder.`);
+            return Promise.reject(`Could not find the '${Constants.BOOKMARKS_OTHER_NAME}' folder.`);
         }
         return await chrome.bookmarks.create({ parentId: otherBookmarksFolder.id, title: Constants.BOOKMARKS_FOLDER_NAME });
     }
 
+    /**
+     * Retrieves the "Other Bookmarks" folder from the Chrome bookmarks tree.
+     *
+     * @returns A promise that resolves to the "Other Bookmarks" folder node if found, otherwise undefined.
+     */
     private static async getOtherBookmarksFolder(): Promise<chrome.bookmarks.BookmarkTreeNode | undefined> {
         const bookmarks = await chrome.bookmarks.getTree();
         if (bookmarks.length === 0) {
             return undefined;
         }
-        return bookmarks[0].children?.find((node) => node.title === "Other bookmarks");
+        return bookmarks[0].children?.find((node) => node.title === Constants.BOOKMARKS_OTHER_NAME);
     }
 
     public static async addTabToWorkspace(workspaceId: string, tab: chrome.tabs.Tab): Promise<void> {
@@ -86,5 +86,14 @@ export class BookmarkStorageHelper {
         console.debug("workspaceFolder", workspaceFolder);
         // Create a bookmark in the workspace's folder
         await chrome.bookmarks.create({ parentId: workspaceFolder?.id, title: tab.title, url: tab.url });
+    }
+
+    /**
+     * Save the workspace to bookmarks.
+     * 
+     * Ensures the associated workspace folder is fully replaced with the new workspace tabs.
+     */
+    public static async saveWorkspace(workspace: Workspace): Promise<void> {
+
     }
 }
