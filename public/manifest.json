@@ -26,7 +26,8 @@
   "permissions": [
     "storage",
     "tabGroups",
-    "activeTab"
+    "activeTab",
+    "bookmarks"
   ],
   "browser_specific_settings": {
     "gecko": {
