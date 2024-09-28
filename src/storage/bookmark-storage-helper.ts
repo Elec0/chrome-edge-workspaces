@@ -1,7 +1,6 @@
 import { Constants } from "../constants/constants";
 import { Workspace } from "../obj/workspace";
 import { StorageHelper } from "../storage-helper";
-import { WorkspaceStorage } from "../workspace-storage";
 
 export class BookmarkStorageHelper {
     /**
@@ -59,13 +58,12 @@ export class BookmarkStorageHelper {
         }
 
         const resolvedBookmarkFolder = await bookmarkFolder;
+
         if (resolvedBookmarkFolder === undefined) {
             console.error("Could not find the bookmark folder, cannot save workspace to bookmarks.");
             return Promise.reject("Could not find the bookmark folder.");
         }
-        console.debug("saveWorkspaceBookmarks: ", workspace, resolvedBookmarkFolder);
         const workspaceFolder = resolvedBookmarkFolder.children?.find((node) => node.title === workspace.name);
-
         // Delete the workspace folder and all children so we can recreate it with the new tabs
         if (workspaceFolder !== undefined) {
             await chrome.bookmarks.removeTree(workspaceFolder.id);
@@ -84,19 +82,19 @@ export class BookmarkStorageHelper {
      * Remove the workspace from bookmarks.
      * @param workspace - The workspace to remove.
      */
-    public static async removeWorkspace(workspace: Workspace): Promise<void> {
+    public static async removeWorkspace(workspace: Workspace, bookmarkFolder = this.getExtensionBookmarkFolder()): Promise<void> {
         if (!await this.isBookmarkSaveEnabled()) {
             console.debug("Bookmark saving is disabled, skipping.");
             return;
         }
 
-        const resolvedBookmarkFolder = await this.getExtensionBookmarkFolder();
+        const resolvedBookmarkFolder = await bookmarkFolder;
         if (resolvedBookmarkFolder === undefined) {
-            console.error("Could not find the bookmark folder, cannot remove workspace from bookmarks.");
+            console.error("Could not find the bookmark folder, cannot save workspace to bookmarks.");
             return Promise.reject("Could not find the bookmark folder.");
         }
-
         const workspaceFolder = resolvedBookmarkFolder.children?.find((node) => node.title === workspace.name);
+
         if (workspaceFolder !== undefined) {
             await chrome.bookmarks.removeTree(workspaceFolder.id);
         }

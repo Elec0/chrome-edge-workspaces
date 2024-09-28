@@ -25,6 +25,7 @@ describe('BookmarkStorageHelper', () => {
                 ]),
                 create: jest.fn().mockImplementation((bookmark) => Promise.resolve({ id: '3', ...bookmark })),
                 search: jest.fn().mockResolvedValue([]),
+                removeTree: jest.fn().mockResolvedValue()
             }
         };
 
@@ -67,5 +68,72 @@ describe('BookmarkStorageHelper', () => {
         await BookmarkStorageHelper.saveWorkspace(workspace);
 
         expect(chrome.bookmarks.create).not.toHaveBeenCalled();
+    });
+
+    describe("Remove workspace", () => {
+        let workspace;
+        let bookmarkFolder;
+    
+        beforeEach(() => {
+            workspace = new Workspace(1, "Test Workspace", []);
+            bookmarkFolder = {
+                id: "1",
+                title: Constants.BOOKMARKS_FOLDER_NAME,
+                children: [
+                    {
+                        id: "2",
+                        title: "Test Workspace",
+                        children: []
+                    }
+                ]
+            };
+    
+            jest.spyOn(chrome.bookmarks, "getTree").mockResolvedValue([{
+                id: "0",
+                title: "Bookmarks",
+                children: [
+                    {
+                        id: "1",
+                        title: Constants.BOOKMARKS_OTHER_NAME,
+                        children: [bookmarkFolder]
+                    }
+                ]
+            }]);
+        });
+
+        afterEach(() => {
+            jest.clearAllMocks();
+        });
+
+        it("removeWorkspace removes the workspace folder if it exists", async () => {
+            await BookmarkStorageHelper.removeWorkspace(workspace);
+    
+            expect(chrome.bookmarks.removeTree).toHaveBeenCalledWith("2");
+        });
+    
+        test("removeWorkspace does nothing if the workspace folder does not exist", async () => {
+            bookmarkFolder.children = [];
+    
+            await BookmarkStorageHelper.removeWorkspace(workspace);
+    
+            expect(chrome.bookmarks.removeTree).not.toHaveBeenCalled();
+        });
+    
+        test("removeWorkspace logs an error if the bookmark folder cannot be found", async () => {
+            jest.spyOn(console, "error").mockImplementation(() => {});
+            jest.spyOn(BookmarkStorageHelper, "getExtensionBookmarkFolder").mockResolvedValue(undefined);
+    
+            await expect(BookmarkStorageHelper.removeWorkspace(workspace)).rejects.toEqual("Could not find the bookmark folder.");
+    
+            expect(console.error).toHaveBeenCalled();
+        });
+    
+        test("removeWorkspace skips if bookmark saving is disabled", async () => {
+            jest.spyOn(BookmarkStorageHelper, "isBookmarkSaveEnabled").mockResolvedValue(false);
+    
+            await BookmarkStorageHelper.removeWorkspace(workspace);
+    
+            expect(chrome.bookmarks.removeTree).not.toHaveBeenCalled();
+        });
     });
 });
