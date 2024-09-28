@@ -43,19 +43,19 @@ export class BookmarkStorageHelper {
      *
      * @returns A promise that resolves to the bookmark folder node, or undefined if it cannot be found or created.
      */
-    private static async getExtensionBookmarkFolder(): Promise<chrome.bookmarks.BookmarkTreeNode | undefined> {
+    public static async getExtensionBookmarkFolder(): Promise<chrome.bookmarks.BookmarkTreeNode | undefined> {
         const otherBookmarksFolder = await this.getOtherBookmarksFolder();
         const bookmarkFolder = otherBookmarksFolder?.children?.find((node) => node.title === Constants.BOOKMARKS_FOLDER_NAME);
         if (bookmarkFolder === undefined) {
             return await this.createExtensionBookmarkFolder(otherBookmarksFolder);
         }
-        return bookmarkFolder; 
+        return bookmarkFolder;
     }
 
     private static async createExtensionBookmarkFolder(otherBookmarksFolder: chrome.bookmarks.BookmarkTreeNode | undefined): Promise<chrome.bookmarks.BookmarkTreeNode> {
         if (otherBookmarksFolder === undefined) {
-            console.error(`Could not find the '${Constants.BOOKMARKS_OTHER_NAME}' folder.`);
-            return Promise.reject(`Could not find the '${Constants.BOOKMARKS_OTHER_NAME}' folder.`);
+            console.error(`Could not find the '${ Constants.BOOKMARKS_OTHER_NAME }' folder.`);
+            return Promise.reject(`Could not find the '${ Constants.BOOKMARKS_OTHER_NAME }' folder.`);
         }
         return await chrome.bookmarks.create({ parentId: otherBookmarksFolder.id, title: Constants.BOOKMARKS_FOLDER_NAME });
     }
@@ -92,8 +92,31 @@ export class BookmarkStorageHelper {
      * Save the workspace to bookmarks.
      * 
      * Ensures the associated workspace folder is fully replaced with the new workspace tabs.
+     * 
+     * We are going to go with the constraint that names should be unique, and if they aren't 
+     * one of them will be overwritten.
+     * Unique names aren't enforced by the extension, but hopefully people don't name things the same since it's confusing.
      */
-    public static async saveWorkspace(workspace: Workspace): Promise<void> {
+    public static async saveWorkspace(workspace: Workspace, bookmarkFolder = this.getExtensionBookmarkFolder()): Promise<void> {
+        const resolvedBookmarkFolder = await bookmarkFolder;
+        if (resolvedBookmarkFolder === undefined) {
+            console.error("Could not find the bookmark folder, cannot save workspace to bookmarks.");
+            return Promise.reject("Could not find the bookmark folder.");
+        }
+        console.debug("saveWorkspaceBookmarks: ", workspace, resolvedBookmarkFolder);
+        const workspaceFolder = resolvedBookmarkFolder.children?.find((node) => node.title === workspace.name);
 
+        // Delete the workspace folder and all children so we can recreate it with the new tabs
+        if (workspaceFolder !== undefined) {
+            await chrome.bookmarks.removeTree(workspaceFolder.id);
+        }
+
+        // Create the workspace folder
+        const newWorkspaceFolder = await chrome.bookmarks.create({ parentId: resolvedBookmarkFolder.id, title: workspace.name });
+
+        // Add all the tabs to the workspace folder
+        for (const tab of workspace.getTabs()) {
+            await chrome.bookmarks.create({ parentId: newWorkspaceFolder.id, title: tab.title, url: tab.url });
+        }
     }
 }

@@ -231,7 +231,8 @@ export class Background {
         Utils.setBadgeForWindow(windowId, Background.getBadgeTextForWorkspace(workspace));
 
         // Ensure the workspace is saved to bookmarks
-        BookmarkStorageHelper.saveWorkspace(workspace)
+        console.debug(`Saving workspace ${ workspace.name } to bookmarks...`);
+        await BookmarkStorageHelper.saveWorkspace(workspace)
 
         // Save the workspace to sync storage
         // await StorageHelper.setWorkspace(workspace);
