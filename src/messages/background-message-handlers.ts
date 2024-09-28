@@ -4,6 +4,7 @@ import { StorageHelper } from "../storage-helper";
 import { Background } from "../background";
 import { MessageResponse, MessageResponses } from "../constants/message-responses";
 import { Utils } from "../utils";
+import { BookmarkStorageHelper } from "../storage/bookmark-storage-helper";
 
 /**
  * Class representing the message handlers for background operations.
@@ -67,6 +68,10 @@ export class BackgroundMessageHandlers {
         }
 
         const result = await StorageHelper.removeWorkspace(request.payload.uuid);
+
+        // Remove the workspace from bookmarks
+        await BookmarkStorageHelper.removeWorkspace(workspace);
+        
         if (!result) {
             return MessageResponses.ERROR;
         }
