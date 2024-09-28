@@ -4,6 +4,7 @@ import { BaseDialog } from "../dialogs/base-dialog";
 import { VERSION } from "../globals";
 import { LogHelper } from "../log-helper";
 import { StorageHelper } from "../storage-helper";
+import { BookmarkStorageHelper } from "../storage/bookmark-storage-helper";
 import SETTINGS_TEMPLATE from "../templates/dialogSettingsTemplate.html";
 import { Utils } from "../utils";
 
@@ -21,8 +22,14 @@ export class PageSettings extends BaseDialog {
      * Opens the settings dialog.
      * This method creates the dialog element, attaches event listeners, and shows the dialog.
      */
-    public static openSettings() {
-        const dialog = Utils.interpolateTemplate(SETTINGS_TEMPLATE, {"version": VERSION});
+    public static async openSettings() {
+        const saveBookmarks = await BookmarkStorageHelper.isBookmarkSaveEnabled();
+        const dialog = Utils.interpolateTemplate(SETTINGS_TEMPLATE, 
+            {
+                "version": VERSION,
+                "bookmarkSaveChecked": saveBookmarks ? "checked" : ""
+            }
+        );
 
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = dialog;
@@ -34,6 +41,10 @@ export class PageSettings extends BaseDialog {
         });
         dialogElement.querySelector("#modal-settings-import")?.addEventListener("click", () => {
             PageSettings.importSettings();
+        });
+        dialogElement.querySelector("#modal-settings-bookmark-save")?.addEventListener("click", async (event) => {
+            const target = event.target as HTMLInputElement;
+            await BookmarkStorageHelper.setBookmarkSaveEnabled(target.checked);
         });
 
         dialogElement.querySelector("#modal-settings-close")?.addEventListener("click", () => {

@@ -84,6 +84,18 @@ body {
     cursor: pointer;
     align-self: center;
 }
+/* No margin bottom for checkboxes */
+input[type="checkbox"] {
+    margin-bottom: 0;
+}
+
+.settings-checkbox {
+    display: flex;
+    align-items: center;
+}
+.settings-checkbox label {
+    margin-left: 5px;
+}
 
 .sidebar {
     /* To override the width in body */

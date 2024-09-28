@@ -1,7 +1,7 @@
 
 export class Constants {
     public static KEY_STORAGE_WORKSPACES = "workspaces";
-    
+
     public static BOOKMARKS_FOLDER_NAME = "Edge Workspaces";
 
     /** The name for 'Other bookmarks' */
@@ -16,4 +16,10 @@ export class Constants {
     public static WORKSPACE_SAVE_DEBOUNCE_TIME = 300;
 
     public static DEBOUNCE_ALARM_NAME_PREFIX = "debounceSave";
+
+    public static STORAGE_KEYS = {
+        settings: {
+            saveBookmarks: "settings.saveBookmarks",
+        }
+    }
 }

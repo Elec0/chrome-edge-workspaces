@@ -1,7 +1,7 @@
-import { BookmarkStorageHelper } from '../../storage/bookmark-storage-helper';
 import { Constants } from '../../constants/constants';
-import { Workspace } from '../../obj/workspace';
 import { TabStub } from "../../obj/tab-stub";
+import { Workspace } from '../../obj/workspace';
+import { BookmarkStorageHelper } from '../../storage/bookmark-storage-helper';
 
 jest.mock('../../storage-helper');
 
@@ -27,6 +27,8 @@ describe('BookmarkStorageHelper', () => {
                 search: jest.fn().mockResolvedValue([]),
             }
         };
+
+        jest.spyOn(BookmarkStorageHelper, "isBookmarkSaveEnabled").mockResolvedValue(true);
     });
 
     afterEach(() => {
@@ -56,5 +58,14 @@ describe('BookmarkStorageHelper', () => {
         expect(chrome.bookmarks.create).toHaveBeenCalledWith({title: 'Test Workspace', parentId: expect.any(String)});
         expect(chrome.bookmarks.create).toHaveBeenCalledWith({title: 'Tab 1', url: 'http://example.com', parentId: expect.any(String)});
         expect(chrome.bookmarks.create).toHaveBeenCalledWith({title: 'Tab 2', url: 'http://example2.com', parentId: expect.any(String)});
+    });
+
+    test('nothing should be saved to bookmarks when the setting is disabled', async () => {
+        jest.spyOn(BookmarkStorageHelper, "isBookmarkSaveEnabled").mockResolvedValue(false);
+
+        const workspace = new Workspace(1, 'Test Workspace', []);
+        await BookmarkStorageHelper.saveWorkspace(workspace);
+
+        expect(chrome.bookmarks.create).not.toHaveBeenCalled();
     });
 });
