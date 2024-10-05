@@ -23,8 +23,8 @@ export class BookmarkStorageHelper {
 
     private static async createExtensionBookmarkFolder(otherBookmarksFolder: chrome.bookmarks.BookmarkTreeNode | undefined): Promise<chrome.bookmarks.BookmarkTreeNode> {
         if (otherBookmarksFolder === undefined) {
-            console.error(`Could not find the '${ Constants.BOOKMARKS_OTHER_NAME }' folder.`);
-            return Promise.reject(`Could not find the '${ Constants.BOOKMARKS_OTHER_NAME }' folder.`);
+            console.error(`Could not find the 'Other bookmarks' folder.`);
+            return Promise.reject(`Could not find the 'Other bookmarks' folder.`);
         }
         return await chrome.bookmarks.create({ parentId: otherBookmarksFolder.id, title: Constants.BOOKMARKS_FOLDER_NAME });
     }
@@ -39,7 +39,8 @@ export class BookmarkStorageHelper {
         if (bookmarks.length === 0) {
             return undefined;
         }
-        return bookmarks[0].children?.find((node) => node.title === Constants.BOOKMARKS_OTHER_NAME);
+        // We can't find the "Other bookmarks" folder by name, since it's localized, so we'll just grab the second child
+        return bookmarks[0].children?.at(1);
     }
 
     /**
@@ -51,22 +52,33 @@ export class BookmarkStorageHelper {
      * one of them will be overwritten.
      * Unique names aren't enforced by the extension, but hopefully people don't name things the same since it's confusing.
      */
-    public static async saveWorkspace(workspace: Workspace, bookmarkFolder = this.getExtensionBookmarkFolder()): Promise<void> {
+    public static async saveWorkspace(workspace: Workspace, bookmarkFolder?: chrome.bookmarks.BookmarkTreeNode | undefined): Promise<void> {
         if (!await this.isBookmarkSaveEnabled()) {
             console.debug("Bookmark saving is disabled, skipping.");
             return;
         }
-
-        const resolvedBookmarkFolder = await bookmarkFolder;
+        // Resolve the bookmark folder using the provided one or our default
+        let resolvedBookmarkFolder;
+        if (bookmarkFolder === undefined) {
+            resolvedBookmarkFolder = await this.getExtensionBookmarkFolder();
+        }
+        else {
+            resolvedBookmarkFolder = await bookmarkFolder;
+        }
 
         if (resolvedBookmarkFolder === undefined) {
             console.error("Could not find the bookmark folder, cannot save workspace to bookmarks.");
             return Promise.reject("Could not find the bookmark folder.");
         }
-        const workspaceFolder = resolvedBookmarkFolder.children?.find((node) => node.title === workspace.name);
+        const workspaceFolders = resolvedBookmarkFolder.children?.filter((node) => node.title === workspace.name);
         // Delete the workspace folder and all children so we can recreate it with the new tabs
-        if (workspaceFolder !== undefined) {
-            await chrome.bookmarks.removeTree(workspaceFolder.id);
+        if (workspaceFolders !== undefined) {
+            if (workspaceFolders.length > 1) {
+                console.warn(`Found multiple workspace folders with the name '${ workspace.name }'. All will be removed!`);
+            }
+            workspaceFolders.forEach(async (workspaceFolder) => {
+                await chrome.bookmarks.removeTree(workspaceFolder.id);
+            });
         }
 
         // Create the workspace folder

@@ -2,10 +2,7 @@
 export class Constants {
     public static KEY_STORAGE_WORKSPACES = "workspaces";
 
-    public static BOOKMARKS_FOLDER_NAME = "Edge Workspaces";
-
-    /** The name for 'Other bookmarks' */
-    public static BOOKMARKS_OTHER_NAME = "Other bookmarks";
+    public static BOOKMARKS_FOLDER_NAME = "Edge Workspaces (read-only)";
 
     public static DOWNLOAD_FILENAME = "workspaces-export.json";
 
