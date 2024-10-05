@@ -23,8 +23,8 @@ export class BookmarkStorageHelper {
 
     private static async createExtensionBookmarkFolder(otherBookmarksFolder: chrome.bookmarks.BookmarkTreeNode | undefined): Promise<chrome.bookmarks.BookmarkTreeNode> {
         if (otherBookmarksFolder === undefined) {
-            console.error(`Could not find the 'Other bookmarks' folder.`);
-            return Promise.reject(`Could not find the 'Other bookmarks' folder.`);
+            console.error("Could not find the 'Other bookmarks' folder.");
+            return Promise.reject("Could not find the 'Other bookmarks' folder.");
         }
         return await chrome.bookmarks.create({ parentId: otherBookmarksFolder.id, title: Constants.BOOKMARKS_FOLDER_NAME });
     }
