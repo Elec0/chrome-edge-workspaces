@@ -4,6 +4,7 @@ import { LogHelper } from "./log-helper";
 import { BackgroundMessageHandlers } from "./messages/background-message-handlers";
 import { Workspace } from "./obj/workspace";
 import { StorageHelper } from "./storage-helper";
+import { BookmarkStorageHelper } from "./storage/bookmark-storage-helper";
 import { Utils } from "./utils";
 import { DebounceUtil } from "./utils/debounce";
 import { FeatureDetect } from "./utils/feature-detect";
@@ -229,7 +230,12 @@ export class Background {
         // Update the badge text
         Utils.setBadgeForWindow(windowId, Background.getBadgeTextForWorkspace(workspace));
 
-        // await BookmarkStorageHelper.addTabToWorkspace(workspace.uuid, tab);
+        // Ensure the workspace is saved to bookmarks
+        console.debug(`Saving workspace ${ workspace.name } to bookmarks...`);
+        await BookmarkStorageHelper.saveWorkspace(workspace)
+
+        // Save the workspace to sync storage
+        // await StorageHelper.setWorkspace(workspace);
     }
 
     /**

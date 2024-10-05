@@ -1,8 +1,8 @@
 
 export class Constants {
     public static KEY_STORAGE_WORKSPACES = "workspaces";
-    
-    public static BOOKMARKS_FOLDER_NAME = "Tab Manager";
+
+    public static BOOKMARKS_FOLDER_NAME = "Edge Workspaces (read-only)";
 
     public static DOWNLOAD_FILENAME = "workspaces-export.json";
 
@@ -13,4 +13,10 @@ export class Constants {
     public static WORKSPACE_SAVE_DEBOUNCE_TIME = 300;
 
     public static DEBOUNCE_ALARM_NAME_PREFIX = "debounceSave";
+
+    public static STORAGE_KEYS = {
+        settings: {
+            saveBookmarks: "settings.saveBookmarks",
+        }
+    }
 }

@@ -11,6 +11,7 @@
 
 - **Automatic Saving**: The extension automatically saves your workspace as you work, eliminating the need to manually save open tabs.
 - **Import/Export**: Workspaces can be exported to a file and imported later on another device.
+- **Workspaces copied as bookmarks**: Workspaces can be saved as bookmarks to allow for easier cross-platform access.
 - **Internal Tab Exclusion**: Internal tabs, such as the new tab page, settings, or extensions, are not saved to workspaces.
 
 ## Usage
@@ -36,6 +37,13 @@
 
 - Click the trashcan icon to delete a workspace.
 - Click the pencil icon to rename a workspace.
+
+### Saving Workspaces as Bookmarks
+
+- Ensure "Save workspaces to bookmarks" option is checked in Settings.
+- Workspaces will now be copied to `Other bookmarks -> Edge Workspaces (read-only) -> [Workspace Name]`.
+- Note that changes to the bookmarks will **not** be reflected in the workspaces themselves, as they are just a copy. 
+- When installing a new version, make sure to open old workspaces at least once to allow for them to be saved as bookmarks.
 
 ### Importing/Exporting Workspaces
 
