@@ -2,7 +2,7 @@ global.chrome = {
     storage: {
         local: {
             get: async () => { throw new Error("Unimplemented.") },
-            set: async () => { throw new Error("Unimplemented.") },
+            set: async () => { jest.fn() },
             clear: async () => { throw new Error("Unimplemented.") }
         }
     },
@@ -38,3 +38,4 @@ global.chrome = {
         setBadgeText: jest.fn()
     }
 };
+global.VERSION = "1.0.0";
