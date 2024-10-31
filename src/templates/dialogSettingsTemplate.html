@@ -1,8 +1,13 @@
 <dialog class="modal" id="modal">
     <h2>Extension Settings (v${version})</h2>
     <br />
-    <input type="button" id="modal-settings-export" value="Export Data" />
-    <input type="button" id="modal-settings-import" value="Import Data" />
+    <div class="settings-checkbox">
+        <input type="checkbox" id="modal-settings-bookmark-save" ${bookmarkSaveChecked} />
+        <label for="modal-settings-bookmark-save">Save workspaces to bookmarks</label>
+    </div>
+    <br />
+    <input type="button" id="modal-settings-export" value="Export data to file" />
+    <input type="button" id="modal-settings-import" value="Import data from file" />
 
     <div class="modal-settings-bottom">
         <button id="modal-settings-close" class="close">Close</button>

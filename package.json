@@ -1,13 +1,19 @@
 {
   "name": "edge-workspaces",
-  "version": "0.9.0",
-  "description": "Edge workspaces for Chrome",
+  "version": "1.1.0",
+  "description": "Edge workspaces extension",
   "private": true,
   "scripts": {
     "prebuild": "node scripts/sync-version.js",
     "watch": "node ./node_modules/webpack/bin/webpack.js --mode=development --watch --config config/webpack.config.js",
-    "build": "node ./node_modules/webpack/bin/webpack.js --mode=production --config config/webpack.config.js",
-    "build-copy": "npm run build && cp -rf ./build/* ../chrome-edge-workspaces.vscode/test-build",
+    "watch-firefox": "cross-env TARGET_BROWSER=firefox npm run watch",
+
+    "build": "npm run build-chrome && npm run build-firefox",
+    "build-target": "node ./node_modules/webpack/bin/webpack.js --mode=production --config config/webpack.config.js",
+    "build-chrome": "cross-env TARGET_BROWSER=chrome npm run build-target",
+    "build-firefox": "cross-env TARGET_BROWSER=firefox npm run build-target",
+    "build-copy": "npm run build && cp -rf ./build/chrome/* ../chrome-edge-workspaces.vscode/test-build",
+
     "lint": "eslint -f unix \"src/**/*.{ts,tsx}\"",
     "test": "jest .",
     "test-unit": "jest --testMatch='**/unit/*.test.[tj]s'",
@@ -22,6 +28,7 @@
     "@typescript-eslint/eslint-plugin": "^6.16.0",
     "@typescript-eslint/parser": "^6.16.0",
     "copy-webpack-plugin": "^6.4.1",
+    "cross-env": "^7.0.3",
     "css-loader": "^6.8.1",
     "eslint": "^8.56.0",
     "eslint-plugin-tsdoc": "^0.2.17",

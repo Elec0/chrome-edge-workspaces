@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Edge Workspaces",
-  "version": "0.9.0",
-  "description": "Edge Workspaces is a Chrome extension that helps you manage your tabs.",
+  "version": "1.1.0",
+  "description": "Effortlessly organize and manage multiple projects or tasks by saving and restoring entire browsing sessions.",
   "icons": {
     "16": "icons/icon_16.png",
     "32": "icons/icon_32.png",
@@ -18,13 +18,26 @@
   ],
   "background": {
     "service_worker": "background.js",
+    "scripts": [
+      "background.js"
+    ],
     "type": "module"
   },
   "permissions": [
     "storage",
     "tabGroups",
-    "scripting",
     "activeTab",
     "bookmarks"
-  ]
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "edgeworkspaces@elec0.com",
+      "strict_min_version": "109.0"
+    }
+  },
+  "sidebar_action": {
+    "default_title": "Edge Workspaces",
+    "default_panel": "sidebar.html",
+    "default_icon": "icons/icon_48.png"
+  }
 }

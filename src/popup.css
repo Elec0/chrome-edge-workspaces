@@ -62,10 +62,6 @@
     }
 }
 
-html {
-    /* font-family: Segoe UI, Helvetica, Arial, sans-serif; */
-}
-
 body {
     width: 350px;
     min-height: 150px;
@@ -73,6 +69,37 @@ body {
 
     color: var(--on-surface-color);
     background-color: var(--surface-color);
+}
+
+/*
+ * Make the inputs look more modern
+ */
+ input, button {
+    background-color: var(--surface-container-color);
+    color: var(--on-surface-color);
+    border: none;
+    padding: 5px 10px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    align-self: center;
+}
+/* No margin bottom for checkboxes */
+input[type="checkbox"] {
+    margin-bottom: 0;
+}
+
+.settings-checkbox {
+    display: flex;
+    align-items: center;
+}
+.settings-checkbox label {
+    margin-left: 5px;
+}
+
+.sidebar {
+    /* To override the width in body */
+    width: 100%;
 }
 
 .app {
@@ -239,20 +266,6 @@ img#addIcon:hover {
     align-items: center;
     justify-content: center;
 
-}
-
-/*
-Make the input buttons inside the modal look like a modern button
-*/
-.modal input, .modal button {
-    background-color: var(--surface-container-color);
-    color: var(--on-surface-color);
-    border: none;
-    padding: 5px 10px;
-    margin-bottom: 5px;
-    border-radius: 5px;
-    cursor: pointer;
-    align-self: center;
 }
 
 #modal-input-name {

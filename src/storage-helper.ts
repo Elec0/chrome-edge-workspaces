@@ -1,5 +1,6 @@
 import { Constants } from "./constants/constants";
 import { MessageResponse } from "./constants/message-responses";
+import { VERSION } from "./globals";
 import { Workspace } from "./obj/workspace";
 import { WorkspaceStorage } from "./workspace-storage";
 
@@ -9,7 +10,7 @@ export class StorageHelper {
     private static _loadedWorkspaces: WorkspaceStorage = new WorkspaceStorage();
 
     public static async init() {
-
+        this.saveVersionNumber();
     }
 
     /** 
@@ -40,6 +41,14 @@ export class StorageHelper {
     public static setSyncValue(key: string, val: string): Promise<void> {
         console.log(`Sync set ${ key }`);
         return chrome.storage.sync.set({ [key]: val });
+    }
+
+    /**
+     * Save the version number to storage. This will be used to determine if the extension has been updated
+     * and if any migrations need to be run.
+     */
+    private static saveVersionNumber() {
+        this.setValue("version", VERSION);
     }
 
     /**

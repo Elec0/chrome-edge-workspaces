@@ -1,11 +1,54 @@
-import { BackgroundMessageHandlers } from "./messages/background-message-handlers";
+import { Constants } from "./constants/constants";
 import { MessageResponse, MessageResponses } from "./constants/message-responses";
 import { LogHelper } from "./log-helper";
-import { StorageHelper } from "./storage-helper";
-import { Utils } from "./utils";
+import { BackgroundMessageHandlers } from "./messages/background-message-handlers";
 import { Workspace } from "./obj/workspace";
+import { StorageHelper } from "./storage-helper";
+import { BookmarkStorageHelper } from "./storage/bookmark-storage-helper";
+import { Utils } from "./utils";
+import { DebounceUtil } from "./utils/debounce";
+import { FeatureDetect } from "./utils/feature-detect";
 
 export class Background {
+    private static saveDisabledUntil: number = 0;
+    private static savesSkipped: number = 0;
+
+    /**
+     * Disable saving for a certain number of seconds.
+     * Performs a scheduled save after the time has elapsed.
+     */
+    private static disableSavingFor(seconds: number, windowId: number): void {
+        Background.saveDisabledUntil = Date.now() + seconds * 1000;
+        console.debug(`Saving disabled for ${ seconds } seconds.`);
+
+        // Queue up a save for when saving is re-enabled
+        if (Utils.areWeTestingWithJest()) return;
+
+        setTimeout(() => {
+            this.isSavingDisabled(); // Reset the flag
+            Background.saveWindowTabsToWorkspace(windowId);
+        }, seconds * 1000);
+    }
+
+    private static isSavingDisabled(): boolean {
+        const skip = Date.now() < Background.saveDisabledUntil;
+        if (skip) {
+            this.savesSkipped++;
+        }
+        else if (this.savesSkipped > 0) {
+            console.debug(`Saves skipped: ${ this.savesSkipped }`);
+            this.savesSkipped = 0;
+        }
+        return skip;
+    }
+
+    /** Wrapper for debouncing the save with our util. */
+    private static debounceSave(windowId: number): void {
+        DebounceUtil.debounce(() => {
+            Background.saveWindowTabsToWorkspace(windowId);
+        }, Constants.WORKSPACE_SAVE_DEBOUNCE_TIME);
+    }
+
     /**
      * A window is closing. Check to see if it's a workspace, and if so, push an update to the sync storage.
      * 
@@ -44,6 +87,7 @@ export class Background {
      * @param removeInfo - Information about the tab removal.
      */
     public static async tabRemoved(tabId: number, removeInfo: chrome.tabs.TabRemoveInfo): Promise<void> {
+        if (Background.isSavingDisabled()) return;
         if (removeInfo.isWindowClosing || removeInfo.windowId == null || removeInfo.windowId == undefined) {
             return; // Window is closing, not saving tabs; they've already been saved.
         }
@@ -56,7 +100,7 @@ export class Background {
         if (workspace.getTabs().length > 1) {
             // Tab is being closed normally, update the workspace that the tab has closed.
             // The tab is not part of the window anymore, so querying the window will not return the tab.
-            Background.saveWindowTabsToWorkspace(removeInfo.windowId);
+            Background.debounceSave(removeInfo.windowId);
         }
     }
 
@@ -70,6 +114,7 @@ export class Background {
      * @param tab - The tab that was updated.
      */
     public static async tabUpdated(tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab): Promise<void> {
+        if (Background.isSavingDisabled()) return;
         if (!await StorageHelper.isWindowWorkspace(tab.windowId)) return;
 
         // We need to ignore any tabs that are not normal website tabs.
@@ -77,8 +122,8 @@ export class Background {
             return;
         }
         // console.debug(`Tab ${ tabId } updated. Change info:`, changeInfo);
-        
-        Background.saveWindowTabsToWorkspace(tab.windowId);
+
+        Background.debounceSave(tab.windowId);
     }
 
     /**
@@ -89,9 +134,10 @@ export class Background {
      */
     public static async tabAttached(tabId: number, attachInfo: chrome.tabs.TabAttachInfo): Promise<void> {
         console.debug(`Tab ${ tabId } attached to window ${ attachInfo.newWindowId }`);
+        if (Background.isSavingDisabled()) return;
         if (!await StorageHelper.isWindowWorkspace(attachInfo.newWindowId)) return;
-        
-        Background.saveWindowTabsToWorkspace(attachInfo.newWindowId);
+
+        Background.debounceSave(attachInfo.newWindowId);
     }
 
     /**
@@ -108,7 +154,7 @@ export class Background {
         console.debug(`Tab ${ tabId } detached from window ${ detachInfo.oldWindowId }`);
         // Removing the tab from the workspace is handled in tabRemoved.
         Background.tabRemoved(tabId, { isWindowClosing: false, windowId: detachInfo.oldWindowId });
-        
+
         // No matter what window the tab is being moved to, we need to update the badge text of this tab.
         Utils.setBadgeForTab("", tabId);
     }
@@ -120,10 +166,12 @@ export class Background {
      */
     public static async tabReplaced(addedTabId: number, removedTabId: number): Promise<void> {
         console.debug(`Tab ${ removedTabId } replaced with tab ${ addedTabId }`);
+
+        if (Background.isSavingDisabled()) return;
         const addedTab = await chrome.tabs.get(addedTabId);
         if (!await StorageHelper.isWindowWorkspace(addedTab.windowId)) return;
 
-        Background.saveWindowTabsToWorkspace(addedTab.windowId);
+        Background.debounceSave(addedTab.windowId);
     }
 
     /**
@@ -132,11 +180,12 @@ export class Background {
      * @param activeInfo - Information about the activated tab.
      */
     public static async tabActivated(activeInfo: chrome.tabs.TabActiveInfo): Promise<void> {
+        if (Background.isSavingDisabled()) return;
         if (!await StorageHelper.isWindowWorkspace(activeInfo.windowId)) return;
 
         const workspace = await StorageHelper.getWorkspace(activeInfo.windowId);
         if (workspace.getTabs().length > 1) {
-            Background.saveWindowTabsToWorkspace(activeInfo.windowId);
+            Background.debounceSave(activeInfo.windowId);
         }
     }
 
@@ -147,10 +196,10 @@ export class Background {
      */
     public static async tabGroupEvent(group: chrome.tabGroups.TabGroup): Promise<void> {
         console.debug(`Tab group ${ group.id } changed in window ${ group.windowId }`);
+        if (Background.isSavingDisabled()) return;
         if (!await StorageHelper.isWindowWorkspace(group.windowId)) return;
 
-        // No await is intentional, as we don't need to wait for this to finish.
-        Background.saveWindowTabsToWorkspace(group.windowId);
+        Background.debounceSave(group.windowId);
     }
 
     /**
@@ -163,7 +212,10 @@ export class Background {
     public static async saveWindowTabsToWorkspace(windowId: number): Promise<void> {
         const workspace = await StorageHelper.getWorkspace(windowId);
         const tabs = await Utils.getTabsFromWindow(windowId);
-        const tabGroups = await Utils.getTabGroupsFromWindow(windowId);
+        let tabGroups;
+        if (FeatureDetect.supportsTabGroups()) {
+            tabGroups = await Utils.getTabGroupsFromWindow(windowId);
+        }
 
         // If we're getting an update at a point where there are no tabs considered attached to the window,
         // we should just ignore it, since it's likely the window is closing. 
@@ -177,7 +229,12 @@ export class Background {
         // Update the badge text
         Utils.setBadgeForWindow(windowId, Background.getBadgeTextForWorkspace(workspace));
 
-        // await BookmarkStorageHelper.addTabToWorkspace(workspace.uuid, tab);
+        // Ensure the workspace is saved to bookmarks
+        console.debug(`Saving workspace ${ workspace.name } to bookmarks...`);
+        await BookmarkStorageHelper.saveWorkspace(workspace)
+
+        // Save the workspace to sync storage
+        // await StorageHelper.setWorkspace(workspace);
     }
 
     /**
@@ -200,6 +257,9 @@ export class Background {
      * @returns 
      */
     public static async updateWorkspaceWindowId(uuid: string, windowId: number): Promise<MessageResponse> {
+        // Disable saving for 5 seconds
+        Background.disableSavingFor(Constants.WORKSPACE_OPEN_SAVE_DELAY, windowId);
+
         try {
             const workspace = await StorageHelper.getWorkspace(uuid);
             workspace.windowId = windowId;
@@ -214,8 +274,11 @@ export class Background {
     }
 }
 
-function setupListeners() {
-    if (Utils.areWeTestingWithJest()) return;
+// #region Message Listeners
+// These must be at the top level for Firefox compatibility, otherwise they won't fire
+// when the extension is unloaded.
+if (!Utils.areWeTestingWithJest()) {
+    console.info("Adding message listeners in background script.");
 
     chrome.runtime.onMessage.addListener(BackgroundMessageHandlers.messageListener);
     chrome.windows.onRemoved.addListener(Background.windowRemoved);
@@ -225,8 +288,10 @@ function setupListeners() {
     chrome.tabs.onDetached.addListener(Background.tabDetached);
     chrome.tabs.onAttached.addListener(Background.tabAttached);
     chrome.tabs.onActivated.addListener(Background.tabActivated);
-    chrome.tabGroups.onCreated.addListener(Background.tabGroupEvent);
-    chrome.tabGroups.onUpdated.addListener(Background.tabGroupEvent);
-    chrome.tabGroups.onRemoved.addListener(Background.tabGroupEvent);
+    if (FeatureDetect.supportsTabGroups()) {
+        chrome.tabGroups.onCreated.addListener(Background.tabGroupEvent);
+        chrome.tabGroups.onUpdated.addListener(Background.tabGroupEvent);
+        chrome.tabGroups.onRemoved.addListener(Background.tabGroupEvent);
+    }
 }
-setupListeners();
+// #endregion
