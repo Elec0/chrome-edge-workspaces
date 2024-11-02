@@ -13,6 +13,36 @@ interface SyncData {
     tabGroups: string[];
 }
 
+/**
+ * To implement syncing to Chrome's `sync` storage while adhering to the quota and rate limits, we need to design a data structure that is both efficient and compliant with the constraints.
+ * 
+ * ### Data Structure Format
+ * 1. **Workspace Metadata**:
+ *     - Store metadata about each workspace separately from the actual tab data. This metadata includes the workspace name, UUID, and window ID.
+ *     - Key: `workspace_metadata`
+ *     - Value: An array of objects, each representing a workspace's metadata.
+ * 
+ * 2. **Workspace Tabs**:
+ *    - Store the tabs for each workspace in separate items to avoid exceeding the `QUOTA_BYTES_PER_ITEM` limit.
+ *    - Key: `workspace_tabs_<uuid>_<index>`
+ *    - Value: An object containing an array of tab stubs.
+ * 
+ * 3. **Workspace Tab Groups**:
+ *    - Store the tab groups for each workspace in separate items.
+ *    - Key: `workspace_tab_groups_<uuid>`
+ *    - Value: An array of tab group stubs.
+ * 
+ * ### Sync Strategy
+ * To ensure we do not exceed the rate limits, we will implement a debouncing mechanism for saving data to `sync` storage. This will aggregate multiple changes and perform a single save operation within a specified time window.
+ * 
+ * ### Summary
+ * - **Metadata**: Store workspace metadata in a single item.
+ * - **Tabs**: Store tabs in separate items, partitioned by workspace UUID and index.
+ * - **Tab Groups**: Store tab groups in separate items, partitioned by workspace UUID.
+ * - **Debouncing**: Implement a debouncing mechanism to control the frequency of write operations to `sync` storage.
+ * 
+ * This structure ensures that we stay within the `QUOTA_BYTES_PER_ITEM` limit and manage the rate of write operations effectively.
+ */
 class SyncWorkspaceStorage {
     private static readonly SYNC_QUOTA_BYTES_PER_ITEM = chrome.storage.sync.QUOTA_BYTES_PER_ITEM; // 8KB per item
     private static readonly SYNC_MAX_WRITE_OPERATIONS_PER_HOUR = 1800;
@@ -88,6 +118,7 @@ class SyncWorkspaceStorage {
      * @param workspace - The Workspace object to save.
      */
     public static debounceSaveWorkspaceToSync(workspace: Workspace): void {
+        // TODO: Current implementation of debounce doesn't work for multiple callbacks.
         DebounceUtil.debounce(() => SyncWorkspaceStorage.saveWorkspaceToSync(workspace), 60000); // 1 minute debounce
     }
 }
