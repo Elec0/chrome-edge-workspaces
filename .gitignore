@@ -8,5 +8,7 @@
 # misc
 .DS_Store
 
+/coverage
+
 npm-debug.log*
 size-plugin.json
