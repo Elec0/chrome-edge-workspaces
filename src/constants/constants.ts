@@ -20,6 +20,7 @@ export class Constants {
     public static STORAGE_KEYS = {
         settings: {
             saveBookmarks: "settings.saveBookmarks",
+            saveSync: "settings.saveSync",
         }
     }
 }

@@ -84,7 +84,7 @@ body {
     cursor: pointer;
     align-self: center;
 }
-/* No margin bottom for checkboxes */
+/* No margin bottom for 1oxes */
 input[type="checkbox"] {
     margin-bottom: 0;
 }
@@ -92,6 +92,7 @@ input[type="checkbox"] {
 .settings-checkbox {
     display: flex;
     align-items: center;
+    margin-bottom: 3px;
 }
 .settings-checkbox label {
     margin-left: 5px;
@@ -243,9 +244,11 @@ img#addIcon:hover {
     border: 0px;
 }
 
-.modal h2,
 .modal h2 {
     margin-bottom: 2px;
+}
+.modal h3 {
+    margin-top: 2px;
 }
 
 .modal #modal-settings-close {

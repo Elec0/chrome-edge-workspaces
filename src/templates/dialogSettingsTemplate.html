@@ -1,13 +1,20 @@
 <dialog class="modal" id="modal">
     <h2>Extension Settings (v${version})</h2>
-    <br />
     <div class="settings-checkbox">
         <input type="checkbox" id="modal-settings-bookmark-save" ${bookmarkSaveChecked} />
         <label for="modal-settings-bookmark-save">Save workspaces to bookmarks</label>
     </div>
-    <br />
-    <input type="button" id="modal-settings-export" value="Export data to file" />
-    <input type="button" id="modal-settings-import" value="Import data from file" />
+    <div class="settings-checkbox">
+        <input type="checkbox" id="modal-settings-sync-save" ${syncSaveChecked} />
+        <label for="modal-settings-sync-save">Sync workspaces to cloud</label>
+    </div>
+    <h3>Cloud Data</h3>
+    <input type="button" id="modal-settings-sync-fetch" value="Fetch" />
+    <input type="button" id="modal-settings-sync-push" value="Push" />
+    <input type="button" id="modal-settings-sync-clear" value="Delete" />
+    <h3>Local Data</h3>
+    <input type="button" id="modal-settings-export" value="Export to file" />
+    <input type="button" id="modal-settings-import" value="Import from file" />
 
     <div class="modal-settings-bottom">
         <button id="modal-settings-close" class="close">Close</button>

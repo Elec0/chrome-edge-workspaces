@@ -1,5 +1,6 @@
 import { Constants } from "../constants/constants";
 import { Workspace } from "../obj/workspace";
+import { StorageHelper } from "../storage-helper";
 import { DebounceUtil } from "../utils/debounce";
 
 interface WorkspaceMetadata {
@@ -124,6 +125,24 @@ class SyncWorkspaceStorage {
     public static debounceSaveWorkspaceToSync(workspace: Workspace): void {
         DebounceUtil.debounce(Constants.DEBOUNCE_IDS.saveWorkspaceToSync,
              () => SyncWorkspaceStorage.saveWorkspaceToSync(workspace), 60000); // 1 minute debounce
+    }
+
+    /**
+     * Check if the user has enabled saving bookmarks.
+     * @returns A Promise that resolves to a boolean indicating if saving bookmarks is enabled.
+     *          Defaults to true if the setting is not found.
+     */
+    public static async isSyncSavingEnabled(): Promise<boolean> {
+        const value = await StorageHelper.getValue(Constants.STORAGE_KEYS.settings.saveSync, "true");
+        return value === "true";
+    }
+
+    /**
+     * Set the user's preference for syncing.
+     * @param value - The new value for the setting.
+     */
+    public static async setSyncSavingEnabled(value: boolean): Promise<void> {
+        await StorageHelper.setValue(Constants.STORAGE_KEYS.settings.saveSync, value.toString());
     }
 }
 

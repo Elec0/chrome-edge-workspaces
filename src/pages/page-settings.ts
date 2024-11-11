@@ -5,6 +5,7 @@ import { VERSION } from "../globals";
 import { LogHelper } from "../log-helper";
 import { StorageHelper } from "../storage-helper";
 import { BookmarkStorageHelper } from "../storage/bookmark-storage-helper";
+import { SyncWorkspaceStorage } from "../storage/sync-workspace-storage";
 import SETTINGS_TEMPLATE from "../templates/dialogSettingsTemplate.html";
 import { Utils } from "../utils";
 
@@ -24,10 +25,12 @@ export class PageSettings extends BaseDialog {
      */
     public static async openSettings() {
         const saveBookmarks = await BookmarkStorageHelper.isBookmarkSaveEnabled();
+        const syncWorkspaces = await SyncWorkspaceStorage.isSyncSavingEnabled();
         const dialog = Utils.interpolateTemplate(SETTINGS_TEMPLATE, 
             {
                 "version": VERSION,
-                "bookmarkSaveChecked": saveBookmarks ? "checked" : ""
+                "bookmarkSaveChecked": saveBookmarks ? "checked" : "",
+                "syncSaveChecked": syncWorkspaces ? "checked" : ""
             }
         );
 
@@ -45,6 +48,10 @@ export class PageSettings extends BaseDialog {
         dialogElement.querySelector("#modal-settings-bookmark-save")?.addEventListener("click", async (event) => {
             const target = event.target as HTMLInputElement;
             await BookmarkStorageHelper.setBookmarkSaveEnabled(target.checked);
+        });
+        dialogElement.querySelector("#modal-settings-sync-save")?.addEventListener("click", async (event) => {
+            const target = event.target as HTMLInputElement;
+            await SyncWorkspaceStorage.setSyncSavingEnabled(target.checked);
         });
 
         dialogElement.querySelector("#modal-settings-close")?.addEventListener("click", () => {
