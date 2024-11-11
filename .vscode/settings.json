@@ -1,5 +1,5 @@
 {
-    "jest.autoRun": "on-save",
+    "jest.runMode": "on-save",
     "jest.jestCommandLine": "npm run test-unit --",
     "workbench.colorCustomizations": {
         "activityBar.activeBackground": "#23114e",
