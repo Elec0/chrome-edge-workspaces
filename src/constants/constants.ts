@@ -12,7 +12,10 @@ export class Constants {
     /** Time in ms to debounce the saving of the workspace on updates. */
     public static WORKSPACE_SAVE_DEBOUNCE_TIME = 300;
 
-    public static DEBOUNCE_ALARM_NAME_PREFIX = "debounceSave";
+    public static DEBOUNCE_IDS = {
+        saveWorkspace: "saveWorkspace",
+        saveWorkspaceToSync: "saveWorkspaceToSync",
+    }
 
     public static STORAGE_KEYS = {
         settings: {

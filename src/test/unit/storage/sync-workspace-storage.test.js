@@ -58,14 +58,13 @@ describe("SyncWorkspaceStorage", () => {
         expect(chunks.length).toBeGreaterThan(1);
     });
 
-    // This test probably isn't that helpful
     test("debounceSaveWorkspaceToSync debounces saving a Workspace object to chrome.storage.sync", () => {
         jest.useFakeTimers();
         const debounceSpy = jest.spyOn(DebounceUtil, 'debounce');
 
         SyncWorkspaceStorage.debounceSaveWorkspaceToSync(workspace);
 
-        expect(debounceSpy).toHaveBeenCalledWith(expect.any(Function), 60000);
+        expect(debounceSpy).toHaveBeenCalledWith(expect.any(String), expect.any(Function), 60000);
 
         jest.runAllTimers();
         expect(chrome.storage.sync.set).toHaveBeenCalled();

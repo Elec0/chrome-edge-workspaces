@@ -44,7 +44,7 @@ export class Background {
 
     /** Wrapper for debouncing the save with our util. */
     private static debounceSave(windowId: number): void {
-        DebounceUtil.debounce(() => {
+        DebounceUtil.debounce(Constants.DEBOUNCE_IDS.saveWorkspace, () => {
             Background.saveWindowTabsToWorkspace(windowId);
         }, Constants.WORKSPACE_SAVE_DEBOUNCE_TIME);
     }

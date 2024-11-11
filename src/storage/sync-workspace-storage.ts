@@ -1,3 +1,4 @@
+import { Constants } from "../constants/constants";
 import { Workspace } from "../obj/workspace";
 import { DebounceUtil } from "../utils/debounce";
 
@@ -121,8 +122,8 @@ class SyncWorkspaceStorage {
      * @param workspace - The Workspace object to save.
      */
     public static debounceSaveWorkspaceToSync(workspace: Workspace): void {
-        // TODO: Current implementation of debounce doesn't work for multiple callbacks.
-        DebounceUtil.debounce(() => SyncWorkspaceStorage.saveWorkspaceToSync(workspace), 60000); // 1 minute debounce
+        DebounceUtil.debounce(Constants.DEBOUNCE_IDS.saveWorkspaceToSync,
+             () => SyncWorkspaceStorage.saveWorkspaceToSync(workspace), 60000); // 1 minute debounce
     }
 }
 

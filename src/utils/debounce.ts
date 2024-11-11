@@ -1,23 +1,30 @@
 import { Utils } from "../utils";
 
 export class DebounceUtil {
-    private static debounceTimeout: NodeJS.Timeout | undefined;
+    private static debounceTimeouts: Map<string, NodeJS.Timeout> = new Map();
     
     /**
-     * Debounce the saving of the workspace.
-     * @param windowId - The ID of the window to save the workspace for.
-     * @param delay - The delay in ms to debounce the save.
+     * Debounce the execution of a callback.
+     * @param id - A unique identifier for the callback.
+     * @param callback - The callback function to debounce.
+     * @param delay - The delay in ms to debounce the callback.
      */
-    public static debounce(callback: () => void, delay: number): void {
-        if (DebounceUtil.debounceTimeout) {
-            clearTimeout(DebounceUtil.debounceTimeout);
+    public static debounce(id: string, callback: () => void, delay: number): void {
+        if (DebounceUtil.debounceTimeouts.has(id)) {
+            clearTimeout(DebounceUtil.debounceTimeouts.get(id));
         }
+
         // If we're testing with Jest, don't debounce, since we probably test the function immediately.
         if (Utils.areWeTestingWithJest()) {
             callback();
             return;
         }
 
-        DebounceUtil.debounceTimeout = setTimeout(callback, delay);
+        const timeout = setTimeout(() => {
+            callback();
+            DebounceUtil.debounceTimeouts.delete(id);
+        }, delay);
+
+        DebounceUtil.debounceTimeouts.set(id, timeout);
     }
 }
