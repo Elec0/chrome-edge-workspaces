@@ -71,18 +71,21 @@ class SyncWorkspaceStorage {
      */
     public static async saveWorkspaceToSync(workspace: Workspace): Promise<void> {
         const syncData: SyncData = SyncWorkspaceStorage.convertWorkspaceToSyncData(workspace);
-
+        const writeObject: {[key: string]: unknown} = {};
         // Save metadata
-        await chrome.storage.sync.set({ [`workspace_metadata_${workspace.uuid}`]: syncData.metadata });
+        writeObject[`workspace_metadata_${workspace.uuid}`] = syncData.metadata;
 
         // Save tabs in chunks to avoid exceeding QUOTA_BYTES_PER_ITEM
         const tabChunks: string[][] = SyncWorkspaceStorage.chunkArray(syncData.tabs, SyncWorkspaceStorage.SYNC_QUOTA_BYTES_PER_ITEM);
         for (let i = 0; i < tabChunks.length; i++) {
-            await chrome.storage.sync.set({ [`workspace_tabs_${workspace.uuid}_${i}`]: tabChunks[i] });
+            writeObject[`workspace_tabs_${workspace.uuid}_${i}`] = tabChunks[i];
         }
 
         // Save tab groups
-        await chrome.storage.sync.set({ [`workspace_tab_groups_${workspace.uuid}`]: syncData.tabGroups });
+        writeObject[`workspace_tab_groups_${workspace.uuid}`] = syncData.tabGroups;
+
+        // Perform the write operation
+        await chrome.storage.sync.set(writeObject);
     }
 
     /**

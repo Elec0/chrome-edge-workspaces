@@ -41,26 +41,13 @@ describe("SyncWorkspaceStorage", () => {
         await SyncWorkspaceStorage.saveWorkspaceToSync(workspace);
 
         const syncData = SyncWorkspaceStorage.convertWorkspaceToSyncData(workspace);
-        const expectedMetadata = {
-            [`workspace_metadata_${workspace.uuid}`]: syncData.metadata
-        };
-
-        expect(chrome.storage.sync.set).toHaveBeenCalledWith(expectedMetadata);
-
-        // This data is not long enough to be chunked into multiple arrays
-        const expectedTabChunks = [
-            {[`workspace_tabs_${workspace.uuid}_0`]: syncData.tabs}
-        ];
-
-        for (const chunk of expectedTabChunks) {
-            expect(chrome.storage.sync.set).toHaveBeenCalledWith(chunk);
+        const expectedObject = {
+            [`workspace_metadata_${workspace.uuid}`]: syncData.metadata,
+            [`workspace_tabs_${workspace.uuid}_0`]: syncData.tabs,
+            [`workspace_tab_groups_${workspace.uuid}`]: syncData.tabGroups
         }
 
-        const expectedTabGroups = {
-            [`workspace_tab_groups_${workspace.uuid}`]: syncData.tabGroups
-        };
-
-        expect(chrome.storage.sync.set).toHaveBeenCalledWith(expectedTabGroups);
+        expect(chrome.storage.sync.set).toHaveBeenCalledWith(expectedObject);
     });
 
     test("chunkArray chunks an array into smaller arrays based on byte size", () => {
