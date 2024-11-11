@@ -18,9 +18,6 @@
   ],
   "background": {
     "service_worker": "background.js",
-    "scripts": [
-      "background.js"
-    ],
     "type": "module"
   },
   "permissions": [
@@ -28,16 +25,5 @@
     "tabGroups",
     "activeTab",
     "bookmarks"
-  ],
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "edgeworkspaces@elec0.com",
-      "strict_min_version": "109.0"
-    }
-  },
-  "sidebar_action": {
-    "default_title": "Edge Workspaces",
-    "default_panel": "sidebar.html",
-    "default_icon": "icons/icon_48.png"
-  }
+  ]
 }
