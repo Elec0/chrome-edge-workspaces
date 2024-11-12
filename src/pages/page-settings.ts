@@ -36,15 +36,9 @@ export class PageSettings extends BaseDialog {
 
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = dialog;
-
         const dialogElement = tempDiv.firstElementChild as HTMLDialogElement;
 
-        dialogElement.querySelector("#modal-settings-export")?.addEventListener("click", () => {
-            PageSettings.exportSettings();
-        });
-        dialogElement.querySelector("#modal-settings-import")?.addEventListener("click", () => {
-            PageSettings.importSettings();
-        });
+        // Event listeners are in the same order as the buttons in the dialog.
         dialogElement.querySelector("#modal-settings-bookmark-save")?.addEventListener("click", async (event) => {
             const target = event.target as HTMLInputElement;
             await BookmarkStorageHelper.setBookmarkSaveEnabled(target.checked);
@@ -52,6 +46,23 @@ export class PageSettings extends BaseDialog {
         dialogElement.querySelector("#modal-settings-sync-save")?.addEventListener("click", async (event) => {
             const target = event.target as HTMLInputElement;
             await SyncWorkspaceStorage.setSyncSavingEnabled(target.checked);
+        });
+
+        dialogElement.querySelector("#modal-settings-sync-fetch")?.addEventListener("click", () => {
+            SyncWorkspaceStorage.debug_getSyncData();
+        });
+        dialogElement.querySelector("#modal-settings-sync-push")?.addEventListener("click", () => {
+            
+        });
+        dialogElement.querySelector("#modal-settings-sync-delete")?.addEventListener("click", () => {
+            
+        });
+
+        dialogElement.querySelector("#modal-settings-export")?.addEventListener("click", () => {
+            PageSettings.exportSettings();
+        });
+        dialogElement.querySelector("#modal-settings-import")?.addEventListener("click", () => {
+            PageSettings.importSettings();
         });
 
         dialogElement.querySelector("#modal-settings-close")?.addEventListener("click", () => {

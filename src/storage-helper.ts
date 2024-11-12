@@ -7,7 +7,6 @@ import { WorkspaceStorage } from "./workspace-storage";
 export class StorageHelper {
     private static logStorageChanges = false;
     private static _storage = chrome.storage.local;
-    private static _loadedWorkspaces: WorkspaceStorage = new WorkspaceStorage();
 
     public static async init() {
         this.saveVersionNumber();
@@ -67,7 +66,6 @@ export class StorageHelper {
      */
     public static async setWorkspaces(workspaces: WorkspaceStorage): Promise<void> {
         await this.setValue(Constants.KEY_STORAGE_WORKSPACES, workspaces.serialize());
-        this._loadedWorkspaces = workspaces;
     }
 
     public static async setWorkspacesSync(workspaces: WorkspaceStorage): Promise<void> {
@@ -114,6 +112,8 @@ export class StorageHelper {
      */
     public static async setWorkspace(workspace: Workspace): Promise<void> {
         const workspaces = await this.getWorkspaces();
+        // We're setting the workspace, so we need to update the last updated time.
+        workspace.updateLastUpdated();
         workspaces.set(workspace.uuid, workspace);
         await this.setWorkspaces(workspaces);
     }
@@ -128,13 +128,14 @@ export class StorageHelper {
      */
     public static async addWorkspace(workspaceName: string, windowId: number): Promise<boolean> {
         console.debug("addWorkspace: ", workspaceName, windowId);
-        // return await BookmarkStorageHelper.addWorkspace(workspaceName, windowId);
+        
         if (windowId == null || windowId == undefined) {
             return Promise.resolve(false) // reject("Window id is null or undefined");
         }
 
         const workspaces = await this.getWorkspaces();
         const newWorkspace = new Workspace(windowId, workspaceName, []);
+        newWorkspace.updateLastUpdated();
         workspaces.set(newWorkspace.uuid, newWorkspace);
         await this.setWorkspaces(workspaces);
 
