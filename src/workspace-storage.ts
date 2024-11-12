@@ -79,8 +79,8 @@ export class WorkspaceStorage implements Map<string | number, Workspace> {
             this.workspaces.set(key, value);
             this.windowIdToUuid.set(value.windowId, key);
         } else {
-            this.windowIdToUuid.set(key, value.uuid);
             this.workspaces.set(value.uuid, value);
+            this.windowIdToUuid.set(key, value.uuid);
         }
         return this;
     }
