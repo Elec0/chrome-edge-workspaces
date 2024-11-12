@@ -7,6 +7,7 @@ interface WorkspaceMetadata {
     uuid: string;
     name: string;
     windowId: number;
+    lastUpdated: number;
 }
 
 interface SyncData {
@@ -58,7 +59,8 @@ class SyncWorkspaceStorage {
         const metadata: WorkspaceMetadata = {
             uuid: workspace.uuid,
             name: workspace.name,
-            windowId: workspace.windowId
+            windowId: workspace.windowId,
+            lastUpdated: workspace.lastUpdated,
         };
 
         const tabs: string[] = workspace.getTabs().map(tab => tab.toJson());
@@ -88,6 +90,20 @@ class SyncWorkspaceStorage {
 
         // Perform the write operation
         await chrome.storage.sync.set(writeObject);
+    }
+
+    /**
+     * Compare the timestamps of local and sync data to determine which one is more recent.
+     * @param localData - The local workspace data.
+     * @param syncData - The sync workspace data.
+     * @returns The more recent workspace data.
+     */
+    public static getMoreRecentData(localData: Workspace, syncData: SyncData): Workspace | SyncData {
+        if (localData.lastUpdated > syncData.metadata.lastUpdated) {
+            return localData;
+        } else {
+            return syncData;
+        }
     }
 
     /**
@@ -143,6 +159,11 @@ class SyncWorkspaceStorage {
      */
     public static async setSyncSavingEnabled(value: boolean): Promise<void> {
         await StorageHelper.setValue(Constants.STORAGE_KEYS.settings.saveSync, value.toString());
+    }
+
+    public static async debug_getSyncData(): Promise<void> {
+        const data = await chrome.storage.sync.get(null);
+        console.debug("Sync data", data);
     }
 }
 

@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { IWorkspaceJson } from "../interfaces/i-workspace-json";
 import { TabStub } from "./tab-stub";
 import { TabGroupStub } from "./tab-group-stub";
+import { Constants } from "../constants/constants";
 
 
 /**
@@ -15,16 +16,19 @@ export class Workspace {
     private tabs: Map<number, TabStub>;
     /** The tab groups that exist in this workspace/window, mapped by their IDs */
     private tabGroups: Map<number, TabGroupStub>;
+    public lastUpdated: number;
 
     constructor(windowId: number, name: string, tabs: chrome.tabs.Tab[] | undefined = undefined,
         tabStubs: TabStub[] | undefined = undefined, uuid: string | undefined = uuidv4(), 
-        tabGroups: Map<number, TabGroupStub> | undefined = undefined) {
+        tabGroups: Map<number, TabGroupStub> | undefined = undefined,
+        lastUpdated?: number
+    ) {
         this.windowId = windowId;
         this.name = name;
         this.uuid = uuid;
         this.tabs = new Map<number, TabStub>();
         this.tabGroups = new Map<number, TabGroupStub>();
-
+        
         if (tabs != undefined) {
             tabs.forEach((tab: chrome.tabs.Tab) => {
                 this.addTab(undefined, tab);
@@ -38,6 +42,8 @@ export class Workspace {
         if (tabGroups != undefined) {
             this.tabGroups = tabGroups;
         }
+
+        this.lastUpdated = lastUpdated ?? Constants.FAR_IN_PAST_DATE;
     }
 
 
@@ -136,6 +142,16 @@ export class Workspace {
     }
 
     /**
+     * Updates the last updated timestamp of the workspace.
+     * 
+     * Should be called whenever the workspace is modified in any 
+     * way not related to loading from storage.
+     */
+    public updateLastUpdated(): void {
+        this.lastUpdated = Date.now();
+    }
+
+    /**
      * Replace the tabs in the workspace with the provided tabs.
      */
     public setTabs(tabs: TabStub[]): void {
@@ -165,6 +181,7 @@ export class Workspace {
             id: this.windowId,
             name: this.name,
             uuid: this.uuid,
+            lastUpdated: this.lastUpdated,
             tabs: this.getTabs().map((tab: TabStub) => tab.toJson()),
             tabGroups: this.getTabGroups().map((tabGroup: TabGroupStub) => tabGroup.toJson())
         };
@@ -177,6 +194,10 @@ export class Workspace {
      */
     public static fromJson(json: IWorkspaceJson): Workspace {
         const workspace = new Workspace(json.id, json.name, undefined, undefined, json.uuid);
+        if (json.lastUpdated !== undefined) {
+            workspace.lastUpdated = json.lastUpdated;
+        }
+
         if (json.tabs != null && json.tabs instanceof Array) {
             json.tabs.forEach((tab: string) => {
                 workspace.addTab(TabStub.fromJson(tab));
