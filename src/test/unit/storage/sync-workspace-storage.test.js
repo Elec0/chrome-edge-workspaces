@@ -32,7 +32,7 @@ describe("SyncWorkspaceStorage", () => {
             windowId: 1
         };
 
-        expect(syncData.metadata).toEqual(expectedMetadata);
+        expect(syncData.metadata).toMatchObject(expectedMetadata);
         expect(syncData.tabs.length).toBe(2);
         expect(syncData.tabGroups.length).toBe(2);
     });

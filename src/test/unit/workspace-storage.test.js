@@ -101,21 +101,24 @@ describe('WorkspaceStorage', () => {
 
     test('should serialize and deserialize correctly', () => {
         const uuid = '123e4567-e89b-12d3-a456-426614174000';
+        const now = Date.now();
         workspace.uuid = uuid;
         workspace.windowId = 1;
         workspace.addTab(new TabStub({ url: 'https://example.com', id: 12, index: 0}));
+        workspace.lastUpdated = now;
         workspaceStorage.set(uuid, workspace);
 
         const serialized = workspaceStorage.serialize();
         const newWorkspaceStorage = new WorkspaceStorage();
         newWorkspaceStorage.deserialize(serialized);
 
-        expect(newWorkspaceStorage.get(uuid)).toEqual(workspace);
-        expect(newWorkspaceStorage.get(workspace.windowId)).toEqual(workspace);
         expect(newWorkspaceStorage.size).toBe(1);
         expect(newWorkspaceStorage.get(uuid).getTab(12).url).toBe('https://example.com');
         expect(newWorkspaceStorage.get(uuid).getTab(12).id).toBe(12);
         expect(newWorkspaceStorage.get(uuid).getTab(12).index).toBe(0);
+        expect(newWorkspaceStorage.get(uuid).lastUpdated).toBe(now);
+        expect(newWorkspaceStorage.get(uuid)).toEqual(workspace);
+        expect(newWorkspaceStorage.get(workspace.windowId)).toEqual(workspace);
     });
 
     test('should handle serialization and deserialization of empty storage', () => {
