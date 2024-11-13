@@ -52,6 +52,9 @@ class SyncWorkspaceStorage {
     private static readonly SYNC_QUOTA_BYTES_PER_ITEM = chrome.storage.sync.QUOTA_BYTES_PER_ITEM; // 8KB per item
     private static readonly SYNC_MAX_WRITE_OPERATIONS_PER_HOUR = 1800;
     private static readonly SYNC_MAX_WRITE_OPERATIONS_PER_MINUTE = 120;
+    private static readonly SYNC_PREFIX_METADATA = 'workspace_metadata_';
+    private static readonly SYNC_PREFIX_TABS = 'workspace_tabs_';
+    private static readonly SYNC_PREFIX_TAB_GROUPS = 'workspace_tab_groups_';
 
     /**
      * Converts a Workspace object to the new data structure for sync storage.
@@ -99,16 +102,16 @@ class SyncWorkspaceStorage {
         const syncData: SyncData = SyncWorkspaceStorage.convertWorkspaceToSyncData(workspace);
         const writeObject: {[key: string]: unknown} = {};
         // Save metadata
-        writeObject[`workspace_metadata_${workspace.uuid}`] = syncData.metadata;
+        writeObject[this.SYNC_PREFIX_METADATA + workspace.uuid] = syncData.metadata;
 
         // Save tabs in chunks to avoid exceeding QUOTA_BYTES_PER_ITEM
         const tabChunks: string[][] = SyncWorkspaceStorage.chunkArray(syncData.tabs, SyncWorkspaceStorage.SYNC_QUOTA_BYTES_PER_ITEM);
         for (let i = 0; i < tabChunks.length; i++) {
-            writeObject[`workspace_tabs_${workspace.uuid}_${i}`] = tabChunks[i];
+            writeObject[`${this.SYNC_PREFIX_TABS}${workspace.uuid}_${i}`] = tabChunks[i];
         }
 
         // Save tab groups
-        writeObject[`workspace_tab_groups_${workspace.uuid}`] = syncData.tabGroups;
+        writeObject[this.SYNC_PREFIX_TAB_GROUPS + workspace.uuid] = syncData.tabGroups;
 
         // Perform the write operation
         await chrome.storage.sync.set(writeObject);
