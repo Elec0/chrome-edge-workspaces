@@ -13,13 +13,13 @@ export class LogHelper {
     public static errorAlert(message: string, ...optionalParams: unknown[]): void {
         const formattedMessage = util.format(message, ...optionalParams);
         console.error(formattedMessage);
-        alert(formattedMessage);        
+        alert(formattedMessage);      
     }
 
     public static successAlert(message: string, ...optionalParams: unknown[]): void {
         const formattedMessage = util.format(message, ...optionalParams);
         console.log(formattedMessage);
-        alert(formattedMessage);        
+        alert(formattedMessage);
     }
 
     public static warn(message: string, ...optionalParams: unknown[]): void {

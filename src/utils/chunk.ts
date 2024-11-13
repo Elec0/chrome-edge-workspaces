@@ -1,10 +1,10 @@
 
 export class ChunkUtil {
     /**
-         * Chunks an array into smaller arrays, each with a maximum byte size.
-         * @param array - The array to chunk.
-         * @param maxBytes - The maximum byte size for each chunk.
-         */
+     * Chunks an array into smaller arrays, each with a maximum byte size.
+     * @param array - The array to chunk.
+     * @param maxBytes - The maximum byte size for each chunk.
+     */
     public static chunkArray<T>(array: T[], maxBytes: number): T[][] {
         const chunks: T[][] = [];
         let currentChunk: T[] = [];
@@ -30,6 +30,9 @@ export class ChunkUtil {
 
     /**
      * Combines smaller arrays back into a single array.
+     * 
+     * Note: This method assumes that the chunks are in the correct order, and 
+     * that none of the array elements are null or undefined.
      * @param chunks - The array of chunks to combine.
      * @returns The combined array.
      */
