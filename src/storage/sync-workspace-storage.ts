@@ -1,8 +1,10 @@
 import { Constants } from "../constants/constants";
+import { LogHelper } from "../log-helper";
 import { TabGroupStub } from "../obj/tab-group-stub";
 import { TabStub } from "../obj/tab-stub";
 import { Workspace } from "../obj/workspace";
 import { StorageHelper } from "../storage-helper";
+import { ChunkUtil } from "../utils/chunk";
 import { DebounceUtil } from "../utils/debounce";
 
 interface WorkspaceMetadata {
@@ -10,6 +12,7 @@ interface WorkspaceMetadata {
     name: string;
     windowId: number;
     lastUpdated: number;
+    numTabChunks: number;
 }
 
 interface SyncData {
@@ -66,6 +69,7 @@ class SyncWorkspaceStorage {
             name: workspace.name,
             windowId: workspace.windowId,
             lastUpdated: workspace.lastUpdated,
+            numTabChunks: -1, // This will be set when the tabs are chunked
         };
 
         const tabs: string[] = workspace.getTabs().map(tab => tab.toJson());
@@ -100,21 +104,80 @@ class SyncWorkspaceStorage {
      */
     private static async saveWorkspaceToSync(workspace: Workspace): Promise<void> {
         const syncData: SyncData = SyncWorkspaceStorage.convertWorkspaceToSyncData(workspace);
-        const writeObject: {[key: string]: unknown} = {};
-        // Save metadata
-        writeObject[this.SYNC_PREFIX_METADATA + workspace.uuid] = syncData.metadata;
+        const writeObject: { [key: string]: unknown } = {};
 
         // Save tabs in chunks to avoid exceeding QUOTA_BYTES_PER_ITEM
-        const tabChunks: string[][] = SyncWorkspaceStorage.chunkArray(syncData.tabs, SyncWorkspaceStorage.SYNC_QUOTA_BYTES_PER_ITEM);
+        const tabChunks: string[][] = ChunkUtil.chunkArray(syncData.tabs, SyncWorkspaceStorage.SYNC_QUOTA_BYTES_PER_ITEM);
         for (let i = 0; i < tabChunks.length; i++) {
-            writeObject[`${this.SYNC_PREFIX_TABS}${workspace.uuid}_${i}`] = tabChunks[i];
+            writeObject[`${ this.SYNC_PREFIX_TABS }${ workspace.uuid }_${ i }`] = tabChunks[i];
         }
+
+        // Update metadata with the number of tab chunks
+        syncData.metadata.numTabChunks = tabChunks.length;
+        // Save metadata
+        writeObject[this.SYNC_PREFIX_METADATA + workspace.uuid] = syncData.metadata;
 
         // Save tab groups
         writeObject[this.SYNC_PREFIX_TAB_GROUPS + workspace.uuid] = syncData.tabGroups;
 
         // Perform the write operation
         await chrome.storage.sync.set(writeObject);
+    }
+
+    public static async getWorkspaceFromSync(id: string | number): Promise<Workspace | null> {
+        const metadataKey = `${this.SYNC_PREFIX_METADATA}${id}`;
+        const tabGroupsKey = `${this.SYNC_PREFIX_TAB_GROUPS}${id}`;
+
+        const data = await chrome.storage.sync.get([metadataKey, tabGroupsKey]);
+
+        if (!data[metadataKey] || !data[tabGroupsKey]) {
+            return null;
+        }
+
+        const metadata = data[metadataKey] as WorkspaceMetadata;
+        const tabGroups = data[tabGroupsKey] as string[];
+
+        if (metadata.numTabChunks == -1) {
+            LogHelper.errorAlert("Number of tab chunks for workspace is not set in sync storage metadata. Cannot load workspace.");
+            return null;
+        }
+
+        // Retrieve tabs in chunks
+        const tabChunkKeys: string[] = [];
+
+        for(let chunkIndex = 0; chunkIndex < metadata.numTabChunks; chunkIndex++) {
+            const tabChunkKey = `${this.SYNC_PREFIX_TABS}${id}_${chunkIndex}`;
+            tabChunkKeys.push(tabChunkKey);
+        }
+        
+        // Perform the read operation only once to retrieve all tab chunks
+        const tabChunks = await chrome.storage.sync.get(tabChunkKeys);
+
+        const tabs: string[][] = [];
+        for (const key of tabChunkKeys) {
+            if (!tabChunks[key]) {
+                LogHelper.warn(`Tab chunk ${key} is missing from sync storage.`);
+                continue;
+            }
+            tabs.push(tabChunks[key]);
+        }
+
+        // Combine the tab chunks into a single array
+        const combinedTabs = ChunkUtil.unChunkArray(tabs);
+
+        // Create the Workspace object
+        const workspace = new Workspace(metadata.windowId, metadata.name, undefined, undefined, metadata.uuid);
+        workspace.lastUpdated = metadata.lastUpdated;
+
+        // Add tabs and tab groups to the workspace
+        combinedTabs.forEach(tabJson => workspace.addTab(TabStub.fromJson(tabJson)));
+        tabGroups.forEach(groupJson => workspace.addTabGroup(TabGroupStub.fromJson(groupJson)));
+
+        return workspace;
+    }
+
+    public static async getAllSyncData(): Promise<Map<string | number, SyncData>> {
+        return new Map();
     }
 
     /**
@@ -131,33 +194,7 @@ class SyncWorkspaceStorage {
         }
     }
 
-    /**
-     * Chunks an array into smaller arrays, each with a maximum byte size.
-     * @param array - The array to chunk.
-     * @param maxBytes - The maximum byte size for each chunk.
-     */
-    private static chunkArray<T>(array: T[], maxBytes: number): T[][] {
-        const chunks: T[][] = [];
-        let currentChunk: T[] = [];
-        let currentChunkSize = 0;
 
-        for (const item of array) {
-            const itemSize = new Blob([JSON.stringify(item)]).size;
-            if (currentChunkSize + itemSize > maxBytes) {
-                chunks.push(currentChunk);
-                currentChunk = [];
-                currentChunkSize = 0;
-            }
-            currentChunk.push(item);
-            currentChunkSize += itemSize;
-        }
-
-        if (currentChunk.length > 0) {
-            chunks.push(currentChunk);
-        }
-
-        return chunks;
-    }
 
     /**
      * Debounced method to save a workspace to sync storage.
@@ -165,7 +202,7 @@ class SyncWorkspaceStorage {
      */
     public static debounceSaveWorkspaceToSync(workspace: Workspace): void {
         DebounceUtil.debounce(Constants.DEBOUNCE_IDS.saveWorkspaceToSync,
-             () => SyncWorkspaceStorage.saveWorkspaceToSync(workspace), 60000); // 1 minute debounce
+            () => SyncWorkspaceStorage.saveWorkspaceToSync(workspace), 60000); // 1 minute debounce
     }
 
     /**
