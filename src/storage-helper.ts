@@ -1,7 +1,9 @@
+import { assert } from "console";
 import { Constants } from "./constants/constants";
 import { MessageResponse } from "./constants/message-responses";
 import { VERSION } from "./globals";
 import { Workspace } from "./obj/workspace";
+import { SyncWorkspaceStorage } from "./storage/sync-workspace-storage";
 import { WorkspaceStorage } from "./workspace-storage";
 
 export class StorageHelper {
@@ -92,17 +94,32 @@ export class StorageHelper {
     }
 
     /**
-     * Get a single workspace from the `workspaces` map.
+     * Get a single workspace from the `workspaces` map or from the sync storage.
      * The workspace must exist in the map or the promise will reject.
      * @param id - The id of the workspace to get.
      * @returns A promise that resolves to the workspace, or rejects if the workspace does not exist.
      */
     public static async getWorkspace(id: string | number): Promise<Workspace> {
         const workspaces = await this.getWorkspaces();
-        if (workspaces.has(id)) {
-            return Promise.resolve(workspaces.get(id) as Workspace);
+        const localWorkspace = workspaces.get(id);
+
+        // Get sync data
+        const syncWorkspace = await SyncWorkspaceStorage.getWorkspaceFromSync(id);
+
+        if (localWorkspace && syncWorkspace) {
+            // Compare timestamps and return the most recent one
+            return SyncWorkspaceStorage.getMoreRecentWorkspace(localWorkspace, syncWorkspace);
         }
-        return Promise.reject(`getWorkspace: Workspace does not exist with id ${ id }`);
+        else if (localWorkspace) {
+            return localWorkspace;
+        }
+        else if (syncWorkspace) {
+            return syncWorkspace;
+        }
+        else {
+            return Promise.reject(`getWorkspace: Workspace does not exist with id ${ id }`);
+        }
+
     }
 
     /**
@@ -116,6 +133,10 @@ export class StorageHelper {
         workspace.updateLastUpdated();
         workspaces.set(workspace.uuid, workspace);
         await this.setWorkspaces(workspaces);
+
+        if (await SyncWorkspaceStorage.isSyncSavingEnabled()) {
+            await SyncWorkspaceStorage.debounceSaveWorkspaceToSync(workspace);
+        }
     }
 
     /**
@@ -128,7 +149,7 @@ export class StorageHelper {
      */
     public static async addWorkspace(workspaceName: string, windowId: number): Promise<boolean> {
         console.debug("addWorkspace: ", workspaceName, windowId);
-        
+
         if (windowId == null || windowId == undefined) {
             return Promise.resolve(false) // reject("Window id is null or undefined");
         }

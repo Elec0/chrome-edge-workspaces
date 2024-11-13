@@ -199,10 +199,12 @@ class SyncWorkspaceStorage {
      * @param syncData - The sync workspace data.
      * @returns The more recent workspace data.
      */
-    public static getMoreRecentData(localData: Workspace, syncData: SyncData): Workspace | SyncData {
-        if (localData.lastUpdated > syncData.metadata.lastUpdated) {
+    public static getMoreRecentWorkspace(localData: Workspace, syncData: Workspace): Workspace {
+        if (localData.lastUpdated > syncData.lastUpdated) {
+            console.debug("Local workspace is more recent.", localData.lastUpdated, syncData.lastUpdated);
             return localData;
         } else {
+            console.debug("Sync workspace is more recent.", localData.lastUpdated, syncData.lastUpdated);
             return syncData;
         }
     }
