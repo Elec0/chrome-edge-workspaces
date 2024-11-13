@@ -1,4 +1,6 @@
 import { Constants } from "../constants/constants";
+import { TabGroupStub } from "../obj/tab-group-stub";
+import { TabStub } from "../obj/tab-stub";
 import { Workspace } from "../obj/workspace";
 import { StorageHelper } from "../storage-helper";
 import { DebounceUtil } from "../utils/debounce";
@@ -70,10 +72,30 @@ class SyncWorkspaceStorage {
     }
 
     /**
+     * Converts a SyncData object to a Workspace object.
+     * @param syncData - The SyncData object to convert.
+     */
+    private static convertSyncDataToWorkspace(syncData: SyncData): Workspace {
+        const workspace = new Workspace(syncData.metadata.windowId, syncData.metadata.name);
+        workspace.uuid = syncData.metadata.uuid;
+        workspace.lastUpdated = syncData.metadata.lastUpdated;
+
+        for (const tabJson of syncData.tabs) {
+            workspace.addTab(TabStub.fromJson(tabJson));
+        }
+
+        for (const groupJson of syncData.tabGroups) {
+            workspace.addTabGroup(TabGroupStub.fromJson(groupJson));
+        }
+
+        return workspace;
+    }
+
+    /**
      * Saves a Workspace object to Chrome's sync storage.
      * @param workspace - The Workspace object to save.
      */
-    public static async saveWorkspaceToSync(workspace: Workspace): Promise<void> {
+    private static async saveWorkspaceToSync(workspace: Workspace): Promise<void> {
         const syncData: SyncData = SyncWorkspaceStorage.convertWorkspaceToSyncData(workspace);
         const writeObject: {[key: string]: unknown} = {};
         // Save metadata

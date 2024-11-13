@@ -37,6 +37,17 @@ describe("SyncWorkspaceStorage", () => {
         expect(syncData.tabGroups.length).toBe(2);
     });
 
+    test("convertSyncDataToWorkspace converts basic SyncData to a Workspace object", () => {
+        const syncData = SyncWorkspaceStorage.convertWorkspaceToSyncData(workspace);
+        const newWorkspace = SyncWorkspaceStorage.convertSyncDataToWorkspace(syncData);
+
+        expect(newWorkspace.uuid).toBe(workspace.uuid);
+        expect(newWorkspace.name).toBe(workspace.name);
+        expect(newWorkspace.windowId).toBe(workspace.windowId);
+        expect(newWorkspace.getTabs().length).toBe(2);
+        expect(newWorkspace.getTabGroups().length).toBe(2);
+    });
+
     test("saveWorkspaceToSync saves a Workspace object to chrome.storage.sync", async () => {
         await SyncWorkspaceStorage.saveWorkspaceToSync(workspace);
 
