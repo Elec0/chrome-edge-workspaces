@@ -124,6 +124,19 @@ class SyncWorkspaceStorage {
         await chrome.storage.sync.set(writeObject);
     }
 
+
+    /**
+     * Retrieves a workspace from Chrome's sync storage using the provided ID.
+     * 
+     * @param id - The ID of the workspace to retrieve. Can be a string or number.
+     * @returns A promise that resolves to the retrieved Workspace object, or null if the workspace could not be found or an error occurred.
+     * 
+     * @remarks
+     * This function reads metadata, tab groups, and tab chunks from Chrome's sync storage.
+     * If the number of tab chunks is not set in the metadata, an error is logged and null is returned.
+     * The function retrieves all tab chunks in a single read operation and combines them into a single array.
+     * The resulting Workspace object includes tabs and tab groups.
+     */
     public static async getWorkspaceFromSync(id: string | number): Promise<Workspace | null> {
         const metadataKey = `${this.SYNC_PREFIX_METADATA}${id}`;
         const tabGroupsKey = `${this.SYNC_PREFIX_TAB_GROUPS}${id}`;
