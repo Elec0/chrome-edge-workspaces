@@ -27,4 +27,18 @@ export class DebounceUtil {
 
         DebounceUtil.debounceTimeouts.set(id, timeout);
     }
+
+    /**
+     * Clear the debounce timeout for a callback.
+     * @param id - The unique identifier for the callback.
+     * @returns True if the debounce was cleared, false if it was not found.
+     */
+    public static clearDebounce(id: string): boolean {
+        if (DebounceUtil.debounceTimeouts.has(id)) {
+            clearTimeout(DebounceUtil.debounceTimeouts.get(id));
+            DebounceUtil.debounceTimeouts.delete(id);
+            return true;
+        }
+        return false;
+    }
 }
