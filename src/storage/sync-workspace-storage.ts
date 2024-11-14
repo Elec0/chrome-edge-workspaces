@@ -6,6 +6,7 @@ import { Workspace } from "../obj/workspace";
 import { StorageHelper } from "../storage-helper";
 import { ChunkUtil } from "../utils/chunk";
 import { DebounceUtil } from "../utils/debounce";
+import { WorkspaceStorage } from "../workspace-storage";
 
 interface WorkspaceMetadata {
     uuid: string;
@@ -103,6 +104,8 @@ class SyncWorkspaceStorage {
      * @param workspace - The Workspace object to save.
      */
     private static async saveWorkspaceToSync(workspace: Workspace): Promise<void> {
+        console.debug("Saving workspace to sync storage", workspace);
+
         const syncData: SyncData = SyncWorkspaceStorage.convertWorkspaceToSyncData(workspace);
         const writeObject: { [key: string]: unknown } = {};
 
@@ -124,6 +127,9 @@ class SyncWorkspaceStorage {
         await chrome.storage.sync.set(writeObject);
     }
 
+    // TODO: Current implementation doesn't allow for saving all workspaces to sync storage in a single call.
+    private static async saveAllWorkspacesToSync(workspaceStorage: WorkspaceStorage): Promise<void> {
+    }
 
     /**
      * Retrieves a workspace from Chrome's sync storage using the provided ID.
@@ -138,8 +144,8 @@ class SyncWorkspaceStorage {
      * The resulting Workspace object includes tabs and tab groups.
      */
     public static async getWorkspaceFromSync(id: string | number): Promise<Workspace | null> {
-        const metadataKey = `${this.SYNC_PREFIX_METADATA}${id}`;
-        const tabGroupsKey = `${this.SYNC_PREFIX_TAB_GROUPS}${id}`;
+        const metadataKey = `${ this.SYNC_PREFIX_METADATA }${ id }`;
+        const tabGroupsKey = `${ this.SYNC_PREFIX_TAB_GROUPS }${ id }`;
 
         const data = await chrome.storage.sync.get([metadataKey, tabGroupsKey]);
 
@@ -158,18 +164,18 @@ class SyncWorkspaceStorage {
         // Retrieve tabs in chunks
         const tabChunkKeys: string[] = [];
 
-        for(let chunkIndex = 0; chunkIndex < metadata.numTabChunks; chunkIndex++) {
-            const tabChunkKey = `${this.SYNC_PREFIX_TABS}${id}_${chunkIndex}`;
+        for (let chunkIndex = 0; chunkIndex < metadata.numTabChunks; chunkIndex++) {
+            const tabChunkKey = `${ this.SYNC_PREFIX_TABS }${ id }_${ chunkIndex }`;
             tabChunkKeys.push(tabChunkKey);
         }
-        
+
         // Perform the read operation only once to retrieve all tab chunks
         const tabChunks = await chrome.storage.sync.get(tabChunkKeys);
 
         const tabs: string[][] = [];
         for (const key of tabChunkKeys) {
             if (!tabChunks[key]) {
-                LogHelper.warn(`Tab chunk ${key} is missing from sync storage.`);
+                LogHelper.warn(`Tab chunk ${ key } is missing from sync storage.`);
                 continue;
             }
             tabs.push(tabChunks[key]);
@@ -189,6 +195,7 @@ class SyncWorkspaceStorage {
         return workspace;
     }
 
+    // TODO: Implement this method
     public static async getAllSyncData(): Promise<Map<string | number, SyncData>> {
         return new Map();
     }
@@ -209,8 +216,6 @@ class SyncWorkspaceStorage {
         }
     }
 
-
-
     /**
      * Debounced method to save a workspace to sync storage.
      * @param workspace - The Workspace object to save.
@@ -218,6 +223,17 @@ class SyncWorkspaceStorage {
     public static debounceSaveWorkspaceToSync(workspace: Workspace): void {
         DebounceUtil.debounce(Constants.DEBOUNCE_IDS.saveWorkspaceToSync,
             () => SyncWorkspaceStorage.saveWorkspaceToSync(workspace), 60000); // 1 minute debounce
+    }
+
+    /**
+     * Immediately save a workspace to sync storage, skipping the debounce.
+     * Don't use this method for frequent calls, as it may exceed the rate limits.
+     * It's intended for one-off calls, such as when the user explicitly requests a sync, or 
+     * when the window is closing.
+     */
+    public static async immediatelySaveWorkspaceToSync(workspace: Workspace): Promise<void> {
+        console.debug("Immediately saving workspace to sync storage");
+        await SyncWorkspaceStorage.saveWorkspaceToSync(workspace);
     }
 
     /**
@@ -236,6 +252,32 @@ class SyncWorkspaceStorage {
      */
     public static async setSyncSavingEnabled(value: boolean): Promise<void> {
         await StorageHelper.setValue(Constants.STORAGE_KEYS.settings.saveSync, value.toString());
+    }
+
+    /**
+     * Delete a workspace from sync storage.
+     * @param id - The ID of the workspace to delete.
+     */
+    public static async deleteWorkspaceFromSync(id: string | number): Promise<void> {
+        const metadataKey = `${ this.SYNC_PREFIX_METADATA }${ id }`;
+        const tabGroupsKey = `${ this.SYNC_PREFIX_TAB_GROUPS }${ id }`;
+
+        const data = await chrome.storage.sync.get([metadataKey]);
+
+        const keysToDelete: string[] = [metadataKey, tabGroupsKey];
+
+        // Remove tab chunks
+        const metadata = data[metadataKey] as WorkspaceMetadata;
+        if (metadata.numTabChunks == -1) {
+            LogHelper.errorAlert("Number of tab chunks for workspace is not set in sync storage metadata. If you see this message repeatedly, please file a bug report.");
+            return;
+        }
+
+        for (let chunkIndex = 0; chunkIndex < metadata.numTabChunks; chunkIndex++) {
+            keysToDelete.push(`${ this.SYNC_PREFIX_TABS }${ id }_${ chunkIndex }`);
+        }
+        await chrome.storage.sync.remove(keysToDelete);
+        console.info(`Deleted workspace ${ id } from sync storage.`);
     }
 
     public static async debug_getSyncData(): Promise<void> {
