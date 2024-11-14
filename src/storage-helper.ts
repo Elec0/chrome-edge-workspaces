@@ -164,7 +164,7 @@ export class StorageHelper {
     }
 
     /**
-     * Remove a workspace from storage.
+     * Remove a workspace from storage, both local and sync.
      * @param uuid - The UUID of the workspace to remove.
      * @returns A promise that resolves to true if the workspace was removed successfully, or rejects if the workspace could not be removed.
      */
@@ -172,6 +172,7 @@ export class StorageHelper {
         console.debug("removeWorkspace: ", uuid);
         const workspaces = await this.getWorkspaces();
         if (workspaces.delete(uuid)) {
+            await SyncWorkspaceStorage.deleteWorkspaceFromSync(uuid);
             await this.setWorkspaces(workspaces);
             return Promise.resolve(true);
         }
