@@ -8,6 +8,7 @@ global.chrome = {
         sync: {
             set: jest.fn(),
             get: jest.fn(),
+            remove: jest.fn(),
             QUOTA_BYTES_PER_ITEM: 8192,
             MAX_WRITE_OPERATIONS_PER_HOUR: 1800,
             MAX_WRITE_OPERATIONS_PER_MINUTE: 120

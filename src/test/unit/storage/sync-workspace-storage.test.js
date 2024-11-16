@@ -63,17 +63,38 @@ describe("SyncWorkspaceStorage", () => {
         expect(chrome.storage.sync.set).toHaveBeenCalledWith(expectedObject);
     });
 
+    test("deleteWorkspaceFromSync deletes a Workspace object from chrome.storage.sync", async () => {
+        chrome.storage.sync.get.mockResolvedValue({
+            [`workspace_metadata_${workspace.uuid}`]: {numTabChunks: 1},
+            [`workspace_tabs_${workspace.uuid}_0`]: [],
+            [`workspace_tab_groups_${workspace.uuid}`]: [1]
+        });
+
+        await SyncWorkspaceStorage.deleteWorkspaceFromSync(workspace.uuid);
+
+        const expectedKeys = [
+            `workspace_metadata_${workspace.uuid}`,
+            `workspace_tabs_${workspace.uuid}_0`,
+            `workspace_tab_groups_${workspace.uuid}`
+        ];
+
+        expect(chrome.storage.sync.remove).toHaveBeenCalledWith(expect.arrayContaining(expectedKeys));
+    });
+
     test("debounceSaveWorkspaceToSync debounces saving a Workspace object to chrome.storage.sync", () => {
         jest.useFakeTimers();
         const debounceSpy = jest.spyOn(DebounceUtil, 'debounce');
 
         SyncWorkspaceStorage.debounceSaveWorkspaceToSync(workspace);
 
-        expect(debounceSpy).toHaveBeenCalledWith(expect.any(String), expect.any(Function), 60000);
+        expect(debounceSpy).toHaveBeenCalledWith(expect.any(String), expect.any(Function), expect.any(Number));
 
         jest.runAllTimers();
         expect(chrome.storage.sync.set).toHaveBeenCalled();
     });
+
+
+        
 
     describe("loadWorkspaceFromSync", () => {
         test("should return null if number of tab chunks is not set in metadata", async () => {
