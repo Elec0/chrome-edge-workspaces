@@ -45,6 +45,7 @@ describe("SyncWorkspaceStorage", () => {
         expect(newWorkspace.name).toBe(workspace.name);
         expect(newWorkspace.windowId).toBe(workspace.windowId);
         expect(newWorkspace.getTabs().length).toBe(2);
+        expect(newWorkspace.getTabs()[0].url).toBe("https://example.com");
         expect(newWorkspace.getTabGroups().length).toBe(2);
     });
 
@@ -127,7 +128,7 @@ describe("SyncWorkspaceStorage", () => {
     });
 
     describe("loadWorkspaceFromSync", () => {
-        test("should return null if number of tab chunks is not set in metadata", async () => {
+        it("should return null if number of tab chunks is not set in metadata", async () => {
             const metadata = {
                 uuid: "workspace-uuid",
                 name: "Test Workspace",
@@ -145,7 +146,7 @@ describe("SyncWorkspaceStorage", () => {
             expect(result).toBeNull();
         });
 
-        test("should return a Workspace object if metadata and tab chunks are found", async () => {
+        it("should return a Workspace object if metadata and tab chunks are found", async () => {
             const metadata = {
                 uuid: "workspace-uuid",
                 name: "Test Workspace",
@@ -181,7 +182,7 @@ describe("SyncWorkspaceStorage", () => {
             expect(result.getTabGroups().length).toBe(2);
         });
 
-        test("should handle missing tab chunks gracefully", async () => {
+        it("should handle missing tab chunks gracefully", async () => {
             const metadata = {
                 uuid: "workspace-uuid",
                 name: "Test Workspace",
@@ -217,7 +218,7 @@ describe("SyncWorkspaceStorage", () => {
             expect(result.getTabGroups().length).toBe(2);
         });
 
-        test("should return null if workspace metadata is not found", async () => {
+        it("should return null if workspace metadata is not found", async () => {
             chrome.storage.sync.get.mockResolvedValue({});
 
             const result = await SyncWorkspaceStorage.getWorkspaceFromSync("workspace-uuid");
@@ -225,7 +226,7 @@ describe("SyncWorkspaceStorage", () => {
             expect(result).toBeNull();
         });
 
-        test("should return null if number of tab chunks is not set in metadata", async () => {
+        it("should return null if number of tab chunks is not set in metadata", async () => {
             const metadata = {
                 uuid: "workspace-uuid",
                 name: "Test Workspace",
@@ -241,6 +242,30 @@ describe("SyncWorkspaceStorage", () => {
             const result = await SyncWorkspaceStorage.getWorkspaceFromSync("workspace-uuid");
 
             expect(result).toBeNull();
+        });
+    });
+
+    describe("getAllSyncData", () => {
+        it("should return all SyncData objects from chrome.storage.sync", async () => {
+            const testData = require("../../data/sync-storage-data-1.json");
+
+            chrome.storage.sync.get.mockResolvedValue(testData);
+
+            const result = await SyncWorkspaceStorage.getAllSyncData();
+
+            expect(result.length).toBe(2);
+            expect(result[0].metadata.uuid).toBe("cac9dc5b-178a-42b8-b50f-aa0c17c370f2");
+            expect(result[1].metadata.uuid).toBe("e36de816-4071-4a48-8ab2-03719ff4b301");
+            expect(result[0].tabs.length).toBe(2);
+            expect(result[0].tabGroups.length).toBe(0);
+        });
+
+        it("should return an empty array if no SyncData objects are found", async () => {
+            chrome.storage.sync.get.mockResolvedValue({});
+
+            const result = await SyncWorkspaceStorage.getAllSyncData();
+
+            expect(result).toEqual([]);
         });
     });
 });

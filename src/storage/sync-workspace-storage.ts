@@ -134,8 +134,6 @@ class SyncWorkspaceStorage {
     /**
      * Retrieves a workspace from Chrome's sync storage using the provided ID.
      * 
-     * TODO: A good chunk of this function should be moved up to `convertSyncDataToWorkspace` to make it more reusable.
-     * 
      * @param id - The ID of the workspace to retrieve. Can be a string or number.
      * @returns A promise that resolves to the retrieved Workspace object, or null if the workspace could not be found or an error occurred.
      * 
@@ -146,49 +144,12 @@ class SyncWorkspaceStorage {
      * The resulting Workspace object includes tabs and tab groups.
      */
     public static async getWorkspaceFromSync(id: string | number): Promise<Workspace | null> {
-        const data = await SyncWorkspaceStorage.getData(id.toString());
-        if (!data) {
+        const syncData = await SyncWorkspaceStorage.getSyncData(id.toString());
+        if (!syncData) {
             return null;
         }
 
-        const metadata = data.metadata;
-        const tabGroups = data.tabGroups;
-
-        if (metadata.numTabChunks == -1) {
-            LogHelper.errorAlert("Number of tab chunks for workspace is not set in sync storage metadata. Cannot load workspace.");
-            return null;
-        }
-
-        // Retrieve tabs in chunks
-        const tabChunkKeys: string[] = [];
-
-        for (let chunkIndex = 0; chunkIndex < metadata.numTabChunks; chunkIndex++) {
-            const tabChunkKey = `${ this.SYNC_PREFIX_TABS }${ id }_${ chunkIndex }`;
-            tabChunkKeys.push(tabChunkKey);
-        }
-
-        // Perform the read operation only once to retrieve all tab chunks
-        const tabChunks = await chrome.storage.sync.get(tabChunkKeys);
-
-        const tabs: string[][] = [];
-        for (const key of tabChunkKeys) {
-            if (!tabChunks[key]) {
-                LogHelper.warn(`Tab chunk ${ key } is missing from sync storage.`);
-                continue;
-            }
-            tabs.push(tabChunks[key]);
-        }
-
-        // Combine the tab chunks into a single array
-        const combinedTabs = ChunkUtil.unChunkArray(tabs);
-
-        // Create the Workspace object
-        const workspace = new Workspace(metadata.windowId, metadata.name, undefined, undefined, metadata.uuid);
-        workspace.lastUpdated = metadata.lastUpdated;
-
-        // Add tabs and tab groups to the workspace
-        combinedTabs.forEach(tabJson => workspace.addTab(TabStub.fromJson(tabJson)));
-        tabGroups.forEach(groupJson => workspace.addTabGroup(TabGroupStub.fromJson(groupJson)));
+        const workspace = SyncWorkspaceStorage.convertSyncDataToWorkspace(syncData);
 
         return workspace;
     }
@@ -219,7 +180,60 @@ class SyncWorkspaceStorage {
     }
 
     /**
+     * Retrieves synchronized data for a given workspace ID.
+     * 
+     * @param id - The unique identifier of the workspace.
+     * @returns A promise that resolves to the synchronized data (`SyncData`) or `null` if the data is not found or an error occurs.
+     * 
+     * @remarks
+     * This method retrieves metadata and tab groups from the synchronized storage. It also handles the retrieval of tab chunks in multiple read operations and combines them into a single array.
+     * 
+     * If the number of tab chunks is not set in the metadata, an error is logged and `null` is returned.
+     */
+    private static async getSyncData(id: string): Promise<SyncData | null> {
+        const data = await SyncWorkspaceStorage.getData(id.toString());
+        if (!data) {
+            return null;
+        }
+
+        const metadata = data.metadata;
+
+        if (metadata.numTabChunks == -1) {
+            LogHelper.errorAlert("Number of tab chunks for workspace is not set in sync storage metadata. Cannot load workspace.");
+            return null;
+        }
+
+        // Retrieve tabs in chunks
+        const tabChunkKeys: string[] = [];
+
+        for (let chunkIndex = 0; chunkIndex < metadata.numTabChunks; chunkIndex++) {
+            const tabChunkKey = `${ this.SYNC_PREFIX_TABS }${ id }_${ chunkIndex }`;
+            tabChunkKeys.push(tabChunkKey);
+        }
+
+        // Perform the read operation only once to retrieve all tab chunks
+        const tabChunks = await chrome.storage.sync.get(tabChunkKeys);
+
+        const tabs: string[][] = [];
+        for (const key of tabChunkKeys) {
+            if (!tabChunks[key]) {
+                LogHelper.warn(`Tab chunk ${ key } is missing from sync storage.`);
+                continue;
+            }
+            tabs.push(tabChunks[key]);
+        }
+
+        // Combine the tab chunks into a single array
+        const combinedTabs = ChunkUtil.unChunkArray(tabs);
+        data.tabs = combinedTabs;
+
+        return data;
+    }
+
+    /**
      * Retrieves synchronized workspace data from Chrome's storage.
+     * 
+     * **Note**: This method does not retrieve the tabs for the workspace. Only the metadata and tab groups are retrieved.
      * 
      * Helper function to handle the null checks in one place.
      * 
@@ -229,7 +243,7 @@ class SyncWorkspaceStorage {
      * The returned data includes:
      * - `metadata`: The workspace metadata.
      * - `tabGroups`: An array of tab group identifiers.
-     * - `tabs`: An empty array, as tabs are not retrieved in this method.
+     * - `tabs`: An empty array.
      */
     private static async getData(id: string): Promise<SyncData | null> {
         const metadataKey = this.getMetadataKey(id);
@@ -261,8 +275,19 @@ class SyncWorkspaceStorage {
      * This method is mainly used for initial loading of the popup. Incremental saving and loading of workspaces is handled by the 
      * `saveWorkspaceToSync` and `getWorkspaceFromSync` methods.
      */
-    public static async getAllSyncData(): Promise<Map<string | number, SyncData>> {
-        return new Map();
+    public static async getAllSyncData(): Promise<Array<SyncData>> {
+        const keys = await StorageHelper.getKeysByPrefix(this.SYNC_PREFIX_METADATA);
+        const data: Array<SyncData> = [];
+
+        for (const key of keys) {
+            const uuid = key.replace(this.SYNC_PREFIX_METADATA, '');
+            const syncData = await this.getSyncData(uuid);
+            if (syncData) {
+                data.push(syncData);
+            }
+        }
+
+        return data;
     }
 
     /**

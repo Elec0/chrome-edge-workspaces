@@ -1,0 +1,26 @@
+{
+    "workspace_metadata_cac9dc5b-178a-42b8-b50f-aa0c17c370f2": {
+        "lastUpdated": 1731541866684,
+        "name": "asdf",
+        "numTabChunks": 1,
+        "uuid": "cac9dc5b-178a-42b8-b50f-aa0c17c370f2",
+        "windowId": 1310797554
+    },
+    "workspace_metadata_e36de816-4071-4a48-8ab2-03719ff4b301": {
+        "lastUpdated": 1731541342068,
+        "name": "test",
+        "numTabChunks": 1,
+        "uuid": "e36de816-4071-4a48-8ab2-03719ff4b301",
+        "windowId": 1310797546
+    },
+    "workspace_tab_groups_cac9dc5b-178a-42b8-b50f-aa0c17c370f2": [],
+    "workspace_tab_groups_e36de816-4071-4a48-8ab2-03719ff4b301": [],
+    "workspace_tabs_cac9dc5b-178a-42b8-b50f-aa0c17c370f2_0": [
+        "{\"id\":1310797555,\"index\":0,\"title\":\"Google\",\"url\":\"https://www.google.com/\",\"favIconUrl\":\"https://www.google.com/favicon.ico\",\"pinned\":false,\"windowId\":1310797554,\"active\":false,\"groupId\":-1,\"mutedInfo\":{\"extensionId\":\"ognnkoophhofbamdhhgbcaglbmpjcpak\",\"muted\":false,\"reason\":\"extension\"}}",
+        "{\"id\":1310797556,\"index\":1,\"title\":\"Home | Archive of Our Own\",\"url\":\"https://archiveofourown.org/\",\"favIconUrl\":\"https://archiveofourown.org/favicon.ico\",\"pinned\":false,\"windowId\":1310797554,\"active\":true,\"groupId\":-1,\"mutedInfo\":{\"extensionId\":\"ognnkoophhofbamdhhgbcaglbmpjcpak\",\"muted\":false,\"reason\":\"extension\"}}"
+    ],
+    "workspace_tabs_e36de816-4071-4a48-8ab2-03719ff4b301_0": [
+        "{\"id\":1310797547,\"index\":0,\"title\":\"Google\",\"url\":\"https://www.google.com/\",\"favIconUrl\":\"https://www.google.com/favicon.ico\",\"pinned\":false,\"windowId\":1310797540,\"active\":false,\"groupId\":-1,\"mutedInfo\":{\"extensionId\":\"ognnkoophhofbamdhhgbcaglbmpjcpak\",\"muted\":false,\"reason\":\"extension\"}}",
+        "{\"id\":1310797548,\"index\":1,\"title\":\"Bing\",\"url\":\"https://www.bing.com/\",\"favIconUrl\":\"https://www.bing.com/sa/simg/favicon-trans-bg-blue-mg-png.png\",\"pinned\":false,\"windowId\":1310797540,\"active\":true,\"groupId\":-1,\"mutedInfo\":{\"extensionId\":\"ognnkoophhofbamdhhgbcaglbmpjcpak\",\"muted\":false,\"reason\":\"extension\"}}"
+    ]
+}
