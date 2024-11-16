@@ -224,6 +224,20 @@ export class StorageHelper {
         console.log("Cleared all data");
     }
 
+    
+    /**
+     * Retrieves all keys from the specified storage that start with the given prefix.
+     *
+     * @param prefix - The prefix to filter the keys.
+     * @param storage - The storage area to search for keys. Defaults to `chrome.storage.sync`.
+     * @returns A promise that resolves to an array of keys that start with the specified prefix.
+     */
+    public static async getKeysByPrefix(prefix: string, storage = chrome.storage.sync): Promise<string[]> {
+        const data = await storage.get(null);
+        const keys = Object.keys(data).filter(key => key.startsWith(prefix));
+        return keys;
+    }
+
     /** Generate hash from string. 
      * From: https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript */
     public static hashCode(toHash: string): string {

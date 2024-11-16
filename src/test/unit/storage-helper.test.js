@@ -223,3 +223,26 @@ describe("isWindowWorkspace", () => {
         expect(await StorageHelper.isWindowWorkspace(null)).toBe(false);
     });
 });
+
+test("getKeysByPrefix returns keys from chrome.storage.sync with a given prefix", async () => {
+    const keys = [
+        "workspace_metadata_workspace-uuid",
+        "workspace_tabs_workspace-uuid_0",
+        "workspace_tab_groups_workspace-uuid",
+        "non_workspace_key",
+        "2nd_workspace_metadata_workspace-uuid",
+    ];
+
+    chrome.storage.sync.get.mockResolvedValue(keys.reduce((acc, key) => {
+        acc[key] = [];
+        return acc;
+    }, {}));
+
+    const result = await StorageHelper.getKeysByPrefix("workspace_");
+
+    expect(result).toEqual([
+        "workspace_metadata_workspace-uuid",
+        "workspace_tabs_workspace-uuid_0",
+        "workspace_tab_groups_workspace-uuid",
+    ]);
+});
