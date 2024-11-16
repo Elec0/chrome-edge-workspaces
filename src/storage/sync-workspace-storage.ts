@@ -149,7 +149,7 @@ class SyncWorkspaceStorage {
 
         const data = await chrome.storage.sync.get([metadataKey, tabGroupsKey]);
 
-        if (!data[metadataKey] || !data[tabGroupsKey]) {
+        if (!data || !data[metadataKey] || !data[tabGroupsKey]) {
             return null;
         }
 

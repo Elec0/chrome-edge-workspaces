@@ -180,7 +180,6 @@ describe("renameWorkspace", () => {
 
         // Act
         await StorageHelper.renameWorkspace(workspace.uuid, "newName");
-
         // Assert
         let workspaces = await StorageHelper.getWorkspaces();
         expect(workspaces.get(workspace.uuid).name).toBe("newName");
