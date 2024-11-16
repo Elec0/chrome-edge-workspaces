@@ -155,6 +155,25 @@ class SyncWorkspaceStorage {
     }
 
     /**
+     * Retrieves all workspaces from the synchronized storage.
+     *
+     * This method fetches all synchronized data and converts each entry
+     * into a `Workspace` object.
+     * 
+     * @returns A promise that resolves to a `WorkspaceStorage` object containing all synchronized workspaces.
+     */
+    public static async getAllSyncWorkspaces(): Promise<WorkspaceStorage> {
+        const syncData = await SyncWorkspaceStorage.getAllSyncData();
+        const workspaceStorage = new WorkspaceStorage();
+
+        for (const data of syncData) {
+            const workspace = SyncWorkspaceStorage.convertSyncDataToWorkspace(data);
+            workspaceStorage.set(workspace.uuid, workspace);
+        }
+        return workspaceStorage;
+    }
+
+    /**
      * Delete a workspace from sync storage.
      * @param id - The ID of the workspace to delete.
      */
