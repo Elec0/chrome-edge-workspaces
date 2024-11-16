@@ -5,6 +5,7 @@ import { VERSION } from "./globals";
 import { Workspace } from "./obj/workspace";
 import { SyncWorkspaceStorage } from "./storage/sync-workspace-storage";
 import { WorkspaceStorage } from "./workspace-storage";
+import { WorkspaceUtils } from "./utils/workspace-utils";
 
 export class StorageHelper {
     private static logStorageChanges = false;
@@ -52,12 +53,23 @@ export class StorageHelper {
         this.setValue("version", VERSION);
     }
 
+
     /**
-     * Get the workspaces from storage.
-     * @returns A promise that resolves to a map of workspaces, or an empty object if no workspaces exist.
+     * Retrieves the workspaces from both local storage and sync storage, and merges them.
+     *
+     * @returns A promise that resolves to the merged workspace storage.
      */
     public static async getWorkspaces(): Promise<WorkspaceStorage> {
-        // return await BookmarkStorageHelper.getWorkspaces();
+        const localStorage = await this.getLocalWorkspaces();
+        const syncStorage = await SyncWorkspaceStorage.getAllSyncWorkspaces();
+        return WorkspaceUtils.mergeWorkspaceStorages(localStorage, syncStorage);
+    }
+
+    /**
+     * Get the workspaces from local storage.
+     * @returns A promise that resolves to a map of workspaces, or an empty object if no workspaces exist.
+     */
+    public static async getLocalWorkspaces(): Promise<WorkspaceStorage> {
         const result = await this.getRawWorkspaces();
         return this.workspacesFromJson({ "data": result });
     }
@@ -234,6 +246,9 @@ export class StorageHelper {
      */
     public static async getKeysByPrefix(prefix: string, storage = chrome.storage.sync): Promise<string[]> {
         const data = await storage.get(null);
+        if (!data) {
+            return [];
+        }
         const keys = Object.keys(data).filter(key => key.startsWith(prefix));
         return keys;
     }
