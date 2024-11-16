@@ -134,6 +134,8 @@ class SyncWorkspaceStorage {
     /**
      * Retrieves a workspace from Chrome's sync storage using the provided ID.
      * 
+     * TODO: A good chunk of this function should be moved up to `convertSyncDataToWorkspace` to make it more reusable.
+     * 
      * @param id - The ID of the workspace to retrieve. Can be a string or number.
      * @returns A promise that resolves to the retrieved Workspace object, or null if the workspace could not be found or an error occurred.
      * 
@@ -253,7 +255,12 @@ class SyncWorkspaceStorage {
         return `${ this.SYNC_PREFIX_TAB_GROUPS }${ id }`;
     }
 
-    // TODO: Implement this method
+    /**
+     * Retrieves all synchronized workspace data from Chrome's storage.
+     * 
+     * This method is mainly used for initial loading of the popup. Incremental saving and loading of workspaces is handled by the 
+     * `saveWorkspaceToSync` and `getWorkspaceFromSync` methods.
+     */
     public static async getAllSyncData(): Promise<Map<string | number, SyncData>> {
         return new Map();
     }
@@ -310,6 +317,16 @@ class SyncWorkspaceStorage {
      */
     public static async setSyncSavingEnabled(value: boolean): Promise<void> {
         await StorageHelper.setValue(Constants.STORAGE_KEYS.settings.saveSync, value.toString());
+    }
+
+    /**
+     * Retrieve all of the workspace UUIDs from the sync storage.
+     * 
+     * Get all workspace metadata keys, then extract the UUIDs from the keys.
+     */
+    public static async getAllSyncWorkspaceUUIDs(): Promise<string[]> {
+        const keys = await StorageHelper.getKeysByPrefix(this.SYNC_PREFIX_METADATA);
+        return keys.map(key => key.replace(this.SYNC_PREFIX_METADATA, ''));
     }
 
     public static async debug_getSyncData(): Promise<void> {

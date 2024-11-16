@@ -65,7 +65,7 @@ describe("SyncWorkspaceStorage", () => {
 
     test("deleteWorkspaceFromSync deletes a Workspace object from chrome.storage.sync", async () => {
         chrome.storage.sync.get.mockResolvedValue({
-            [`workspace_metadata_${workspace.uuid}`]: {numTabChunks: 1},
+            [`workspace_metadata_${workspace.uuid}`]: { numTabChunks: 1 },
             [`workspace_tabs_${workspace.uuid}_0`]: [],
             [`workspace_tab_groups_${workspace.uuid}`]: [1]
         });
@@ -93,8 +93,38 @@ describe("SyncWorkspaceStorage", () => {
         expect(chrome.storage.sync.set).toHaveBeenCalled();
     });
 
+    describe("getAllSyncWorkspaceUUIDs", () => {
+        it("should return all workspace UUIDs from chrome.storage.sync", async () => {
+            const keys = [
+                "workspace_metadata_workspace-uuid",
+                "workspace_tabs_workspace-uuid_0",
+                "workspace_tab_groups_workspace-uuid",
+                "workspace_metadata_workspace-uuid2",
+                "workspace_tabs_workspace-uuid2_0",
+                "workspace_tab_groups_workspace-uuid2",
+                "workspace_metadata_workspace-uuid3",
+                "workspace_tabs_workspace-uuid3_0",
+                "workspace_tab_groups_workspace-uuid3"
+            ];
 
-        
+            chrome.storage.sync.get.mockResolvedValue(keys.reduce((acc, key) => {
+                acc[key] = {};
+                return acc;
+            }, {}));
+
+            const result = await SyncWorkspaceStorage.getAllSyncWorkspaceUUIDs();
+
+            expect(result).toEqual(["workspace-uuid", "workspace-uuid2", "workspace-uuid3"]);
+        });
+
+        it("should return an empty array if no workspace UUIDs are found", async () => {
+            chrome.storage.sync.get.mockResolvedValue({});
+
+            const result = await SyncWorkspaceStorage.getAllSyncWorkspaceUUIDs();
+
+            expect(result).toEqual([]);
+        });
+    });
 
     describe("loadWorkspaceFromSync", () => {
         test("should return null if number of tab chunks is not set in metadata", async () => {
