@@ -189,7 +189,7 @@ export class StorageHelper {
         console.debug("renameWorkspace: ", uuid, newName);
         try {
             // Promise will reject if workspace does not exist
-        const workspace = await this.getWorkspace(uuid);
+            const workspace = await this.getWorkspace(uuid);
             workspace.updateName(newName);
             await this.setWorkspace(workspace);
 
@@ -208,13 +208,14 @@ export class StorageHelper {
             return false;
         }
 
-        const workspaceWindows = await this.getWorkspaces();
-        for (const workspace of Array.from(workspaceWindows.values())) {
-            if (workspace.windowId === windowId) {
-                return true;
-            }
-        }
-        return false;
+        const workspaceStorage = await this.getWorkspaces();
+        return workspaceStorage.get(windowId) != undefined;
+    }
+
+    /** Get the workspace associated with a window. */
+    public static async getWorkspaceFromWindow(windowId: number): Promise<Workspace | undefined> {
+        const workspaceStorage = await this.getWorkspaces();
+        return Promise.resolve(workspaceStorage.get(windowId));
     }
 
     /** Delete everything we have in storage. */

@@ -201,5 +201,25 @@ describe("removeWorkspace", () => {
 });
 
 describe("isWindowWorkspace", () => {
+    it("should return true if the window is a workspace", async () => {
+        let workspace = new Workspace(3, "toCheck");
+        await StorageHelper.setWorkspace(workspace);
 
+        let result = await StorageHelper.isWindowWorkspace(workspace.windowId);
+
+        expect(result).toBe(true);
+    });
+
+    it("should return false if the window is not a workspace", async () => {
+        let workspace = new Workspace(3, "toCheck");
+        await StorageHelper.setWorkspace(workspace);
+
+        let result = await StorageHelper.isWindowWorkspace(4);
+
+        expect(result).toBe(false);
+    });
+
+    it("should return false if the windowId is null", async () => {
+        expect(await StorageHelper.isWindowWorkspace(null)).toBe(false);
+    });
 });
