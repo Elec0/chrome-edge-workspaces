@@ -118,10 +118,10 @@ class SyncWorkspaceStorage {
         // Update metadata with the number of tab chunks
         syncData.metadata.numTabChunks = tabChunks.length;
         // Save metadata
-        writeObject[this.SYNC_PREFIX_METADATA + workspace.uuid] = syncData.metadata;
+        writeObject[this.getMetadataKey(workspace.uuid)] = syncData.metadata;
 
         // Save tab groups
-        writeObject[this.SYNC_PREFIX_TAB_GROUPS + workspace.uuid] = syncData.tabGroups;
+        writeObject[this.getTabGroupsKey(workspace.uuid)] = syncData.tabGroups;
 
         // Perform the write operation
         await chrome.storage.sync.set(writeObject);
@@ -144,17 +144,13 @@ class SyncWorkspaceStorage {
      * The resulting Workspace object includes tabs and tab groups.
      */
     public static async getWorkspaceFromSync(id: string | number): Promise<Workspace | null> {
-        const metadataKey = `${ this.SYNC_PREFIX_METADATA }${ id }`;
-        const tabGroupsKey = `${ this.SYNC_PREFIX_TAB_GROUPS }${ id }`;
-
-        const data = await chrome.storage.sync.get([metadataKey, tabGroupsKey]);
-
-        if (!data || !data[metadataKey] || !data[tabGroupsKey]) {
+        const data = await SyncWorkspaceStorage.getData(id.toString());
+        if (!data) {
             return null;
         }
 
-        const metadata = data[metadataKey] as WorkspaceMetadata;
-        const tabGroups = data[tabGroupsKey] as string[];
+        const metadata = data.metadata;
+        const tabGroups = data.tabGroups;
 
         if (metadata.numTabChunks == -1) {
             LogHelper.errorAlert("Number of tab chunks for workspace is not set in sync storage metadata. Cannot load workspace.");
@@ -193,6 +189,68 @@ class SyncWorkspaceStorage {
         tabGroups.forEach(groupJson => workspace.addTabGroup(TabGroupStub.fromJson(groupJson)));
 
         return workspace;
+    }
+
+    /**
+     * Delete a workspace from sync storage.
+     * @param id - The ID of the workspace to delete.
+     */
+    public static async deleteWorkspaceFromSync(id: string | number): Promise<void> {
+        const data = await SyncWorkspaceStorage.getData(id.toString());
+        if (!data) {
+            return;
+        }
+
+        const keysToDelete: string[] = [this.getMetadataKey(id.toString()), this.getTabGroupsKey(id.toString())];
+
+        // Remove tab chunks
+        // Continue with deletion even if the number of tab chunks is not set, to help clean up any potentially orphaned data
+        if (data.metadata.numTabChunks == -1) {
+            LogHelper.errorAlert("Number of tab chunks for workspace is not set in sync storage metadata. If you see this message repeatedly, please file a bug report.");
+        }
+
+        for (let chunkIndex = 0; chunkIndex < data.metadata.numTabChunks; chunkIndex++) {
+            keysToDelete.push(`${ this.SYNC_PREFIX_TABS }${ id }_${ chunkIndex }`);
+        }
+        await chrome.storage.sync.remove(keysToDelete);
+        console.info(`Deleted workspace ${ id } from sync storage.`);
+    }
+
+    /**
+     * Retrieves synchronized workspace data from Chrome's storage.
+     * 
+     * Helper function to handle the null checks in one place.
+     * 
+     * @param id - The unique identifier for the workspace data to retrieve.
+     * @returns A promise that resolves to the synchronized data, or null if the data is not found.
+     * 
+     * The returned data includes:
+     * - `metadata`: The workspace metadata.
+     * - `tabGroups`: An array of tab group identifiers.
+     * - `tabs`: An empty array, as tabs are not retrieved in this method.
+     */
+    private static async getData(id: string): Promise<SyncData | null> {
+        const metadataKey = this.getMetadataKey(id);
+        const tabGroupsKey = this.getTabGroupsKey(id);
+
+        const data = await chrome.storage.sync.get([metadataKey, tabGroupsKey]);
+
+        if (!data || !data[metadataKey] || !data[tabGroupsKey]) {
+            return null;
+        }
+
+        return {
+            metadata: data[metadataKey] as WorkspaceMetadata,
+            tabGroups: data[tabGroupsKey] as string[],
+            tabs: [], // Tabs are not retrieved here. Returning an empty array to work with the interface.
+        };
+    }
+
+    private static getMetadataKey(id: string): string {
+        return `${ this.SYNC_PREFIX_METADATA }${ id }`;
+    }
+    private static getTabGroupsKey(id: string): string {
+        return `${ this.SYNC_PREFIX_TAB_GROUPS }${ id }`;
     }
 
     // TODO: Implement this method
@@ -252,32 +310,6 @@ class SyncWorkspaceStorage {
      */
     public static async setSyncSavingEnabled(value: boolean): Promise<void> {
         await StorageHelper.setValue(Constants.STORAGE_KEYS.settings.saveSync, value.toString());
-    }
-
-    /**
-     * Delete a workspace from sync storage.
-     * @param id - The ID of the workspace to delete.
-     */
-    public static async deleteWorkspaceFromSync(id: string | number): Promise<void> {
-        const metadataKey = `${ this.SYNC_PREFIX_METADATA }${ id }`;
-        const tabGroupsKey = `${ this.SYNC_PREFIX_TAB_GROUPS }${ id }`;
-
-        const data = await chrome.storage.sync.get([metadataKey]);
-
-        const keysToDelete: string[] = [metadataKey, tabGroupsKey];
-
-        // Remove tab chunks
-        const metadata = data[metadataKey] as WorkspaceMetadata;
-        if (metadata.numTabChunks == -1) {
-            LogHelper.errorAlert("Number of tab chunks for workspace is not set in sync storage metadata. If you see this message repeatedly, please file a bug report.");
-            return;
-        }
-
-        for (let chunkIndex = 0; chunkIndex < metadata.numTabChunks; chunkIndex++) {
-            keysToDelete.push(`${ this.SYNC_PREFIX_TABS }${ id }_${ chunkIndex }`);
-        }
-        await chrome.storage.sync.remove(keysToDelete);
-        console.info(`Deleted workspace ${ id } from sync storage.`);
     }
 
     public static async debug_getSyncData(): Promise<void> {
