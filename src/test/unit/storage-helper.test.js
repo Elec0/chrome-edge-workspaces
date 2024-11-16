@@ -32,11 +32,6 @@ afterEach(() => {
 
 describe("addWorkspace", () => {
     it("should successfully add a workspace", async () => {
-        // jest.spyOn(chrome.tabs, "query").mockResolvedValue([{
-        //     id: 3,
-        //     active: true,
-        //     currentWindow: true
-        // }]);
         jest.spyOn(chrome.storage.local, "get").mockResolvedValue(3);
         jest.spyOn(chrome.storage.local, "set").mockResolvedValue("success");
         const window = {
@@ -77,9 +72,6 @@ describe("addWorkspace", () => {
             return map.get(key) || defaultValue;
         });
 
-        // jest.spyOn(chrome.storage.local, "set").mockImplementation(({[key]: value}) => {
-        //     map.set(key, value);
-        // }).mockResolvedValue("success");
         jest.spyOn(StorageHelper, "setValue").mockImplementation((key, value) => {
             map.set(key, value);
             return true;
@@ -129,7 +121,6 @@ describe("setWorkspace", () => {
 });
 
 describe("getWorkspaces", () => {
-    
     it.skip("should call getValue with correct parameters", async () => {
         // Arrange
         const workspaces = new Map();

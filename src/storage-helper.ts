@@ -166,7 +166,7 @@ export class StorageHelper {
     /**
      * Remove a workspace from storage, both local and sync.
      * @param uuid - The UUID of the workspace to remove.
-     * @returns A promise that resolves to true if the workspace was removed successfully, or rejects if the workspace could not be removed.
+     * @returns A promise that resolves to true if the workspace was removed successfully, or resolves to false if the workspace could not be removed.
      */
     public static async removeWorkspace(uuid: string): Promise<boolean> {
         console.debug("removeWorkspace: ", uuid);
@@ -176,24 +176,28 @@ export class StorageHelper {
             await this.setWorkspaces(workspaces);
             return Promise.resolve(true);
         }
-        return Promise.reject("Workspace does not exist");
+        return Promise.resolve(false);
     }
 
     /**
      * Rename a workspace in storage.
      * @param uuid - The UUID of the workspace to rename.
      * @param newName - The new name for the workspace.
-     * @returns A promise that resolves to true if the workspace was renamed successfully, or rejects if the workspace could not be renamed.
+     * @returns A promise that resolves to true if the workspace was renamed successfully, or resolves to false if the workspace could not be renamed.
      */
     public static async renameWorkspace(uuid: string, newName: string): Promise<boolean> {
         console.debug("renameWorkspace: ", uuid, newName);
+        try {
+            // Promise will reject if workspace does not exist
         const workspace = await this.getWorkspace(uuid);
-        if (workspace) {
             workspace.updateName(newName);
             await this.setWorkspace(workspace);
+
             return Promise.resolve(true);
         }
-        return Promise.reject("Workspace does not exist");
+        catch (error) {
+            return Promise.resolve(false);
+        }
     }
 
     /**
