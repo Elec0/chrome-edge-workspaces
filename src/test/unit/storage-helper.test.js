@@ -175,4 +175,31 @@ describe("renameWorkspace", () => {
         let workspaces = await StorageHelper.getWorkspaces();
         expect(workspaces.get(workspace.uuid).name).toBe("newName");
     });
+
+    it("should return false if the workspace does not exist", async () => {
+        expect(await StorageHelper.renameWorkspace("notExist", "newName")).toBe(false);
+    });
+});
+
+describe("removeWorkspace", () => {
+    it("should remove the workspace", async () => {
+        // Arrange
+        let workspace = new Workspace(3, "toRemove");
+        await StorageHelper.setWorkspace(workspace);
+
+        // Act
+        await StorageHelper.removeWorkspace(workspace.uuid);
+
+        // Assert
+        let workspaces = await StorageHelper.getWorkspaces();
+        expect(workspaces.get(workspace.uuid)).toBeUndefined();
+    });
+
+    it("should return false if the workspace does not exist", async () => {
+        expect(await StorageHelper.removeWorkspace("notExist")).toBe(false);
+    });
+});
+
+describe("isWindowWorkspace", () => {
+
 });
