@@ -5,6 +5,7 @@ import { BackgroundMessageHandlers } from "./messages/background-message-handler
 import { Workspace } from "./obj/workspace";
 import { StorageHelper } from "./storage-helper";
 import { BookmarkStorageHelper } from "./storage/bookmark-storage-helper";
+import { SyncWorkspaceStorage } from "./storage/sync-workspace-storage";
 import { Utils } from "./utils";
 import { DebounceUtil } from "./utils/debounce";
 import { FeatureDetect } from "./utils/feature-detect";
@@ -59,6 +60,15 @@ export class Background {
         if (!await StorageHelper.isWindowWorkspace(windowId)) return;
 
         console.debug(`Window ${ windowId } is a workspace, saving tabs...`);
+
+        // Attempt to cancel a workspace debounce if it's in progress.
+        if(DebounceUtil.clearDebounce(Constants.DEBOUNCE_IDS.saveWorkspace)) {
+            console.debug(`Debounced save for window ${ windowId } was canceled, immediately triggering save.`);
+            const workspace = await StorageHelper.getWorkspaceFromWindow(windowId);
+            if(workspace) {
+                await SyncWorkspaceStorage.immediatelySaveWorkspaceToSync(workspace);
+            }
+        }
 
         await StorageHelper.setWorkspacesSync(await StorageHelper.getWorkspaces());
     }
