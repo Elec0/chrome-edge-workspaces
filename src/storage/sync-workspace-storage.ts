@@ -16,10 +16,15 @@ interface WorkspaceMetadata {
     numTabChunks: number;
 }
 
-interface SyncData {
+export interface SyncData {
     metadata: WorkspaceMetadata;
     tabs: string[];
     tabGroups: string[];
+}
+
+export interface SyncWorkspaceTombstone {
+    uuid: string;
+    timestamp: number;
 }
 
 /**
@@ -52,7 +57,7 @@ interface SyncData {
  * 
  * This structure ensures that we stay within the `QUOTA_BYTES_PER_ITEM` limit and manage the rate of write operations effectively.
  */
-class SyncWorkspaceStorage {
+export class SyncWorkspaceStorage {
     private static readonly SYNC_QUOTA_BYTES_PER_ITEM = chrome.storage.sync.QUOTA_BYTES_PER_ITEM; // 8KB per item
     private static readonly SYNC_MAX_WRITE_OPERATIONS_PER_HOUR = 1800;
     private static readonly SYNC_MAX_WRITE_OPERATIONS_PER_MINUTE = 120;
@@ -128,7 +133,7 @@ class SyncWorkspaceStorage {
     }
 
     // TODO: Current implementation doesn't allow for saving all workspaces to sync storage in a single call.
-    private static async saveAllWorkspacesToSync(workspaceStorage: WorkspaceStorage): Promise<void> {
+    public static async setAllSyncWorkspaces(workspaceStorage: WorkspaceStorage): Promise<void> {
     }
 
     /**
@@ -180,6 +185,7 @@ class SyncWorkspaceStorage {
     public static async deleteWorkspaceFromSync(id: string | number): Promise<void> {
         const data = await SyncWorkspaceStorage.getData(id.toString());
         if (!data) {
+            console.warn(`Deleting workspace ${ id }, but not found in sync storage.`);
             return;
         }
 
@@ -196,6 +202,44 @@ class SyncWorkspaceStorage {
         }
         await chrome.storage.sync.remove(keysToDelete);
         console.info(`Deleted workspace ${ id } from sync storage.`);
+
+        await this.createTombstone(data.metadata.uuid);
+    }
+
+    /**
+     * Create a tombstone for a workspace in sync storage.
+     * 
+     * If we run out of space in the single key we store tombstones in, remove the oldest tombstone.
+     */
+    private static async createTombstone(uuid: string): Promise<void> { 
+        const tombstone: SyncWorkspaceTombstone = {
+            uuid: uuid,
+            timestamp: Date.now(),
+        };
+
+        const key = Constants.STORAGE_KEYS.sync.tombstones;
+        const tombstones = await chrome.storage.sync.get(key);
+        let tombstoneArray: SyncWorkspaceTombstone[] = tombstones[key] as SyncWorkspaceTombstone[] || [];
+
+        tombstoneArray.push(tombstone);
+
+        // Sort tombstones by timestamp in descending order
+        tombstoneArray.sort((a, b) => b.timestamp - a.timestamp);
+
+        // Limit the number of tombstones to the maximum allowed
+        if (tombstoneArray.length > 100) {
+            tombstoneArray = tombstoneArray.slice(0, 100);
+        }
+
+        await chrome.storage.sync.set({ [key]: tombstoneArray });
+        
+        console.info(`Created tombstone for workspace ${ uuid }.`);
+    }
+
+    public static async getTombstones(): Promise<SyncWorkspaceTombstone[]> {
+        const key = Constants.STORAGE_KEYS.sync.tombstones;
+        const tombstones = await chrome.storage.sync.get(key);
+        return tombstones[key] as SyncWorkspaceTombstone[] || [];
     }
 
     /**
@@ -379,5 +423,3 @@ class SyncWorkspaceStorage {
         console.debug("Sync data", data);
     }
 }
-
-export { SyncData, SyncWorkspaceStorage, WorkspaceMetadata };
