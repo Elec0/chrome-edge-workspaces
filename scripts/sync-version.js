@@ -7,7 +7,7 @@ const path = require('path');
 const packageJson = require('../package.json');
 // Update the manifest files for the provided browser
 function updateManifest(browser) {
-    const manifestPath = path.join(__dirname, '..', 'public', browser, 'manifest.json');
+    const manifestPath = path.join(__dirname, '..', 'public-flavors', browser, 'manifest.json');
     const manifest = require(manifestPath);
     
     manifest.version = packageJson.version;
