@@ -311,12 +311,13 @@ class SyncWorkspaceStorage {
 
     /**
      * Compare the timestamps of local and sync data to determine which one is more recent.
+     * Consider the local data as more recent if the timestamps are equal.
      * @param localData - The local workspace data.
      * @param syncData - The sync workspace data.
      * @returns The more recent workspace data.
      */
     public static getMoreRecentWorkspace(localData: Workspace, syncData: Workspace): Workspace {
-        if (localData.lastUpdated > syncData.lastUpdated) {
+        if (localData.lastUpdated >= syncData.lastUpdated) {
             console.debug("Local workspace is more recent.", localData.lastUpdated, syncData.lastUpdated);
             return localData;
         } else {

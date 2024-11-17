@@ -61,6 +61,10 @@ export class StorageHelper {
      */
     public static async getWorkspaces(): Promise<WorkspaceStorage> {
         const localStorage = await this.getLocalWorkspaces();
+        if (await SyncWorkspaceStorage.isSyncSavingEnabled() == false) {
+            return localStorage;
+        }
+        
         const syncStorage = await SyncWorkspaceStorage.getAllSyncWorkspaces();
         return WorkspaceUtils.mergeWorkspaceStorages(localStorage, syncStorage);
     }
@@ -115,6 +119,14 @@ export class StorageHelper {
         const workspaces = await this.getWorkspaces();
         const localWorkspace = workspaces.get(id);
 
+        if (await SyncWorkspaceStorage.isSyncSavingEnabled() == false) {
+            if (localWorkspace) {
+                return localWorkspace;
+            }
+            else {
+                return Promise.reject(`getWorkspace: Workspace does not exist with id ${ id }`);
+            }
+        }
         // Get sync data
         const syncWorkspace = await SyncWorkspaceStorage.getWorkspaceFromSync(id);
 

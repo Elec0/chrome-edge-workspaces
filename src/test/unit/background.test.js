@@ -43,8 +43,10 @@ describe('Background', () => {
         it('should immediately save the workspace to sync storage when a debounced save is present', async () => {
             StorageHelper.isWindowWorkspace.mockResolvedValue(true);
             StorageHelper.getWorkspaceFromWindow.mockResolvedValue(new Workspace('test', 1));
+            jest.spyOn(SyncWorkspaceStorage, 'isSyncSavingEnabled').mockResolvedValue(true);
+
             // Hackily say that the debounce timeout is set
-            DebounceUtil.debounceTimeouts.set(Constants.DEBOUNCE_IDS.saveWorkspace, {});
+            DebounceUtil.debounceTimeouts.set(Constants.DEBOUNCE_IDS.saveWorkspaceToSync, {});
 
             const saveSpy = jest.spyOn(SyncWorkspaceStorage, 'immediatelySaveWorkspaceToSync').mockResolvedValue();
             await Background.windowRemoved(1);

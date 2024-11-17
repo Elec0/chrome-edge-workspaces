@@ -61,16 +61,16 @@ export class Background {
 
         console.debug(`Window ${ windowId } is a workspace, saving tabs...`);
 
-        // Attempt to cancel a workspace debounce if it's in progress.
-        if(DebounceUtil.clearDebounce(Constants.DEBOUNCE_IDS.saveWorkspace)) {
-            console.debug(`Debounced save for window ${ windowId } was canceled, immediately triggering save.`);
+        // Attempt to cancel a sync workspace debounce if it's in progress.
+        if(DebounceUtil.clearDebounce(Constants.DEBOUNCE_IDS.saveWorkspaceToSync)) {
+            console.debug(`Debounced save for window ${ windowId } was canceled, immediately triggering sync save.`);
             const workspace = await StorageHelper.getWorkspaceFromWindow(windowId);
             if(workspace) {
                 await SyncWorkspaceStorage.immediatelySaveWorkspaceToSync(workspace);
             }
         }
 
-        await StorageHelper.setWorkspacesSync(await StorageHelper.getWorkspaces());
+        // await StorageHelper.setWorkspacesSync(await StorageHelper.getWorkspaces());
     }
 
     /**
@@ -240,7 +240,6 @@ export class Background {
         Utils.setBadgeForWindow(windowId, Background.getBadgeTextForWorkspace(workspace));
 
         // Ensure the workspace is saved to bookmarks
-        console.debug(`Saving workspace ${ workspace.name } to bookmarks...`);
         await BookmarkStorageHelper.saveWorkspace(workspace)
 
         // Save the workspace to sync storage
