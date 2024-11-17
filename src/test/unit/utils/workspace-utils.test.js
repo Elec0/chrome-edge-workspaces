@@ -127,5 +127,21 @@ describe('WorkspaceUtils', () => {
             expect(updatedLocalStorage.get('2')).toEqual(syncWorkspace);
             expect(updatedLocalStorage.has('1')).toBe(false);
         });
+
+        it('should make no changes after being run once', () => {
+            const localWorkspace = { uuid: '1', lastUpdated: 2 };
+            const syncWorkspace = { uuid: '1', lastUpdated: 1 };
+
+            localStorage.set('1', localWorkspace);
+            localStorage.set('2', { uuid: '2', lastUpdated: 10 });
+            syncStorage.set('1', syncWorkspace);
+            syncStorage.set('3', { uuid: '3', lastUpdated: 5 });
+
+            const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones);
+            const [updatedLocalStorage2, updatedSyncStorage2] = WorkspaceUtils.syncWorkspaces(updatedLocalStorage, updatedSyncStorage, syncStorageTombstones);
+
+            expect(updatedLocalStorage2).toEqual(updatedLocalStorage);
+            expect(updatedSyncStorage2).toEqual(updatedSyncStorage);
+        });
     });
 });
