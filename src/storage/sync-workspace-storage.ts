@@ -111,8 +111,20 @@ export class SyncWorkspaceStorage {
     private static async saveWorkspaceToSync(workspace: Workspace): Promise<void> {
         console.debug("Saving workspace to sync storage", workspace);
 
+        const writeObject = this.createSyncWorkspaceWriteObject(workspace);
+
+        // Perform the write operation
+        await chrome.storage.sync.set(writeObject);
+    }
+
+    /**
+     * Creates a write object for saving a workspace to sync storage.
+     * @param workspace - The Workspace object to save.
+     * @param writeObject - An optional accumulator object for storing the write data.
+     * @returns An object containing the data to write to sync storage.
+     */
+    private static createSyncWorkspaceWriteObject(workspace: Workspace, writeObject: { [key: string]: unknown } = {}): { [key: string]: unknown } {
         const syncData: SyncData = SyncWorkspaceStorage.convertWorkspaceToSyncData(workspace);
-        const writeObject: { [key: string]: unknown } = {};
 
         // Save tabs in chunks to avoid exceeding QUOTA_BYTES_PER_ITEM
         const tabChunks: string[][] = ChunkUtil.chunkArray(syncData.tabs, SyncWorkspaceStorage.SYNC_QUOTA_BYTES_PER_ITEM);
@@ -128,12 +140,21 @@ export class SyncWorkspaceStorage {
         // Save tab groups
         writeObject[this.getTabGroupsKey(workspace.uuid)] = syncData.tabGroups;
 
-        // Perform the write operation
-        await chrome.storage.sync.set(writeObject);
+        return writeObject;
     }
 
-    // TODO: Current implementation doesn't allow for saving all workspaces to sync storage in a single call.
+    /**
+     * Saves all workspaces in the WorkspaceStorage object to Chrome's sync storage.
+     */
     public static async setAllSyncWorkspaces(workspaceStorage: WorkspaceStorage): Promise<void> {
+        const writeObject: { [key: string]: unknown } = {};
+
+        workspaceStorage.forEach((workspace) => {
+            SyncWorkspaceStorage.createSyncWorkspaceWriteObject(workspace, writeObject);
+        });
+
+        // Perform the write operation
+        await chrome.storage.sync.set(writeObject);
     }
 
     /**
@@ -211,7 +232,7 @@ export class SyncWorkspaceStorage {
      * 
      * If we run out of space in the single key we store tombstones in, remove the oldest tombstone.
      */
-    private static async createTombstone(uuid: string): Promise<void> { 
+    private static async createTombstone(uuid: string): Promise<void> {
         const tombstone: SyncWorkspaceTombstone = {
             uuid: uuid,
             timestamp: Date.now(),
@@ -232,7 +253,7 @@ export class SyncWorkspaceStorage {
         }
 
         await chrome.storage.sync.set({ [key]: tombstoneArray });
-        
+
         console.info(`Created tombstone for workspace ${ uuid }.`);
     }
 
