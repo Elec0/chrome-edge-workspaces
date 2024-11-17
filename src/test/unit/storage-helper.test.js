@@ -1,6 +1,7 @@
 import { Constants } from "../../constants/constants";
 import { Workspace } from "../../obj/workspace";
 import { StorageHelper } from "../../storage-helper";
+import { SyncWorkspaceStorage } from "../../storage/sync-workspace-storage";
 
 const map = new Map();
 
@@ -15,6 +16,8 @@ beforeEach(() => {
         return true;
     });
     map.clear();
+    // We're not testing the sync storage here, so mock it to return false to skip the logic
+    jest.spyOn(SyncWorkspaceStorage, "isSyncSavingEnabled").mockResolvedValue(false);
 });
 
 /** Jest does not clear any mock state between tests (which is baffling). So doing this and/or putting 

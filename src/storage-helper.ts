@@ -52,21 +52,33 @@ export class StorageHelper {
     private static saveVersionNumber() {
         this.setValue("version", VERSION);
     }
+    
+    /**
+     * Sync the local storage with the sync storage.
+     * @returns The synced local storage.
+     */
+    private static async syncStorageAndLocalStorage(localStorage: WorkspaceStorage): Promise<WorkspaceStorage> {
+        const syncStorage = await SyncWorkspaceStorage.getAllSyncWorkspaces();
+        const tombstones = await SyncWorkspaceStorage.getTombstones();
+        const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, tombstones);
+        await this.setWorkspaces(updatedLocalStorage);
+        await SyncWorkspaceStorage.setAllSyncWorkspaces(updatedSyncStorage);
 
+        return updatedLocalStorage;
+    }
 
     /**
-     * Retrieves the workspaces from both local storage and sync storage, and merges them.
+     * Retrieves the workspaces from both local storage and sync storage, and syncs them.
      *
-     * @returns A promise that resolves to the merged workspace storage.
+     * @returns A promise that resolves to the merged workspaces from both local and sync storage.
      */
     public static async getWorkspaces(): Promise<WorkspaceStorage> {
         const localStorage = await this.getLocalWorkspaces();
         if (await SyncWorkspaceStorage.isSyncSavingEnabled() == false) {
             return localStorage;
         }
-        
-        const syncStorage = await SyncWorkspaceStorage.getAllSyncWorkspaces();
-        return WorkspaceUtils.mergeWorkspaceStorages(localStorage, syncStorage);
+
+        return this.syncStorageAndLocalStorage(localStorage);
     }
 
     /**
@@ -195,8 +207,11 @@ export class StorageHelper {
     public static async removeWorkspace(uuid: string): Promise<boolean> {
         console.debug("removeWorkspace: ", uuid);
         const workspaces = await this.getWorkspaces();
+
         if (workspaces.delete(uuid)) {
-            await SyncWorkspaceStorage.deleteWorkspaceFromSync(uuid);
+            if (await SyncWorkspaceStorage.isSyncSavingEnabled()) {
+                await SyncWorkspaceStorage.deleteWorkspaceFromSync(uuid);
+            }
             await this.setWorkspaces(workspaces);
             return Promise.resolve(true);
         }
@@ -248,7 +263,6 @@ export class StorageHelper {
         console.log("Cleared all data");
     }
 
-    
     /**
      * Retrieves all keys from the specified storage that start with the given prefix.
      *
