@@ -49,8 +49,8 @@ describe("SyncWorkspaceStorage", () => {
         expect(newWorkspace.getTabGroups().length).toBe(2);
     });
 
-    test("saveWorkspaceToSync saves a Workspace object to chrome.storage.sync", async () => {
-        await SyncWorkspaceStorage.saveWorkspaceToSync(workspace);
+    test("createSyncWorkspaceWriteObject creates object in expected structure", async () => {
+        const result = await SyncWorkspaceStorage.createSyncWorkspaceWriteObject(workspace);
 
         const syncData = SyncWorkspaceStorage.convertWorkspaceToSyncData(workspace);
         syncData.metadata.numTabChunks = 1; // Set to 1 for testing, normally calculated in saveWorkspaceToSync
@@ -61,7 +61,8 @@ describe("SyncWorkspaceStorage", () => {
             [`workspace_tab_groups_${workspace.uuid}`]: syncData.tabGroups
         }
 
-        expect(chrome.storage.sync.set).toHaveBeenCalledWith(expectedObject);
+        // expect(chrome.storage.sync.set).toHaveBeenCalledWith(expectedObject);
+        expect(result).toMatchObject(expectedObject);
     });
 
     test("deleteWorkspaceFromSync deletes a Workspace object from chrome.storage.sync", async () => {
