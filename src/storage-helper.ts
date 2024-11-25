@@ -62,7 +62,7 @@ export class StorageHelper {
         const tombstones = await SyncWorkspaceStorage.getTombstones();
         const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, tombstones);
         await this.setWorkspaces(updatedLocalStorage);
-        await SyncWorkspaceStorage.setAllSyncWorkspaces(updatedSyncStorage);
+        SyncWorkspaceStorage.debounceSaveAllWorkspacesToSync(updatedSyncStorage);
 
         return updatedLocalStorage;
     }
