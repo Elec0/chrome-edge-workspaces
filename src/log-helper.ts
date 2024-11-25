@@ -1,6 +1,8 @@
 import * as util from 'util';
 
 export class LogHelper {
+    private static readonly ENABLE_TRACE = true;
+
     public static log(message: string, ...optionalParams: unknown[]): void {
         console.log(message, ...optionalParams);
     }
@@ -24,5 +26,11 @@ export class LogHelper {
 
     public static warn(message: string, ...optionalParams: unknown[]): void {
         console.warn(message, ...optionalParams);
+    }
+
+    public static trace(message: string, ...optionalParams: unknown[]): void {
+        if (this.ENABLE_TRACE) {
+            console.trace(message, ...optionalParams);
+        }
     }
 }
