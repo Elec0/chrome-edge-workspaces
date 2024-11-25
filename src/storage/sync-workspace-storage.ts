@@ -58,7 +58,7 @@ export interface SyncWorkspaceTombstone {
  * This structure ensures that we stay within the `QUOTA_BYTES_PER_ITEM` limit and manage the rate of write operations effectively.
  */
 export class SyncWorkspaceStorage {
-    private static readonly SYNC_QUOTA_BYTES_PER_ITEM = chrome.storage.sync.QUOTA_BYTES_PER_ITEM; // 8KB per item
+    private static readonly SYNC_QUOTA_BYTES_PER_ITEM = Math.floor(chrome.storage.sync.QUOTA_BYTES_PER_ITEM * 0.1); // Reduce by 90%
     private static readonly SYNC_MAX_WRITE_OPERATIONS_PER_HOUR = 1800;
     private static readonly SYNC_MAX_WRITE_OPERATIONS_PER_MINUTE = 120;
     private static readonly SYNC_PREFIX_METADATA = 'workspace_metadata_';
@@ -113,8 +113,15 @@ export class SyncWorkspaceStorage {
 
         const writeObject = this.createSyncWorkspaceWriteObject(workspace);
 
-        // Perform the write operation
-        await chrome.storage.sync.set(writeObject);
+        try {
+            // Perform the write operation
+            await chrome.storage.sync.set(writeObject);
+        }
+        catch (e) {
+            console.error("Error saving workspace to sync storage:", e);
+            console.trace();
+            console.log("Write object with error:", writeObject);
+        }
     }
 
     /**
@@ -147,14 +154,22 @@ export class SyncWorkspaceStorage {
      * Saves all workspaces in the WorkspaceStorage object to Chrome's sync storage.
      */
     public static async setAllSyncWorkspaces(workspaceStorage: WorkspaceStorage): Promise<void> {
+        console.debug("Saving all workspaces to sync storage");
         const writeObject: { [key: string]: unknown } = {};
 
         workspaceStorage.forEach((workspace) => {
             SyncWorkspaceStorage.createSyncWorkspaceWriteObject(workspace, writeObject);
         });
 
-        // Perform the write operation
-        await chrome.storage.sync.set(writeObject);
+        try {
+            // Perform the write operation
+            await chrome.storage.sync.set(writeObject);
+        }
+        catch (e) {
+            console.error("Error saving workspaces to sync storage:", e);
+            console.trace();
+            console.log("Write object with error:", writeObject);
+        }
     }
 
     /**
@@ -221,8 +236,14 @@ export class SyncWorkspaceStorage {
         for (let chunkIndex = 0; chunkIndex < data.metadata.numTabChunks; chunkIndex++) {
             keysToDelete.push(`${ this.SYNC_PREFIX_TABS }${ id }_${ chunkIndex }`);
         }
-        await chrome.storage.sync.remove(keysToDelete);
-        console.info(`Deleted workspace ${ id } from sync storage.`);
+        try {
+            await chrome.storage.sync.remove(keysToDelete);
+            console.info(`Deleted workspace ${ id } from sync storage.`);
+        }
+        catch (e) {
+            console.error("Error deleting workspace from sync storage:", e);
+            console.log("Keys to delete with error:", keysToDelete);
+        }
 
         await this.createTombstone(data.metadata.uuid);
     }
@@ -252,7 +273,13 @@ export class SyncWorkspaceStorage {
             tombstoneArray = tombstoneArray.slice(0, 100);
         }
 
-        await chrome.storage.sync.set({ [key]: tombstoneArray });
+        try {
+            await chrome.storage.sync.set({ [key]: tombstoneArray });
+        }
+        catch (e) {
+            console.error("Error creating tombstone in sync storage:", e);
+            console.log("Tombstone with error:", tombstone);
+        }
 
         console.info(`Created tombstone for workspace ${ uuid }.`);
     }
@@ -377,18 +404,24 @@ export class SyncWorkspaceStorage {
     /**
      * Compare the timestamps of local and sync data to determine which one is more recent.
      * Consider the local data as more recent if the timestamps are equal.
+     * 
+     * Note that this method is called very frequently.
      * @param localData - The local workspace data.
      * @param syncData - The sync workspace data.
      * @returns The more recent workspace data.
      */
-    public static getMoreRecentWorkspace(localData: Workspace, syncData: Workspace): Workspace {
+    public static getMoreRecentWorkspace(localData: Workspace, syncData: Workspace, log = false): Workspace {
+        let result = syncData;
+        let which = "Sync";
+
         if (localData.lastUpdated >= syncData.lastUpdated) {
-            console.debug("Local workspace is more recent.", localData.lastUpdated, syncData.lastUpdated);
-            return localData;
-        } else {
-            console.debug("Sync workspace is more recent.", localData.lastUpdated, syncData.lastUpdated);
-            return syncData;
+            result = localData;
+            which = "Local";
         }
+        if (log) {
+            console.debug(`${ which } "${ localData.name }" workspace is more recent. localUpdated: ${ localData.lastUpdated }, syncUpdated: ${ syncData.lastUpdated }`);
+        }
+        return result;
     }
 
     /**
@@ -398,6 +431,15 @@ export class SyncWorkspaceStorage {
     public static debounceSaveWorkspaceToSync(workspace: Workspace): void {
         DebounceUtil.debounce(Constants.DEBOUNCE_IDS.saveWorkspaceToSync,
             () => SyncWorkspaceStorage.saveWorkspaceToSync(workspace), 60000); // 1 minute debounce
+    }
+
+    /**
+     * Debounced method to save all workspaces to sync storage.
+     * @param workspaceStorage - The WorkspaceStorage object containing all workspaces to save.
+     */
+    public static debounceSaveAllWorkspacesToSync(workspaceStorage: WorkspaceStorage): void {
+        DebounceUtil.debounce(Constants.DEBOUNCE_IDS.saveAllWorkspacesToSync,
+            () => SyncWorkspaceStorage.setAllSyncWorkspaces(workspaceStorage), 10000); // 10 second debounce
     }
 
     /**

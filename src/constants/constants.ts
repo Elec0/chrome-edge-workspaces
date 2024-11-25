@@ -18,6 +18,7 @@ export class Constants {
     public static DEBOUNCE_IDS = {
         saveWorkspace: "saveWorkspace",
         saveWorkspaceToSync: "saveWorkspaceToSync",
+        saveAllWorkspacesToSync: "saveAllWorkspacesToSync",
     }
 
     public static STORAGE_KEYS = {
