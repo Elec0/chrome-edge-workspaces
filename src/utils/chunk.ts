@@ -12,7 +12,7 @@ export class ChunkUtil {
 
         for (const item of array) {
             const itemSize = new Blob([JSON.stringify(item)]).size;
-            if (currentChunkSize + itemSize > maxBytes) {
+            if (currentChunkSize + itemSize >= maxBytes) {
                 chunks.push(currentChunk);
                 currentChunk = [];
                 currentChunkSize = 0;
