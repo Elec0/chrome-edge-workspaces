@@ -269,4 +269,22 @@ describe("SyncWorkspaceStorage", () => {
             expect(result).toEqual([]);
         });
     });
+
+    describe("convertWorkspaceTabsForSaving", () => {
+        // it should convert tab stubs to JSON strings, removing the 'favIconUrl' property
+
+        it("should convert tabs to JSON strings, removing 'favIconUrl'", async () => {
+            const tabs = [
+                new TabStub({ id: 1, url: "https://example.com", windowId: 1, active: true, pinned: false, mutedInfo: { muted: false }, groupId: 0, favIconUrl: "https://example.com/favicon.ico" }),
+                new TabStub({ id: 2, url: "https://example.org", windowId: 1, active: false, pinned: false, mutedInfo: { muted: false }, groupId: 0, favIconUrl: "https://example.org/favicon.ico" })
+            ];
+
+            // Result object is a string
+            const result = SyncWorkspaceStorage.convertWorkspaceTabsForSaving(tabs);
+
+            expect(result.length).toBe(2);
+            expect(result[0]).not.toContain("favIconUrl");
+            expect(result[1]).not.toContain("favIconUrl");
+        });
+    });
 });

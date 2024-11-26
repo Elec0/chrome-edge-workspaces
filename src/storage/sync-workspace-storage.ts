@@ -58,7 +58,7 @@ export interface SyncWorkspaceTombstone {
  * This structure ensures that we stay within the `QUOTA_BYTES_PER_ITEM` limit and manage the rate of write operations effectively.
  */
 export class SyncWorkspaceStorage {
-    private static readonly SYNC_QUOTA_BYTES_PER_ITEM = Math.floor(chrome.storage.sync.QUOTA_BYTES_PER_ITEM * 0.1); // Reduce by 90%
+    private static readonly SYNC_QUOTA_BYTES_PER_ITEM = Math.floor(chrome.storage.sync.QUOTA_BYTES_PER_ITEM * 0.9); // Reduce by 90%
     private static readonly SYNC_MAX_WRITE_OPERATIONS_PER_HOUR = 1800;
     private static readonly SYNC_MAX_WRITE_OPERATIONS_PER_MINUTE = 120;
     private static readonly SYNC_PREFIX_METADATA = 'workspace_metadata_';
@@ -78,10 +78,28 @@ export class SyncWorkspaceStorage {
             numTabChunks: -1, // This will be set when the tabs are chunked
         };
 
-        const tabs: string[] = workspace.getTabs().map(tab => tab.toJson());
+        const tabs: string[] = SyncWorkspaceStorage.convertWorkspaceTabsForSaving(workspace.getTabs());
         const tabGroups: string[] = workspace.getTabGroups().map(group => group.toJson());
 
         return { metadata, tabs, tabGroups };
+    }
+
+    /**
+     * Converts an array of TabStub objects to an array of JSON strings.
+     * 
+     * To save on storage space, we are going to throw out some of the data that we don't need:
+     * - `favIconUrl` - We don't need this for syncing, and it can be quite large.
+     */
+    private static convertWorkspaceTabsForSaving(tabs: TabStub[]): string[] {
+        return tabs.map(tab => {
+            // Remove the favIconUrl property by using a replacer function, passed to `.toJson`
+            return tab.toJson((key, value) => {
+                if (key === "favIconUrl") {
+                    return undefined;
+                }
+                return value;
+            });
+        });
     }
 
     /**
