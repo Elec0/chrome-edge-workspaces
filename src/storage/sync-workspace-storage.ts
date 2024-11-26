@@ -134,6 +134,7 @@ export class SyncWorkspaceStorage {
         try {
             // Perform the write operation
             await chrome.storage.sync.set(writeObject);
+            await this.cleanupSyncStorage();
         }
         catch (e) {
             console.error("Error saving workspace to sync storage:", e);
@@ -182,11 +183,53 @@ export class SyncWorkspaceStorage {
         try {
             // Perform the write operation
             await chrome.storage.sync.set(writeObject);
+            await this.cleanupSyncStorage();
         }
         catch (e) {
             console.error("Error saving workspaces to sync storage:", e);
             console.trace();
             console.log("Write object with error:", writeObject);
+        }
+    }
+
+    private static async cleanupSyncStorage(): Promise<void> {
+        await this.cleanupSyncStorageTabChunks();
+    }
+
+    /**
+     * Clean up tab chunks in sync storage.
+     * 
+     * When a workspace has tabs closed, the tab chunks that might be left behind are not removed.
+     * Each workspace metadata contains the number of tab chunks, so we can use that to determine the number of tab chunks to remove.
+     * 
+     * Process:
+     * - Get all workspaces from sync storage
+     * - For each workspace, get the number of tab chunks from the metadata
+     * - Get all keys that match the tab chunk pattern for that workspace
+     *  - Example key: `workspace_tabs_<uuid>_<index>`, so match `workspace_tabs_<uuid>_`
+     * - If the number of tab chunks in storage is greater than the number in metadata, remove the extra tab chunks
+     */
+    private static async cleanupSyncStorageTabChunks(): Promise<void> {
+        const workspaces = await SyncWorkspaceStorage.getAllSyncData();
+
+        for (const workspace of workspaces) {
+            const numTabChunks = workspace.metadata.numTabChunks;
+            const tabChunkKeys = await StorageHelper.getKeysByPrefix(`${ this.SYNC_PREFIX_TABS }${ workspace.metadata.uuid }`);
+
+            if (tabChunkKeys.length > numTabChunks) {
+                // Keys are not guaranteed to be in order, so sort them alphanumerically
+                tabChunkKeys.sort();
+                const keysToDelete = tabChunkKeys.slice(numTabChunks);
+
+                try {
+                    await chrome.storage.sync.remove(keysToDelete);
+                    console.info(`Removed ${ keysToDelete.length } extra tab chunks for workspace ${ workspace.metadata.uuid }.`);
+                }
+                catch (e) {
+                    console.error("Error removing extra tab chunks from sync storage:", e);
+                    console.log("Keys to delete with error:", keysToDelete);
+                }
+            }
         }
     }
 

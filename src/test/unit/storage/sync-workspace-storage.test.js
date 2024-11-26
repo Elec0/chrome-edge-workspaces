@@ -1,6 +1,7 @@
 import { TabGroupStub } from "../../../obj/tab-group-stub";
 import { TabStub } from "../../../obj/tab-stub";
 import { Workspace } from "../../../obj/workspace";
+import { StorageHelper } from "../../../storage-helper";
 import { SyncWorkspaceStorage } from "../../../storage/sync-workspace-storage";
 import { DebounceUtil } from "../../../utils/debounce";
 
@@ -285,6 +286,81 @@ describe("SyncWorkspaceStorage", () => {
             expect(result.length).toBe(2);
             expect(result[0]).not.toContain("favIconUrl");
             expect(result[1]).not.toContain("favIconUrl");
+        });
+    });
+
+    describe("cleanupSyncStorageTabChunks", () => {
+        it("should not delete any tab chunks if none are extra", async () => {
+            const workspaces = [
+                {
+                    metadata: { uuid: "workspace-uuid", numTabChunks: 2 },
+                    tabs: [],
+                    tabGroups: []
+                }
+            ];
+    
+            const tabChunkKeys = [
+                "workspace_tabs_workspace-uuid_0",
+                "workspace_tabs_workspace-uuid_1"
+            ];
+    
+            jest.spyOn(SyncWorkspaceStorage, "getAllSyncData").mockResolvedValue(workspaces);
+            jest.spyOn(StorageHelper, "getKeysByPrefix").mockResolvedValue(tabChunkKeys);
+            const removeSpy = jest.spyOn(chrome.storage.sync, "remove");
+    
+            await SyncWorkspaceStorage.cleanupSyncStorageTabChunks();
+    
+            expect(removeSpy).not.toHaveBeenCalled();
+        });
+    
+        it("should delete extra tab chunks", async () => {
+            const workspaces = [
+                {
+                    metadata: { uuid: "workspace-uuid", numTabChunks: 2 },
+                    tabs: [],
+                    tabGroups: []
+                }
+            ];
+    
+            const tabChunkKeys = [
+                "workspace_tabs_workspace-uuid_0",
+                "workspace_tabs_workspace-uuid_1",
+                "workspace_tabs_workspace-uuid_2"
+            ];
+    
+            jest.spyOn(SyncWorkspaceStorage, "getAllSyncData").mockResolvedValue(workspaces);
+            jest.spyOn(StorageHelper, "getKeysByPrefix").mockResolvedValue(tabChunkKeys);
+            const removeSpy = jest.spyOn(chrome.storage.sync, "remove").mockResolvedValue();
+    
+            await SyncWorkspaceStorage.cleanupSyncStorageTabChunks();
+    
+            expect(removeSpy).toHaveBeenCalledWith(["workspace_tabs_workspace-uuid_2"]);
+        });
+    
+        it("should log an error if removing extra tab chunks fails", async () => {
+            const workspaces = [
+                {
+                    metadata: { uuid: "workspace-uuid", numTabChunks: 2 },
+                    tabs: [],
+                    tabGroups: []
+                }
+            ];
+    
+            const tabChunkKeys = [
+                "workspace_tabs_workspace-uuid_0",
+                "workspace_tabs_workspace-uuid_1",
+                "workspace_tabs_workspace-uuid_2"
+            ];
+    
+            jest.spyOn(SyncWorkspaceStorage, "getAllSyncData").mockResolvedValue(workspaces);
+            jest.spyOn(StorageHelper, "getKeysByPrefix").mockResolvedValue(tabChunkKeys);
+            const removeSpy = jest.spyOn(chrome.storage.sync, "remove").mockRejectedValue(new Error("Test error"));
+            const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+    
+            await SyncWorkspaceStorage.cleanupSyncStorageTabChunks();
+    
+            expect(removeSpy).toHaveBeenCalledWith(["workspace_tabs_workspace-uuid_2"]);
+            expect(consoleErrorSpy).toHaveBeenCalled();
         });
     });
 });
