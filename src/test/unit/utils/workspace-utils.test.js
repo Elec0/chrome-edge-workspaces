@@ -18,6 +18,11 @@ describe('WorkspaceUtils', () => {
     });
 
     describe('syncWorkspaces', () => {
+        function defaultConflictResolver(_local, _sync) {
+            return false;
+        }
+        dCR = defaultConflictResolver;
+
         it('should delete local workspaces that have a corresponding tombstone', () => {
             const localWorkspace = { uuid: '1', lastUpdated: 1 };
             const tombstone = { uuid: '1', timestamp: 2 };
@@ -28,23 +33,43 @@ describe('WorkspaceUtils', () => {
             syncStorageTombstones.push(tombstone);
             syncStorage.set('2', syncWorkspace);
 
-            const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones);
+            const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones, dCR);
 
             expect(updatedLocalStorage.has('1')).toBe(false);
             expect(updatedSyncStorage.has('2')).toBe(true); // Should not be affected
         });
 
-        // TODO: Ensure this is still a valid test after implementing user prompt
-        it('should keep local workspaces that are more recent than the tombstone', () => {
+        it('should use the conflictResolver callback when local workspace updated after tombstone creation', () => {
             const localWorkspace = { uuid: '1', lastUpdated: 3 };
             const tombstone = { uuid: '1', timestamp: 2 };
 
             localStorage.set('1', localWorkspace);
             syncStorageTombstones.push(tombstone);
 
-            const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones);
+            const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones, 
+                (_local, _sync) => {
+                    return true; // Always keep local
+                }
+            );
 
+            expect(updatedLocalStorage.has('1')).toBe(true);
             expect(updatedLocalStorage.get('1')).toEqual(localWorkspace);
+        });
+
+        it('should use the conflictResolver callback and delete workspace, when local workspace updated after tombstone creation', () => {
+            const localWorkspace = { uuid: '1', lastUpdated: 4 };
+            const tombstone = { uuid: '1', timestamp: 2 };
+
+            localStorage.set('1', localWorkspace);
+            syncStorageTombstones.push(tombstone);
+
+            const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones, 
+                (_local, _sync) => {
+                    return false; // Always delete
+                }
+            );
+
+            expect(updatedLocalStorage.has('1')).toBe(false);
         });
 
         it('should merge storages and keep the more up-to-date workspace in local storage', () => {
@@ -56,7 +81,7 @@ describe('WorkspaceUtils', () => {
             syncStorage.set('1', syncWorkspace);
             syncStorage.set('3', { uuid: '3', lastUpdated: 5 });
 
-            const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones);
+            const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones, dCR);
 
             expect(updatedSyncStorage.get('1')).toEqual(localWorkspace);
             expect(updatedLocalStorage.get('1')).toEqual(localWorkspace);
@@ -70,7 +95,7 @@ describe('WorkspaceUtils', () => {
             syncStorage.set('1', syncWorkspace);
             syncStorage.set('3', { uuid: '3', lastUpdated: 5 });
 
-            const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones);
+            const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones, dCR);
 
             expect(updatedSyncStorage.get('1')).toEqual(syncWorkspace);
             expect(updatedLocalStorage.get('1')).toEqual(syncWorkspace);
@@ -81,7 +106,7 @@ describe('WorkspaceUtils', () => {
 
             localStorage.set('1', localWorkspace);
 
-            const [_, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones);
+            const [_, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones, dCR);
 
             expect(updatedSyncStorage.get('1')).toEqual(localWorkspace);
         });
@@ -91,7 +116,7 @@ describe('WorkspaceUtils', () => {
 
             syncStorage.set('1', syncWorkspace);
 
-            const [updatedLocalStorage, _] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones);
+            const [updatedLocalStorage, _] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones, dCR);
 
             expect(updatedLocalStorage.get('1')).toEqual(syncWorkspace);
         });
@@ -105,7 +130,7 @@ describe('WorkspaceUtils', () => {
             syncStorage.set('2', syncWorkspace);
             localStorage.set('2', localWorkspace);
 
-            const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones);
+            const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones, dCR);
 
             expect(updatedLocalStorage.has('1')).toBe(false);
             expect(updatedSyncStorage.has('1')).toBe(false);
@@ -122,7 +147,7 @@ describe('WorkspaceUtils', () => {
             syncStorage.set('2', syncWorkspace);
             syncStorageTombstones.push(tombstone);
 
-            const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones);
+            const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones, dCR);
 
             expect(updatedLocalStorage.get('2')).toEqual(syncWorkspace);
             expect(updatedLocalStorage.has('1')).toBe(false);
@@ -137,8 +162,8 @@ describe('WorkspaceUtils', () => {
             syncStorage.set('1', syncWorkspace);
             syncStorage.set('3', { uuid: '3', lastUpdated: 5 });
 
-            const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones);
-            const [updatedLocalStorage2, updatedSyncStorage2] = WorkspaceUtils.syncWorkspaces(updatedLocalStorage, updatedSyncStorage, syncStorageTombstones);
+            const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones, dCR);
+            const [updatedLocalStorage2, updatedSyncStorage2] = WorkspaceUtils.syncWorkspaces(updatedLocalStorage, updatedSyncStorage, syncStorageTombstones, dCR);
 
             expect(updatedLocalStorage2).toEqual(updatedLocalStorage);
             expect(updatedSyncStorage2).toEqual(updatedSyncStorage);

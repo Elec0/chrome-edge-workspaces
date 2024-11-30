@@ -3,7 +3,7 @@ import { Constants } from "./constants/constants";
 import { MessageResponse } from "./constants/message-responses";
 import { VERSION } from "./globals";
 import { Workspace } from "./obj/workspace";
-import { SyncWorkspaceStorage } from "./storage/sync-workspace-storage";
+import { SyncWorkspaceStorage, SyncWorkspaceTombstone } from "./storage/sync-workspace-storage";
 import { WorkspaceStorage } from "./workspace-storage";
 import { WorkspaceUtils } from "./utils/workspace-utils";
 
@@ -60,11 +60,21 @@ export class StorageHelper {
     private static async syncStorageAndLocalStorage(localStorage: WorkspaceStorage): Promise<WorkspaceStorage> {
         const syncStorage = await SyncWorkspaceStorage.getAllSyncWorkspaces();
         const tombstones = await SyncWorkspaceStorage.getTombstones();
-        const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, tombstones);
+        const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, tombstones, this.syncConflictResolver);
         await this.setWorkspaces(updatedLocalStorage);
         SyncWorkspaceStorage.debounceSaveAllWorkspacesToSync(updatedSyncStorage);
 
         return updatedLocalStorage;
+    }
+
+    /**
+     * Resolve a sync conflict by prompting the user to choose which workspace to keep.
+     * @param localWorkspace - The local workspace.
+     * @param tombstone - The tombstone for the workspace.
+     * @returns True if the local workspace should be kept, false if the local workspace should be deleted.
+     */
+    private static syncConflictResolver(localWorkspace: Workspace, tombstone: SyncWorkspaceTombstone): boolean {
+        return confirm(`Conflict detected for workspace ${localWorkspace.name}.\n(The local workspace was updated after the workspace was deleted on another computer)\nDo you want to keep the local workspace or delete it?`);
     }
 
     /**
