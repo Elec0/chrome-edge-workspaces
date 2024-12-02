@@ -93,16 +93,14 @@ export class WorkspaceStorage implements Map<string | number, Workspace> {
         const entries: [string | number, Workspace][] = [];
         this.workspaces.forEach((workspace, uuid) => {
             entries.push([uuid, workspace]);
-            entries.push([workspace.windowId, workspace]);
         });
         return entries[Symbol.iterator]();
     }
 
     keys(): IterableIterator<string | number> {
         const keys: (string | number)[] = [];
-        this.workspaces.forEach((workspace, uuid) => {
+        this.workspaces.forEach((_workspace, uuid) => {
             keys.push(uuid);
-            keys.push(workspace.windowId);
         });
         return keys[Symbol.iterator]();
     }

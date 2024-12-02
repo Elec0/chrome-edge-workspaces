@@ -51,16 +51,18 @@ describe('WorkspaceStorage', () => {
         expect(workspaceStorage.has('test')).toBe(true);
     });
 
-    test('should iterate over workspaces', () => {
+    test('should iterate over workspaces with .entries()', () => {
         workspaceStorage.set('test', workspace);
         const entries = [...workspaceStorage];
-        expect(entries).toEqual([['test', workspace], [undefined, workspace]]);
+        expect(entries).toEqual([['test', workspace]]);
     });
 
-    test('should return all keys', () => {
-        workspaceStorage.set('test', workspace);
+    test('should return only UUIDs from .keys()', () => {
+        workspace.uuid = '123e4567-e89b-12d3-a456-426614174000';
+        workspace.windowId = 13;
+        workspaceStorage.set(workspace.uuid, workspace);
         const keys = [...workspaceStorage.keys()];
-        expect(keys).toEqual(['test']);
+        expect(keys).toEqual([workspace.uuid]);
     });
 
     test('should return all values', () => {
