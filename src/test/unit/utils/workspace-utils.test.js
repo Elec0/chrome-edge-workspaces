@@ -168,5 +168,19 @@ describe('WorkspaceUtils', () => {
             expect(updatedLocalStorage2).toEqual(updatedLocalStorage);
             expect(updatedSyncStorage2).toEqual(updatedSyncStorage);
         });
+
+        it('should return a list of workspace UUIDs to be deleted from sync storage if tombstones exist', () => {
+            const localWorkspace = { uuid: '1', lastUpdated: 2 };
+            const syncWorkspace = { uuid: '1', lastUpdated: 1 };
+            const tombstone = { uuid: '1', timestamp: 3 };
+
+            localStorage.set('1', localWorkspace);
+            syncStorage.set('1', syncWorkspace);
+            syncStorageTombstones.push(tombstone);
+
+            const [_, updatedSyncStorage, deletedWorkspaces] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, syncStorageTombstones, dCR);
+
+            expect(deletedWorkspaces).toEqual(['1']);
+        });
     });
 });
