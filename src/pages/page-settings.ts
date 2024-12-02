@@ -5,6 +5,7 @@ import { VERSION } from "../globals";
 import { LogHelper } from "../log-helper";
 import { StorageHelper } from "../storage-helper";
 import { BookmarkStorageHelper } from "../storage/bookmark-storage-helper";
+import { DebugStorageHelper } from "../storage/debug-storage-helpet";
 import { SyncWorkspaceStorage } from "../storage/sync-workspace-storage";
 import SETTINGS_TEMPLATE from "../templates/dialogSettingsTemplate.html";
 import { Utils } from "../utils";
@@ -26,11 +27,14 @@ export class PageSettings extends BaseDialog {
     public static async openSettings() {
         const saveBookmarks = await BookmarkStorageHelper.isBookmarkSaveEnabled();
         const syncWorkspaces = await SyncWorkspaceStorage.isSyncSavingEnabled();
+        const debugEnabled = await DebugStorageHelper.isDebugEnabled();
         const dialog = Utils.interpolateTemplate(SETTINGS_TEMPLATE, 
             {
                 "version": VERSION,
                 "bookmarkSaveChecked": saveBookmarks ? "checked" : "",
-                "syncSaveChecked": syncWorkspaces ? "checked" : ""
+                "syncSaveChecked": syncWorkspaces ? "checked" : "",
+                "debugChecked": debugEnabled ? "checked" : "",
+                "debugVisibility": debugEnabled ? "block" : "none",
             }
         );
 
@@ -46,6 +50,14 @@ export class PageSettings extends BaseDialog {
         dialogElement.querySelector("#modal-settings-sync-save")?.addEventListener("click", async (event) => {
             const target = event.target as HTMLInputElement;
             await SyncWorkspaceStorage.setSyncSavingEnabled(target.checked);
+        });
+        dialogElement.querySelector("#modal-settings-debug")?.addEventListener("click", async (event) => {
+            const target = event.target as HTMLInputElement;
+            await DebugStorageHelper.setDebugEnabled(target.checked);
+
+            dialogElement.querySelectorAll(".debug-tool")?.forEach((element) => {
+                element.setAttribute("style", `display: ${target.checked ? "block" : "none"}`);
+            });
         });
 
         dialogElement.querySelector("#modal-settings-sync-fetch")?.addEventListener("click", () => {

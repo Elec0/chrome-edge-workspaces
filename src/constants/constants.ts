@@ -25,6 +25,7 @@ export class Constants {
         settings: {
             saveBookmarks: "settings.saveBookmarks",
             saveSync: "settings.saveSync",
+            debug: "settings.debug",
         },
         sync: {
             tombstones: "sync.tombstones",
