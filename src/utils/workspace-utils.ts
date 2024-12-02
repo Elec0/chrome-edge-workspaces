@@ -14,13 +14,15 @@ export class WorkspaceUtils {
      * In the case of a conflict during deletion, the user will be prompted to choose whether to keep the workspace or delete it.
      * 
      * @param conflictResolver - A function that resolves conflicts between local workspaces and tombstones. Return true to keep the workspace, false to delete it.
-     * @returns The updated local and sync storage instances.
+     * @returns The updated local and sync storage instances, and a list of UUIDs that need to be deleted from the sync storage.
      */
     public static syncWorkspaces(localStorage: WorkspaceStorage,
         syncStorage: WorkspaceStorage,
         syncStorageTombstones: SyncWorkspaceTombstone[],
         conflictResolver: (localWorkspace: Workspace, tombstone: SyncWorkspaceTombstone) => boolean
-    ): [WorkspaceStorage, WorkspaceStorage] {
+    ): [WorkspaceStorage, WorkspaceStorage, string[]] {
+        const toDeleteFromSyncStorage: string[] = [];
+
         // We need to check for tombstones and do local deletion before merging the workspaces, otherwise we will end up with deleted workspaces in the merged storage.
         syncStorageTombstones.forEach(tombstone => {
             if (localStorage.has(tombstone.uuid)) {
@@ -34,8 +36,8 @@ export class WorkspaceUtils {
                         localStorage.delete(tombstone.uuid);
                         
                         if(syncStorage.has(tombstone.uuid)) {
-                            console.warn(`Workspace ${localWorkspace.name} existed in sync storage with a tombstone present. Removing workspace.`);
                             syncStorage.delete(tombstone.uuid);
+                            toDeleteFromSyncStorage.push(tombstone.uuid);
                         }
                     }
                     else {
@@ -81,6 +83,6 @@ export class WorkspaceUtils {
             }
         });
 
-        return [localStorage, syncStorage];
+        return [localStorage, syncStorage, toDeleteFromSyncStorage];
     }
 }

@@ -65,6 +65,8 @@ export class SyncWorkspaceStorage {
     private static readonly SYNC_PREFIX_TABS = 'workspace_tabs_';
     private static readonly SYNC_PREFIX_TAB_GROUPS = 'workspace_tab_groups_';
 
+    private static _doFirstSync = true;
+
     /**
      * Converts a Workspace object to the new data structure for sync storage.
      * @param workspace - The Workspace object to convert.
@@ -171,6 +173,8 @@ export class SyncWorkspaceStorage {
 
     /**
      * Saves all workspaces in the WorkspaceStorage object to Chrome's sync storage.
+     * 
+     * Note: Deleting workspaces is not possible with this method. To delete a workspace, use `deleteWorkspaceFromSync`.
      */
     public static async setAllSyncWorkspaces(workspaceStorage: WorkspaceStorage): Promise<void> {
         console.debug("Saving all workspaces to sync storage");
@@ -276,17 +280,24 @@ export class SyncWorkspaceStorage {
     }
 
     /**
-     * Delete a workspace from sync storage.
-     * @param id - The ID of the workspace to delete.
+     * Retrieves the keys that need to be deleted for a given workspace.
+     * 
+     * This function fetches the data associated with the workspace UUID from the sync storage.
+     * If the data is not found, it logs a warning and returns an empty array.
+     * Otherwise, it constructs a list of keys to delete, including metadata and tab group keys.
+     * Additionally, it includes keys for tab chunks if the number of tab chunks is set in the metadata.
+     * 
+     * @param uuid - The unique identifier of the workspace.
+     * @returns A promise that resolves to an array of keys to be deleted.
      */
-    public static async deleteWorkspaceFromSync(id: string | number): Promise<void> {
-        const data = await SyncWorkspaceStorage.getData(id.toString());
+    private static async getKeysToDeleteForWorkspace(uuid: string): Promise<string[]> {
+        const data = await SyncWorkspaceStorage.getData(uuid.toString());
         if (!data) {
-            console.warn(`Deleting workspace ${ id }, but not found in sync storage.`);
-            return;
+            console.warn(`Deleting workspace ${ uuid }, but not found in sync storage.`);
+            return [];
         }
 
-        const keysToDelete: string[] = [this.getMetadataKey(id.toString()), this.getTabGroupsKey(id.toString())];
+        const keysToDelete: string[] = [this.getMetadataKey(uuid.toString()), this.getTabGroupsKey(uuid.toString())];
 
         // Remove tab chunks
         // Continue with deletion even if the number of tab chunks is not set, to help clean up any potentially orphaned data
@@ -295,11 +306,44 @@ export class SyncWorkspaceStorage {
         }
 
         for (let chunkIndex = 0; chunkIndex < data.metadata.numTabChunks; chunkIndex++) {
-            keysToDelete.push(`${ this.SYNC_PREFIX_TABS }${ id }_${ chunkIndex }`);
+            keysToDelete.push(`${ this.SYNC_PREFIX_TABS }${ uuid }_${ chunkIndex }`);
         }
+        return keysToDelete;
+    }
+
+    /**
+     * Retrieves the keys that need to be deleted for a list of workspaces.
+     * @see {@link getKeysToDeleteForWorkspace}
+     */
+    private static async getKeysToDeleteForWorkspaces(uuids: string[]): Promise<string[]> {
+        const keysToDelete: string[] = [];
+
+        for (const uuid of uuids) {
+            const keys = await this.getKeysToDeleteForWorkspace(uuid);
+            keysToDelete.push(...keys);
+        }
+
+        return keysToDelete;
+    }
+
+    /**
+     * Delete a workspace from sync storage. 
+     * 
+     * Creates a tombstone for the workspace.
+     * @param uuid - The ID of the workspace to delete.
+     */
+    public static async deleteWorkspaceFromSync(uuid: string | number): Promise<void> {
+        const data = await SyncWorkspaceStorage.getData(uuid.toString());
+        if (!data) {
+            console.warn(`Deleting workspace ${ uuid }, but not found in sync storage.`);
+            return;
+        }
+
+        const keysToDelete = await this.getKeysToDeleteForWorkspace(uuid.toString());
+
         try {
             await chrome.storage.sync.remove(keysToDelete);
-            console.info(`Deleted workspace ${ id } from sync storage.`);
+            console.info(`Deleted workspace ${ uuid } from sync storage.`);
         }
         catch (e) {
             console.error("Error deleting workspace from sync storage:", e);
@@ -307,6 +351,33 @@ export class SyncWorkspaceStorage {
         }
 
         await this.createTombstone(data.metadata.uuid);
+    }
+
+    /**
+     * Delete multiple workspaces from sync storage.
+     * 
+     * Creates a tombstone for each workspace.
+     * @param uuids - An array of workspace IDs to delete.
+     * @param createTombstones - Whether to create tombstones for the workspaces.
+     */
+    public static async deleteWorkspacesFromSync(uuids: string[], createTombstones = true): Promise<void> {
+        const keysToDelete = await this.getKeysToDeleteForWorkspaces(uuids);
+
+        try {
+            await chrome.storage.sync.remove(keysToDelete);
+            console.info(`Deleted ${ uuids.length } workspaces from sync storage.`);
+        }
+        catch (e) {
+            console.error("Error deleting workspaces from sync storage:", e);
+            console.log("Keys to delete with error:", keysToDelete);
+        }
+
+        // TODO: Batch tombstone creation
+        if (createTombstones) {
+            for (const uuid of uuids) {
+                await this.createTombstone(uuid);
+            }
+        }
     }
 
     /**
@@ -512,6 +583,28 @@ export class SyncWorkspaceStorage {
     public static async immediatelySaveWorkspaceToSync(workspace: Workspace): Promise<void> {
         console.debug("Immediately saving workspace to sync storage");
         await SyncWorkspaceStorage.saveWorkspaceToSync(workspace);
+    }
+
+    /**
+     * Immediately save all workspaces to sync storage, skipping the debounce.
+     * Don't use this method for frequent calls, as it may exceed the rate limits.
+     * It's intended for one-off calls, such as when the user explicitly requests a sync, or 
+     * when the window is closing.
+     */
+    public static async immediatelySaveAllWorkspacesToSync(workspaceStorage: WorkspaceStorage): Promise<void> {
+        console.debug("Immediately saving all workspaces to sync storage");
+        await SyncWorkspaceStorage.setAllSyncWorkspaces(workspaceStorage);
+    }
+
+    /** If the first run sync from local to sync should be done. */
+    public static doFirstSync(): boolean {
+        return this._doFirstSync;
+    }
+    /** Initial sync has been completed. 
+     * @see {@link StorageHelper.syncStorageAndLocalStorage}
+     */
+    public static firstSyncDone(): void {
+        this._doFirstSync = false;
     }
 
     /**

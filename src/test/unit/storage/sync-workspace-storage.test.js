@@ -84,6 +84,39 @@ describe("SyncWorkspaceStorage", () => {
         expect(chrome.storage.sync.remove).toHaveBeenCalledWith(expect.arrayContaining(expectedKeys));
     });
 
+    test("deleteWorkspacesFromSync deletes multiple Workspace objects from chrome.storage.sync", async () => {
+        const workspace2 = new Workspace(2, "Test Workspace 2", undefined, undefined, "workspace-uuid2");
+        const workspace3 = new Workspace(3, "Test Workspace 3", undefined, undefined, "workspace-uuid3");
+
+        chrome.storage.sync.get.mockResolvedValue({
+            [`workspace_metadata_${workspace.uuid}`]: { numTabChunks: 1 },
+            [`workspace_tabs_${workspace.uuid}_0`]: [],
+            [`workspace_tab_groups_${workspace.uuid}`]: [1],
+            [`workspace_metadata_${workspace2.uuid}`]: { numTabChunks: 1 },
+            [`workspace_tabs_${workspace2.uuid}_0`]: [],
+            [`workspace_tab_groups_${workspace2.uuid}`]: [1],
+            [`workspace_metadata_${workspace3.uuid}`]: { numTabChunks: 1 },
+            [`workspace_tabs_${workspace3.uuid}_0`]: [],
+            [`workspace_tab_groups_${workspace3.uuid}`]: [1]
+        });
+
+        await SyncWorkspaceStorage.deleteWorkspacesFromSync([workspace.uuid, workspace2.uuid, workspace3.uuid]);
+
+        const expectedKeys = [
+            `workspace_metadata_${workspace.uuid}`,
+            `workspace_tabs_${workspace.uuid}_0`,
+            `workspace_tab_groups_${workspace.uuid}`,
+            `workspace_metadata_${workspace2.uuid}`,
+            `workspace_tabs_${workspace2.uuid}_0`,
+            `workspace_tab_groups_${workspace2.uuid}`,
+            `workspace_metadata_${workspace3.uuid}`,
+            `workspace_tabs_${workspace3.uuid}_0`,
+            `workspace_tab_groups_${workspace3.uuid}`
+        ];
+
+        expect(chrome.storage.sync.remove).toHaveBeenCalledWith(expect.arrayContaining(expectedKeys));
+    });
+
     test("debounceSaveWorkspaceToSync debounces saving a Workspace object to chrome.storage.sync", () => {
         jest.useFakeTimers();
         const debounceSpy = jest.spyOn(DebounceUtil, 'debounce');

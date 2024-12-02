@@ -52,7 +52,7 @@ export class StorageHelper {
     private static saveVersionNumber() {
         this.setValue("version", VERSION);
     }
-    
+
     /**
      * Sync the local storage with the sync storage.
      * @returns The synced local storage.
@@ -60,9 +60,27 @@ export class StorageHelper {
     private static async syncStorageAndLocalStorage(localStorage: WorkspaceStorage): Promise<WorkspaceStorage> {
         const syncStorage = await SyncWorkspaceStorage.getAllSyncWorkspaces();
         const tombstones = await SyncWorkspaceStorage.getTombstones();
-        const [updatedLocalStorage, updatedSyncStorage] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, tombstones, this.syncConflictResolver);
+        const [updatedLocalStorage, updatedSyncStorage, toDeleteFromSyncStorage] = WorkspaceUtils.syncWorkspaces(
+            localStorage, syncStorage, tombstones, this.syncConflictResolver
+        );
         await this.setWorkspaces(updatedLocalStorage);
-        SyncWorkspaceStorage.debounceSaveAllWorkspacesToSync(updatedSyncStorage);
+
+        if (toDeleteFromSyncStorage.length > 0) {
+            // Delete the necessary workspaces from sync storage
+            // Don't create tombstones for the workspaces we're deleting from sync storage, 
+            // as the tombstones should already be created.
+            await SyncWorkspaceStorage.deleteWorkspacesFromSync(toDeleteFromSyncStorage, false);
+        }
+
+        // If this is the first time syncing this run, we need to immediately save all workspaces to sync.
+        // After the first time, we can debounce the saving, because the local storage will always be more up-to-date than sync.
+        if (SyncWorkspaceStorage.doFirstSync()) {
+            await SyncWorkspaceStorage.immediatelySaveAllWorkspacesToSync(updatedSyncStorage);
+            SyncWorkspaceStorage.firstSyncDone();
+        }
+        else {
+            SyncWorkspaceStorage.debounceSaveAllWorkspacesToSync(updatedSyncStorage);
+        }
 
         return updatedLocalStorage;
     }
@@ -74,7 +92,7 @@ export class StorageHelper {
      * @returns True if the local workspace should be kept, false if the local workspace should be deleted.
      */
     private static syncConflictResolver(localWorkspace: Workspace, tombstone: SyncWorkspaceTombstone): boolean {
-        return confirm(`Conflict detected for workspace ${localWorkspace.name}.\n(The local workspace was updated after the workspace was deleted on another computer)\nDo you want to keep the local workspace or delete it?`);
+        return confirm(`Conflict detected for workspace ${ localWorkspace.name }.\n(The local workspace was updated after the workspace was deleted on another computer)\nDo you want to keep the local workspace or delete it?`);
     }
 
     /**
