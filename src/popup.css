@@ -84,7 +84,7 @@ body {
     cursor: pointer;
     align-self: center;
 }
-/* No margin bottom for 1oxes */
+/* No margin bottom for checkboxes */
 input[type="checkbox"] {
     margin-bottom: 0;
 }
