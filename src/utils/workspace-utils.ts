@@ -32,6 +32,11 @@ export class WorkspaceUtils {
                     if (localWorkspace.lastUpdated <= tombstone.timestamp) {
                         console.debug(`Deleting workspace ${localWorkspace.name} (${ tombstone.uuid }) from local storage.`);
                         localStorage.delete(tombstone.uuid);
+                        
+                        if(syncStorage.has(tombstone.uuid)) {
+                            console.warn(`Workspace ${localWorkspace.name} existed in sync storage with a tombstone present. Removing workspace.`);
+                            syncStorage.delete(tombstone.uuid);
+                        }
                     }
                     else {
                         // If the local workspace was updated after the tombstone was deleted, we need to prompt the user
