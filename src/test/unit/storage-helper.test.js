@@ -1,6 +1,7 @@
 import { Constants } from "../../constants/constants";
 import { Workspace } from "../../obj/workspace";
 import { StorageHelper } from "../../storage-helper";
+import { SyncWorkspaceStorage } from "../../storage/sync-workspace-storage";
 
 const map = new Map();
 
@@ -15,6 +16,8 @@ beforeEach(() => {
         return true;
     });
     map.clear();
+    // We're not testing the sync storage here, so mock it to return false to skip the logic
+    jest.spyOn(SyncWorkspaceStorage, "isSyncSavingEnabled").mockResolvedValue(false);
 });
 
 /** Jest does not clear any mock state between tests (which is baffling). So doing this and/or putting 
@@ -32,11 +35,6 @@ afterEach(() => {
 
 describe("addWorkspace", () => {
     it("should successfully add a workspace", async () => {
-        // jest.spyOn(chrome.tabs, "query").mockResolvedValue([{
-        //     id: 3,
-        //     active: true,
-        //     currentWindow: true
-        // }]);
         jest.spyOn(chrome.storage.local, "get").mockResolvedValue(3);
         jest.spyOn(chrome.storage.local, "set").mockResolvedValue("success");
         const window = {
@@ -77,9 +75,6 @@ describe("addWorkspace", () => {
             return map.get(key) || defaultValue;
         });
 
-        // jest.spyOn(chrome.storage.local, "set").mockImplementation(({[key]: value}) => {
-        //     map.set(key, value);
-        // }).mockResolvedValue("success");
         jest.spyOn(StorageHelper, "setValue").mockImplementation((key, value) => {
             map.set(key, value);
             return true;
@@ -129,7 +124,6 @@ describe("setWorkspace", () => {
 });
 
 describe("getWorkspaces", () => {
-    
     it.skip("should call getValue with correct parameters", async () => {
         // Arrange
         const workspaces = new Map();
@@ -180,9 +174,78 @@ describe("renameWorkspace", () => {
 
         // Act
         await StorageHelper.renameWorkspace(workspace.uuid, "newName");
-
         // Assert
         let workspaces = await StorageHelper.getWorkspaces();
         expect(workspaces.get(workspace.uuid).name).toBe("newName");
     });
+
+    it("should return false if the workspace does not exist", async () => {
+        expect(await StorageHelper.renameWorkspace("notExist", "newName")).toBe(false);
+    });
+});
+
+describe("removeWorkspace", () => {
+    it("should remove the workspace", async () => {
+        // Arrange
+        let workspace = new Workspace(3, "toRemove");
+        await StorageHelper.setWorkspace(workspace);
+
+        // Act
+        await StorageHelper.removeWorkspace(workspace.uuid);
+
+        // Assert
+        let workspaces = await StorageHelper.getWorkspaces();
+        expect(workspaces.get(workspace.uuid)).toBeUndefined();
+    });
+
+    it("should return false if the workspace does not exist", async () => {
+        expect(await StorageHelper.removeWorkspace("notExist")).toBe(false);
+    });
+});
+
+describe("isWindowWorkspace", () => {
+    it("should return true if the window is a workspace", async () => {
+        let workspace = new Workspace(3, "toCheck");
+        await StorageHelper.setWorkspace(workspace);
+
+        let result = await StorageHelper.isWindowWorkspace(workspace.windowId);
+
+        expect(result).toBe(true);
+    });
+
+    it("should return false if the window is not a workspace", async () => {
+        let workspace = new Workspace(3, "toCheck");
+        await StorageHelper.setWorkspace(workspace);
+
+        let result = await StorageHelper.isWindowWorkspace(4);
+
+        expect(result).toBe(false);
+    });
+
+    it("should return false if the windowId is null", async () => {
+        expect(await StorageHelper.isWindowWorkspace(null)).toBe(false);
+    });
+});
+
+test("getKeysByPrefix returns keys from chrome.storage.sync with a given prefix", async () => {
+    const keys = [
+        "workspace_metadata_workspace-uuid",
+        "workspace_tabs_workspace-uuid_0",
+        "workspace_tab_groups_workspace-uuid",
+        "non_workspace_key",
+        "2nd_workspace_metadata_workspace-uuid",
+    ];
+
+    chrome.storage.sync.get.mockResolvedValue(keys.reduce((acc, key) => {
+        acc[key] = [];
+        return acc;
+    }, {}));
+
+    const result = await StorageHelper.getKeysByPrefix("workspace_");
+
+    expect(result).toEqual([
+        "workspace_metadata_workspace-uuid",
+        "workspace_tabs_workspace-uuid_0",
+        "workspace_tab_groups_workspace-uuid",
+    ]);
 });

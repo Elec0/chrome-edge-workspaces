@@ -12,11 +12,23 @@ export class Constants {
     /** Time in ms to debounce the saving of the workspace on updates. */
     public static WORKSPACE_SAVE_DEBOUNCE_TIME = 300;
 
-    public static DEBOUNCE_ALARM_NAME_PREFIX = "debounceSave";
+    /** When a workspace is missing a last updated time, use this one instead of a default. */
+    public static FAR_IN_PAST_DATE = new Date(1970, 0, 1).getTime();
+
+    public static DEBOUNCE_IDS = {
+        saveWorkspace: "saveWorkspace",
+        saveWorkspaceToSync: "saveWorkspaceToSync",
+        saveAllWorkspacesToSync: "saveAllWorkspacesToSync",
+    }
 
     public static STORAGE_KEYS = {
         settings: {
             saveBookmarks: "settings.saveBookmarks",
+            saveSync: "settings.saveSync",
+            debug: "settings.debug",
+        },
+        sync: {
+            tombstones: "sync.tombstones",
         }
     }
 }

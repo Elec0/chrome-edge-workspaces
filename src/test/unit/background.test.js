@@ -1,7 +1,10 @@
 import { Background } from "../../background";
+import { Constants } from "../../constants/constants";
 import { TabStub } from "../../obj/tab-stub";
 import { Workspace } from "../../obj/workspace";
 import { StorageHelper } from "../../storage-helper";
+import { SyncWorkspaceStorage } from "../../storage/sync-workspace-storage";
+import { DebounceUtil } from "../../utils/debounce";
 
 
 // Mock the storage helper, can't be done in beforeEach
@@ -37,7 +40,19 @@ describe('Background', () => {
             consoleSpy.mockRestore();
         });
 
-        // TODO: Add a test for the sync storage update once that functionality is implemented
+        it('should immediately save the workspace to sync storage when a debounced save is present', async () => {
+            StorageHelper.isWindowWorkspace.mockResolvedValue(true);
+            StorageHelper.getWorkspaceFromWindow.mockResolvedValue(new Workspace('test', 1));
+            jest.spyOn(SyncWorkspaceStorage, 'isSyncSavingEnabled').mockResolvedValue(true);
+
+            // Hackily say that the debounce timeout is set
+            DebounceUtil.debounceTimeouts.set(Constants.DEBOUNCE_IDS.saveWorkspaceToSync, {});
+
+            const saveSpy = jest.spyOn(SyncWorkspaceStorage, 'immediatelySaveWorkspaceToSync').mockResolvedValue();
+            await Background.windowRemoved(1);
+            
+            expect(saveSpy).toHaveBeenCalled();
+        });
     });
 
     describe('tabRemoved', () => {

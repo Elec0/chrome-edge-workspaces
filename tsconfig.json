@@ -2,6 +2,7 @@
   "compilerOptions": {
       "strict": true,
       // "target": "es6",
+      "downlevelIteration": true,
       // "moduleResolution": "bundler",
       // "module": "ES6",
       "esModuleInterop": true,

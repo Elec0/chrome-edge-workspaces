@@ -1,6 +1,6 @@
 {
   "name": "edge-workspaces",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Edge workspaces extension",
   "private": true,
   "scripts": {
@@ -8,7 +8,7 @@
     "watch": "node ./node_modules/webpack/bin/webpack.js --mode=development --watch --config config/webpack.config.js",
     "watch-firefox": "cross-env TARGET_BROWSER=firefox npm run watch",
 
-    "build": "npm run build-chrome && npm run build-firefox",
+    "build": "npm run build-firefox && npm run build-chrome",
     "build-target": "node ./node_modules/webpack/bin/webpack.js --mode=production --config config/webpack.config.js",
     "build-chrome": "cross-env TARGET_BROWSER=chrome npm run build-target",
     "build-firefox": "cross-env TARGET_BROWSER=firefox npm run build-target",
@@ -16,9 +16,9 @@
 
     "lint": "eslint -f unix \"src/**/*.{ts,tsx}\"",
     "test": "jest .",
-    "test-unit": "jest --testMatch='**/unit/*.test.[tj]s'",
+    "test-unit": "jest --testMatch='**/unit/**/*.test.[tj]s'",
     "test-e2e": "jest --testMatch='**/e2e/*.test.[tj]s'",
-    "jest-unit": "jest --testMatch='**/unit/*.test.[tj]s'"
+    "jest-unit": "jest --testMatch='**/unit/**/*.test.[tj]s'"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.268",

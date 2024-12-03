@@ -79,8 +79,8 @@ export class WorkspaceStorage implements Map<string | number, Workspace> {
             this.workspaces.set(key, value);
             this.windowIdToUuid.set(value.windowId, key);
         } else {
-            this.windowIdToUuid.set(key, value.uuid);
             this.workspaces.set(value.uuid, value);
+            this.windowIdToUuid.set(key, value.uuid);
         }
         return this;
     }
@@ -93,16 +93,14 @@ export class WorkspaceStorage implements Map<string | number, Workspace> {
         const entries: [string | number, Workspace][] = [];
         this.workspaces.forEach((workspace, uuid) => {
             entries.push([uuid, workspace]);
-            entries.push([workspace.windowId, workspace]);
         });
         return entries[Symbol.iterator]();
     }
 
     keys(): IterableIterator<string | number> {
         const keys: (string | number)[] = [];
-        this.workspaces.forEach((workspace, uuid) => {
+        this.workspaces.forEach((_workspace, uuid) => {
             keys.push(uuid);
-            keys.push(workspace.windowId);
         });
         return keys[Symbol.iterator]();
     }
@@ -120,7 +118,7 @@ export class WorkspaceStorage implements Map<string | number, Workspace> {
         });
         const windowIdToUuidArray = Array.from(this.windowIdToUuid.entries());
         return JSON.stringify({ workspaces: workspacesArray, windowIdToUuid: windowIdToUuidArray });
-    }
+    }   
 
     deserialize(serialized: string): void {
         const data = JSON.parse(serialized);

@@ -5,6 +5,7 @@ import { BackgroundMessageHandlers } from "./messages/background-message-handler
 import { Workspace } from "./obj/workspace";
 import { StorageHelper } from "./storage-helper";
 import { BookmarkStorageHelper } from "./storage/bookmark-storage-helper";
+import { SyncWorkspaceStorage } from "./storage/sync-workspace-storage";
 import { Utils } from "./utils";
 import { DebounceUtil } from "./utils/debounce";
 import { FeatureDetect } from "./utils/feature-detect";
@@ -44,7 +45,7 @@ export class Background {
 
     /** Wrapper for debouncing the save with our util. */
     private static debounceSave(windowId: number): void {
-        DebounceUtil.debounce(() => {
+        DebounceUtil.debounce(Constants.DEBOUNCE_IDS.saveWorkspace, () => {
             Background.saveWindowTabsToWorkspace(windowId);
         }, Constants.WORKSPACE_SAVE_DEBOUNCE_TIME);
     }
@@ -60,8 +61,16 @@ export class Background {
 
         console.debug(`Window ${ windowId } is a workspace, saving tabs...`);
 
-        console.log("Will save tabs to sync storage here.")
-        // TODO: Update the sync storage with the new workspace.
+        // Attempt to cancel a sync workspace debounce if it's in progress.
+        if(DebounceUtil.clearDebounce(Constants.DEBOUNCE_IDS.saveWorkspaceToSync)) {
+            console.debug(`Debounced save for window ${ windowId } was canceled, immediately triggering sync save.`);
+            const workspace = await StorageHelper.getWorkspaceFromWindow(windowId);
+            if(workspace) {
+                await SyncWorkspaceStorage.immediatelySaveWorkspaceToSync(workspace);
+            }
+        }
+
+        // await StorageHelper.setWorkspacesSync(await StorageHelper.getWorkspaces());
     }
 
     /**
@@ -231,7 +240,6 @@ export class Background {
         Utils.setBadgeForWindow(windowId, Background.getBadgeTextForWorkspace(workspace));
 
         // Ensure the workspace is saved to bookmarks
-        console.debug(`Saving workspace ${ workspace.name } to bookmarks...`);
         await BookmarkStorageHelper.saveWorkspace(workspace)
 
         // Save the workspace to sync storage

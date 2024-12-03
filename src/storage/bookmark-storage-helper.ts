@@ -57,6 +57,8 @@ export class BookmarkStorageHelper {
             console.debug("Bookmark saving is disabled, skipping.");
             return;
         }
+        console.debug(`Saving workspace ${ workspace.name } to bookmarks...`);
+        
         // Resolve the bookmark folder using the provided one or our default
         let resolvedBookmarkFolder;
         if (bookmarkFolder === undefined) {

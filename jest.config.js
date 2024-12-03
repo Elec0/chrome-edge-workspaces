@@ -6,8 +6,9 @@ module.exports = {
     // ],
     setupFiles: ['<rootDir>/src/test/jest/mock-extension-apis.js'],
     setupFilesAfterEnv: ['<rootDir>/src/test/jest/setup-jest.js'],
+    // testMatch is handled in package.json
     // testMatch: [
-    //     "**/test/unit/*.test.[tj]s"
+    //     "<rootDir>/test/unit/*.test.[tj]s"
     // ],
 
     extensionsToTreatAsEsm: ['.ts'],

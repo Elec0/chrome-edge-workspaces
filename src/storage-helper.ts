@@ -1,13 +1,15 @@
+import { assert } from "console";
 import { Constants } from "./constants/constants";
 import { MessageResponse } from "./constants/message-responses";
 import { VERSION } from "./globals";
 import { Workspace } from "./obj/workspace";
+import { SyncWorkspaceStorage, SyncWorkspaceTombstone } from "./storage/sync-workspace-storage";
 import { WorkspaceStorage } from "./workspace-storage";
+import { WorkspaceUtils } from "./utils/workspace-utils";
 
 export class StorageHelper {
     private static logStorageChanges = false;
     private static _storage = chrome.storage.local;
-    private static _loadedWorkspaces: WorkspaceStorage = new WorkspaceStorage();
 
     public static async init() {
         this.saveVersionNumber();
@@ -21,28 +23,26 @@ export class StorageHelper {
      */
     public static async getValue(key: string, defaultValue: string = ""): Promise<string> {
         const result = await this._storage.get(key);
-        if (StorageHelper.logStorageChanges) 
+        if (StorageHelper.logStorageChanges)
             console.log(`Get ${ key }: ${ result[key] || defaultValue }`);
         return result[key] || defaultValue;
     }
 
     public static setValue(key: string, val: string): Promise<void> {
         // Being called from tabUpdated after a window with a tab group is closed, for some reason. With 0 tabs, clearing the storage.
-        if (StorageHelper.logStorageChanges) 
+        if (StorageHelper.logStorageChanges)
             console.log(`Set ${ key }: ${ val }`);
         return this._storage.set({ [key]: val });
     }
 
-    public static getSyncValue(key: string, callback: (value: unknown) => void): void {
-        chrome.storage.sync.get(key, function (result) {
-            callback(result[key]);
-        });
+    public static async getSyncValue(key: string, defaultValue: string = ""): Promise<string> {
+        const result = await chrome.storage.sync.get(key);
+        return result[key] || defaultValue;
     }
 
-    public static setSyncValue(key: string, val: string) {
-        chrome.storage.sync.set({ [key]: val }, function () {
-            console.log(`Set ${ key }: ${ val }`);
-        });
+    public static setSyncValue(key: string, val: string): Promise<void> {
+        console.log(`Sync set ${ key }`);
+        return chrome.storage.sync.set({ [key]: val });
     }
 
     /**
@@ -54,13 +54,68 @@ export class StorageHelper {
     }
 
     /**
-     * Get the workspaces from storage.
-     * @returns A promise that resolves to a map of workspaces, or an empty object if no workspaces exist.
+     * Sync the local storage with the sync storage.
+     * @returns The synced local storage.
+     */
+    private static async syncStorageAndLocalStorage(localStorage: WorkspaceStorage): Promise<WorkspaceStorage> {
+        const syncStorage = await SyncWorkspaceStorage.getAllSyncWorkspaces();
+        const tombstones = await SyncWorkspaceStorage.getTombstones();
+        const [updatedLocalStorage, updatedSyncStorage, toDeleteFromSyncStorage] = WorkspaceUtils.syncWorkspaces(
+            localStorage, syncStorage, tombstones, this.syncConflictResolver
+        );
+        await this.setWorkspaces(updatedLocalStorage);
+
+        if (toDeleteFromSyncStorage.length > 0) {
+            // Delete the necessary workspaces from sync storage
+            // Don't create tombstones for the workspaces we're deleting from sync storage, 
+            // as the tombstones should already be created.
+            await SyncWorkspaceStorage.deleteWorkspacesFromSync(toDeleteFromSyncStorage, false);
+        }
+
+        // If this is the first time syncing this run, we need to immediately save all workspaces to sync.
+        // After the first time, we can debounce the saving, because the local storage will always be more up-to-date than sync.
+        if (SyncWorkspaceStorage.doFirstSync()) {
+            await SyncWorkspaceStorage.immediatelySaveAllWorkspacesToSync(updatedSyncStorage);
+            SyncWorkspaceStorage.firstSyncDone();
+        }
+        else {
+            SyncWorkspaceStorage.debounceSaveAllWorkspacesToSync(updatedSyncStorage);
+        }
+
+        return updatedLocalStorage;
+    }
+
+    /**
+     * Resolve a sync conflict by prompting the user to choose which workspace to keep.
+     * @param localWorkspace - The local workspace.
+     * @param tombstone - The tombstone for the workspace.
+     * @returns True if the local workspace should be kept, false if the local workspace should be deleted.
+     */
+    private static syncConflictResolver(localWorkspace: Workspace, tombstone: SyncWorkspaceTombstone): boolean {
+        return confirm(`Conflict detected for workspace ${ localWorkspace.name }.\n(The local workspace was updated after the workspace was deleted on another computer)\nDo you want to keep the local workspace or delete it?`);
+    }
+
+    /**
+     * Retrieves the workspaces from both local storage and sync storage, and syncs them.
+     *
+     * @returns A promise that resolves to the merged workspaces from both local and sync storage.
      */
     public static async getWorkspaces(): Promise<WorkspaceStorage> {
-        // return await BookmarkStorageHelper.getWorkspaces();
+        const localStorage = await this.getLocalWorkspaces();
+        if (await SyncWorkspaceStorage.isSyncSavingEnabled() == false) {
+            return localStorage;
+        }
+
+        return this.syncStorageAndLocalStorage(localStorage);
+    }
+
+    /**
+     * Get the workspaces from local storage.
+     * @returns A promise that resolves to a map of workspaces, or an empty object if no workspaces exist.
+     */
+    public static async getLocalWorkspaces(): Promise<WorkspaceStorage> {
         const result = await this.getRawWorkspaces();
-        return this.workspacesFromJson({"data": result});
+        return this.workspacesFromJson({ "data": result });
     }
 
     /**
@@ -69,7 +124,10 @@ export class StorageHelper {
      */
     public static async setWorkspaces(workspaces: WorkspaceStorage): Promise<void> {
         await this.setValue(Constants.KEY_STORAGE_WORKSPACES, workspaces.serialize());
-        this._loadedWorkspaces = workspaces;
+    }
+
+    public static async setWorkspacesSync(workspaces: WorkspaceStorage): Promise<void> {
+        await this.setSyncValue(Constants.KEY_STORAGE_WORKSPACES, workspaces.serialize());
     }
 
     /**
@@ -92,17 +150,40 @@ export class StorageHelper {
     }
 
     /**
-     * Get a single workspace from the `workspaces` map.
+     * Get a single workspace from the `workspaces` map or from the sync storage.
      * The workspace must exist in the map or the promise will reject.
      * @param id - The id of the workspace to get.
      * @returns A promise that resolves to the workspace, or rejects if the workspace does not exist.
      */
     public static async getWorkspace(id: string | number): Promise<Workspace> {
         const workspaces = await this.getWorkspaces();
-        if (workspaces.has(id)) {
-            return Promise.resolve(workspaces.get(id) as Workspace);
+        const localWorkspace = workspaces.get(id);
+
+        if (await SyncWorkspaceStorage.isSyncSavingEnabled() == false) {
+            if (localWorkspace) {
+                return localWorkspace;
+            }
+            else {
+                return Promise.reject(`getWorkspace: Workspace does not exist with id ${ id }`);
+            }
         }
-        return Promise.reject(`getWorkspace: Workspace does not exist with id ${ id }`);
+        // Get sync data
+        const syncWorkspace = await SyncWorkspaceStorage.getWorkspaceFromSync(id);
+
+        if (localWorkspace && syncWorkspace) {
+            // Compare timestamps and return the most recent one
+            return SyncWorkspaceStorage.getMoreRecentWorkspace(localWorkspace, syncWorkspace);
+        }
+        else if (localWorkspace) {
+            return localWorkspace;
+        }
+        else if (syncWorkspace) {
+            return syncWorkspace;
+        }
+        else {
+            return Promise.reject(`getWorkspace: Workspace does not exist with id ${ id }`);
+        }
+
     }
 
     /**
@@ -112,8 +193,14 @@ export class StorageHelper {
      */
     public static async setWorkspace(workspace: Workspace): Promise<void> {
         const workspaces = await this.getWorkspaces();
+        // We're setting the workspace, so we need to update the last updated time.
+        workspace.updateLastUpdated();
         workspaces.set(workspace.uuid, workspace);
         await this.setWorkspaces(workspaces);
+
+        if (await SyncWorkspaceStorage.isSyncSavingEnabled()) {
+            await SyncWorkspaceStorage.debounceSaveWorkspaceToSync(workspace);
+        }
     }
 
     /**
@@ -126,13 +213,14 @@ export class StorageHelper {
      */
     public static async addWorkspace(workspaceName: string, windowId: number): Promise<boolean> {
         console.debug("addWorkspace: ", workspaceName, windowId);
-        // return await BookmarkStorageHelper.addWorkspace(workspaceName, windowId);
+
         if (windowId == null || windowId == undefined) {
             return Promise.resolve(false) // reject("Window id is null or undefined");
         }
 
         const workspaces = await this.getWorkspaces();
         const newWorkspace = new Workspace(windowId, workspaceName, []);
+        newWorkspace.updateLastUpdated();
         workspaces.set(newWorkspace.uuid, newWorkspace);
         await this.setWorkspaces(workspaces);
 
@@ -140,35 +228,43 @@ export class StorageHelper {
     }
 
     /**
-     * Remove a workspace from storage.
+     * Remove a workspace from storage, both local and sync.
      * @param uuid - The UUID of the workspace to remove.
-     * @returns A promise that resolves to true if the workspace was removed successfully, or rejects if the workspace could not be removed.
+     * @returns A promise that resolves to true if the workspace was removed successfully, or resolves to false if the workspace could not be removed.
      */
     public static async removeWorkspace(uuid: string): Promise<boolean> {
         console.debug("removeWorkspace: ", uuid);
         const workspaces = await this.getWorkspaces();
+
         if (workspaces.delete(uuid)) {
+            if (await SyncWorkspaceStorage.isSyncSavingEnabled()) {
+                await SyncWorkspaceStorage.deleteWorkspaceFromSync(uuid);
+            }
             await this.setWorkspaces(workspaces);
             return Promise.resolve(true);
         }
-        return Promise.reject("Workspace does not exist");
+        return Promise.resolve(false);
     }
 
     /**
      * Rename a workspace in storage.
      * @param uuid - The UUID of the workspace to rename.
      * @param newName - The new name for the workspace.
-     * @returns A promise that resolves to true if the workspace was renamed successfully, or rejects if the workspace could not be renamed.
+     * @returns A promise that resolves to true if the workspace was renamed successfully, or resolves to false if the workspace could not be renamed.
      */
     public static async renameWorkspace(uuid: string, newName: string): Promise<boolean> {
         console.debug("renameWorkspace: ", uuid, newName);
-        const workspace = await this.getWorkspace(uuid);
-        if (workspace) {
+        try {
+            // Promise will reject if workspace does not exist
+            const workspace = await this.getWorkspace(uuid);
             workspace.updateName(newName);
             await this.setWorkspace(workspace);
+
             return Promise.resolve(true);
         }
-        return Promise.reject("Workspace does not exist");
+        catch (error) {
+            return Promise.resolve(false);
+        }
     }
 
     /**
@@ -178,20 +274,37 @@ export class StorageHelper {
         if (windowId == null || windowId == undefined) {
             return false;
         }
-        
-        const workspaceWindows = await this.getWorkspaces();
-        for (const workspace of Array.from(workspaceWindows.values())) {
-            if (workspace.windowId === windowId) {
-                return true;
-            }
-        }
-        return false;
+
+        const workspaceStorage = await this.getWorkspaces();
+        return workspaceStorage.get(windowId) != undefined;
+    }
+
+    /** Get the workspace associated with a window. */
+    public static async getWorkspaceFromWindow(windowId: number): Promise<Workspace | undefined> {
+        const workspaceStorage = await this.getWorkspaces();
+        return Promise.resolve(workspaceStorage.get(windowId));
     }
 
     /** Delete everything we have in storage. */
     public static async clearWorkspaces() {
         await this._storage.clear();
         console.log("Cleared all data");
+    }
+
+    /**
+     * Retrieves all keys from the specified storage that start with the given prefix.
+     *
+     * @param prefix - The prefix to filter the keys.
+     * @param storage - The storage area to search for keys. Defaults to `chrome.storage.sync`.
+     * @returns A promise that resolves to an array of keys that start with the specified prefix.
+     */
+    public static async getKeysByPrefix(prefix: string, storage = chrome.storage.sync): Promise<string[]> {
+        const data = await storage.get(null);
+        if (!data) {
+            return [];
+        }
+        const keys = Object.keys(data).filter(key => key.startsWith(prefix));
+        return keys;
     }
 
     /** Generate hash from string. 

@@ -39,8 +39,14 @@ export class TabStub implements IStub {
         }
     }
 
-    public toJson(): string {
-        return JSON.stringify(this);
+    /**
+     * Used to serialize the TabStub to a JSON string.
+     * 
+     * @param replacer - An optional parameter that can be used to manipulate the serialization process.
+     * @returns 
+     */
+    public toJson(replacer?: (this: unknown, key: string, value: unknown) => unknown): string {
+        return JSON.stringify(this, replacer);
     }
 
     public static fromTab(tab: chrome.tabs.Tab): TabStub {
