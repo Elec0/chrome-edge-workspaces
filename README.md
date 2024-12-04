@@ -13,7 +13,8 @@
 - **Import/Export**: Workspaces can be exported to a file and imported later on another device.
 - **Workspaces copied as bookmarks**: Workspaces can be saved as bookmarks to allow for easier cross-platform access.
 - **Internal Tab Exclusion**: Internal tabs, such as the new tab page, settings, or extensions, are not saved to workspaces.
-
+- **Keep in sync:** Your workspaces stay in sync across computers via Google sync
+ 
 ## Usage
 
 ### Creating a Workspace
