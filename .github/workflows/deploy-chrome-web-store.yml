@@ -1,0 +1,66 @@
+name: Deploy Chrome Extension
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+        timeout-minutes: 8
+
+      - name: Read package version
+        id: version
+        run: echo "value=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
+
+      - name: Sync manifest versions
+        run: npm run prebuild
+
+      - name: Build Chrome extension
+        run: npm run build:chrome
+
+      - name: Create Chrome Web Store archive
+        id: archive
+        run: |
+          archive_name="v${{ steps.version.outputs.value }}.zip"
+          mkdir -p release/build
+          cp -R build/chrome/. release/build/
+          (
+            cd release
+            zip -r "../${archive_name}" build
+          )
+          echo "path=${archive_name}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify archive structure
+        run: unzip -l "${{ steps.archive.outputs.path }}"
+
+      - name: Upload and publish to Chrome Web Store
+        uses: ShahafShavit/chrome-extension-upload@v1
+        with:
+          file-path: ${{ steps.archive.outputs.path }}
+          extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
+          publisher-id: ${{ secrets.CHROME_PUBLISHER_ID }}
+          client-id: ${{ secrets.CHROME_CLIENT_ID }}
+          client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
+          refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
