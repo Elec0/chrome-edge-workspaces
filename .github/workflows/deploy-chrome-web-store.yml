@@ -59,8 +59,8 @@ jobs:
         uses: ShahafShavit/chrome-extension-upload@v1
         with:
           file-path: ${{ steps.archive.outputs.path }}
-          extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
-          publisher-id: ${{ secrets.CHROME_PUBLISHER_ID }}
-          client-id: ${{ secrets.CHROME_CLIENT_ID }}
+          extension-id: ${{ vars.CHROME_EXTENSION_ID }}
+          publisher-id: ${{ vars.CHROME_PUBLISHER_ID }}
+          client-id: ${{ vars.CHROME_CLIENT_ID }}
           client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
           refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
