@@ -4,7 +4,7 @@ import type { Page } from "puppeteer";
 
 let common: E2ECommon;
 
-async function waitForWorkspaceName(page: Page, workspaceName: string): Promise<void> {
+async function waitForWorkspaceName(page: Page, workspaceName: string, timeout = 10000): Promise<void> {
     await page.waitForFunction(
         (name) => {
             const workspaces = Array.from(document.querySelectorAll("#workspaces-list .workspace-item"));
@@ -13,7 +13,7 @@ async function waitForWorkspaceName(page: Page, workspaceName: string): Promise<
                 return text.includes(name);
             });
         },
-        { timeout: 10000 },
+        { timeout },
         workspaceName
     );
 }
@@ -89,6 +89,35 @@ async function createWorkspaceFromCurrentWindow(page: Page, workspaceName: strin
     await page.waitForSelector("dialog", { hidden: true });
 }
 
+async function createWorkspaceInNewWindow(page: Page, workspaceName: string): Promise<Page> {
+    await page.bringToFront();
+
+    let newWorkspaceBtn = await page.$("#modal-new-workspace");
+    for (let attempt = 0; attempt < 2 && !newWorkspaceBtn; attempt++) {
+        const addBtn = await page.waitForSelector("#addWorkspace");
+        expect(await addBtn?.isVisible()).toBe(true);
+        await addBtn?.click();
+
+        try {
+            newWorkspaceBtn = await page.waitForSelector("#modal-new-workspace", { timeout: 10000 });
+        }
+        catch {
+            newWorkspaceBtn = null;
+        }
+    }
+
+    expect(await newWorkspaceBtn?.isVisible()).toBe(true);
+    const newWindowPromise = common.waitForNewWindowPage();
+    await newWorkspaceBtn?.click();
+
+    await page.type("#modal-input-name", workspaceName);
+    await page.click("#modal-submit");
+    await page.waitForSelector("dialog", { hidden: true });
+
+    // Ensure the browser window creation path completed.
+    return await newWindowPromise;
+}
+
 jest.setTimeout(60 * 1000);
 
 beforeEach(async () => {
@@ -148,4 +177,41 @@ test("deleting a workspace removes it from the list", async () => {
         const items = Array.from(document.querySelectorAll("#workspaces-list .workspace-item"));
         return items.every((workspaceItem) => !(workspaceItem.textContent ?? "").includes(name));
     }, { timeout: 10000 }, "test workspace");
+});
+
+test("creating a new workspace with 'New workspace' opens a new browser window", async () => {
+    const page = common.page;
+
+    const newWindowPage = await createWorkspaceInNewWindow(page, "new-window workspace");
+    expect(newWindowPage).toBeDefined();
+});
+
+test("deleting a workspace with cancel keeps it in the list", async () => {
+    const page = common.page;
+
+    await createWorkspaceFromCurrentWindow(page, "cancel-delete workspace");
+    await page.waitForSelector("#workspaces-list");
+    await waitForWorkspaceName(page, "cancel-delete workspace");
+
+    await page.evaluate(() => {
+        window.confirm = () => false;
+    });
+
+    await clickWorkspaceActionByName(page, "cancel-delete workspace", "#delete-button");
+    await waitForWorkspaceName(page, "cancel-delete workspace");
+});
+
+test("opening a workspace keeps the list stable", async () => {
+    const page = common.page;
+
+    await createWorkspaceFromCurrentWindow(page, "open-workspace test");
+    await page.waitForSelector("#workspaces-list");
+    await waitForWorkspaceName(page, "open-workspace test");
+
+    await clickWorkspaceByName(page, "open-workspace test");
+
+    await page.waitForFunction((name) => {
+        const items = Array.from(document.querySelectorAll("#workspaces-list .workspace-item"));
+        return items.filter((workspaceItem) => (workspaceItem.textContent ?? "").includes(name)).length === 1;
+    }, { timeout: 10000 }, "open-workspace test");
 });
