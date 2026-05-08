@@ -1,0 +1,4 @@
+{
+  "version": "1.2.1",
+  "data": "{\"workspaces\":[[\"11111111-1111-4111-8111-111111111111\",{\"id\":1234,\"name\":\"imported workspace\",\"uuid\":\"11111111-1111-4111-8111-111111111111\",\"lastUpdated\":1710000000000,\"tabs\":[\"{\\\"id\\\":1,\\\"index\\\":0,\\\"title\\\":\\\"Example Domain\\\",\\\"url\\\":\\\"https://example.com/\\\",\\\"pinned\\\":false,\\\"windowId\\\":1234,\\\"active\\\":true,\\\"groupId\\\":-1}\"],\"tabGroups\":[]}]],\"windowIdToUuid\":[[1234,\"11111111-1111-4111-8111-111111111111\"]]}"
+}

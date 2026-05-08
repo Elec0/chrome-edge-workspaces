@@ -66,7 +66,7 @@ export class PageSettings extends BaseDialog {
         dialogElement.querySelector("#modal-settings-sync-push")?.addEventListener("click", () => {
             
         });
-        dialogElement.querySelector("#modal-settings-sync-delete")?.addEventListener("click", () => {
+        dialogElement.querySelector("#modal-settings-sync-clear")?.addEventListener("click", () => {
             
         });
 
