@@ -2,6 +2,8 @@ import { E2ECommon } from "./utils/e2e-common";
 import { afterEach, beforeEach, expect, jest, test } from "@jest/globals";
 import type { Page } from "puppeteer";
 import path from "path";
+import fs from "fs";
+import os from "os";
 
 let common: E2ECommon;
 const IMPORT_FIXTURE_PATH = path.resolve(process.cwd(), "src/test/data/import-settings-data.json");
@@ -289,4 +291,104 @@ test("importing settings loads workspaces from a JSON file", async () => {
     await page.goto(page.url(), { waitUntil: "domcontentloaded" });
     await page.waitForSelector("#workspaces-list", { timeout: 10000 });
     await waitForWorkspaceName(page, "imported workspace", 15000);
+});
+
+test("canceling import confirmation does not overwrite workspace data", async () => {
+    const page = common.page;
+
+    // Create a workspace first to ensure storage has data
+    await createWorkspaceFromCurrentWindow(page, "original workspace");
+    await waitForWorkspaceName(page, "original workspace");
+
+    // Get the original storage value
+    const originalStorageValue = await getStorageValue(page, "workspaces");
+
+    await preparePersistentImportInput(page);
+    await openSettingsDialog(page);
+
+    // Inject mock confirm that returns false (reject overwrite)
+    await page.evaluate(() => {
+        const pageWindow = window as unknown as Window & { confirm: (message?: string) => boolean; };
+        pageWindow.confirm = () => false;
+    });
+
+    // Set up dialog listener to track if import was attempted
+    page.once("dialog", async (dialog) => {
+        await dialog.accept();
+    });
+
+    const importButton = await page.waitForSelector("#modal-settings-import");
+    expect(await importButton?.isVisible()).toBe(true);
+
+    await importButton?.click();
+
+    const importInput = await page.waitForSelector('input[type="file"][data-e2e-import-input="true"]', { timeout: 10000 });
+    expect(importInput).toBeDefined();
+    await importInput?.uploadFile(IMPORT_FIXTURE_PATH);
+
+    // Wait a bit to ensure import process completes (or gets cancelled)
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Verify storage is unchanged (should still have original workspace)
+    const afterCancelStorageValue = await getStorageValue(page, "workspaces");
+    expect(afterCancelStorageValue).toBe(originalStorageValue);
+
+    // Verify the original workspace is still in the list
+    await closeSettingsDialog(page);
+    await waitForWorkspaceName(page, "original workspace");
+
+    // Verify imported workspace is NOT in the list (confirm was rejected, so no overwrite)
+    const importedWorkspaceExists = await page.evaluate(() => {
+        const workspaces = Array.from(document.querySelectorAll("#workspaces-list .workspace-item"));
+        return workspaces.some((workspaceItem) => {
+            const text = workspaceItem.textContent ?? "";
+            return text.includes("imported workspace");
+        });
+    });
+
+    expect(importedWorkspaceExists).toBe(false);
+});
+
+test("importing invalid JSON file shows an error", async () => {
+    const page = common.page;
+
+    // Create a temporary invalid JSON file
+    const invalidJsonPath = path.join(os.tmpdir(), `invalid-import-test-${Date.now()}.json`);
+    fs.writeFileSync(invalidJsonPath, "{ invalid json content");
+
+    try {
+        await openSettingsDialog(page);
+        await preparePersistentImportInput(page);
+
+        // Setup to capture error alert
+        const importErrorPromise = new Promise<string>((resolve) => {
+            page.once("dialog", async (dialog) => {
+                const message = dialog.message();
+                await dialog.accept();
+                resolve(message);
+            });
+        });
+
+        const importButton = await page.waitForSelector("#modal-settings-import");
+        expect(await importButton?.isVisible()).toBe(true);
+
+        await importButton?.click();
+
+        const importInput = await page.waitForSelector('input[type="file"][data-e2e-import-input="true"]', { timeout: 10000 });
+        expect(importInput).toBeDefined();
+        await importInput?.uploadFile(invalidJsonPath);
+
+        const alertMessage = await importErrorPromise;
+        expect(alertMessage).toContain("Error");
+
+        // Verify the workspace list is still intact (DOM should still work)
+        await closeSettingsDialog(page);
+        await page.waitForSelector("#workspaces-list", { timeout: 10000 });
+    }
+    finally {
+        // Cleanup
+        if (fs.existsSync(invalidJsonPath)) {
+            fs.unlinkSync(invalidJsonPath);
+        }
+    }
 });
