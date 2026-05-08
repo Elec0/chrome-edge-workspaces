@@ -1,21 +1,22 @@
 {
   "compilerOptions": {
       "strict": true,
-      // "target": "es6",
-      "downlevelIteration": true,
-      // "moduleResolution": "bundler",
-      // "module": "ES6",
+      "target": "ES2022",
       "esModuleInterop": true,
       "rootDir": "src",
       "allowJs": true,
       "outDir": "build",
       "noEmitOnError": true,
       "typeRoots": [ "node_modules/@types" ],
+      "types": ["chrome", "node"],
       "sourceMap": true,
   },
   "include": [
       "src/**/*"
   ],
+  "exclude": [
+      "src/test/**/*"
+  ]
 }
 
 // {
