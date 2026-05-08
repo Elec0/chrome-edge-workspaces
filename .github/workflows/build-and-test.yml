@@ -8,9 +8,17 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
     - name: Checkout repository
@@ -21,9 +29,11 @@ jobs:
       with:
         node-version: '22'
         cache: 'npm'
+        cache-dependency-path: package-lock.json
 
     - name: Install dependencies
-      run: npm install
+      run: npm ci --no-audit --no-fund
+      timeout-minutes: 8
 
     - name: Build the project
       run: npm run build

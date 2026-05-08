@@ -3,9 +3,17 @@ name: Copilot Setup Steps
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   setup:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
     - name: Checkout repository
@@ -16,9 +24,11 @@ jobs:
       with:
         node-version: '22'
         cache: 'npm'
+        cache-dependency-path: package-lock.json
 
     - name: Install dependencies
-      run: npm install
+      run: npm ci --no-audit --no-fund
+      timeout-minutes: 8
 
     - name: Available npm scripts
       run: |
