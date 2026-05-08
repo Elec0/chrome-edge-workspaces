@@ -176,7 +176,7 @@ export class PopupActions {
         PopupMessageHelper.sendClearWorkspaces().then(async response => {
             if (response.message === MessageResponses.SUCCESS.message) {
                 LogHelper.successAlert("Workspace data cleared.");
-                WorkspaceEntryLogic.listWorkspaces(await StorageHelper.getWorkspaces(), await Utils.getAllWindowIds());
+                WorkspaceEntryLogic.listWorkspaces(await getWorkspaceStorage(), await Utils.getAllWindowIds());
             }
             else {
                 LogHelper.errorAlert("Error clearing workspace data. Check the console for more details.");
@@ -195,7 +195,7 @@ export class PopupActions {
         PopupMessageHelper.sendDeleteWorkspace(workspace.uuid).then(async response => {
             if (response.message === MessageResponses.SUCCESS.message) {
                 console.log("Workspace deleted", workspace);
-                WorkspaceEntryLogic.listWorkspaces(await StorageHelper.getWorkspaces(), await Utils.getAllWindowIds());
+                WorkspaceEntryLogic.listWorkspaces(await getWorkspaceStorage(), await Utils.getAllWindowIds());
             }
             else {
                 LogHelper.errorAlert("Error deleting workspace. Check the console for more details.");
@@ -214,7 +214,7 @@ export class PopupActions {
         PopupMessageHelper.sendRenameWorkspace(workspace.uuid, newName).then(async response => {
             if (response.message === MessageResponses.SUCCESS.message) {
                 console.log("Workspace renamed", workspace);
-                WorkspaceEntryLogic.listWorkspaces(await StorageHelper.getWorkspaces(), await Utils.getAllWindowIds());
+                WorkspaceEntryLogic.listWorkspaces(await getWorkspaceStorage(), await Utils.getAllWindowIds());
             }
             else {
                 LogHelper.errorAlert("Error renaming workspace. Check the console for more details.");
