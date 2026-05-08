@@ -42,11 +42,22 @@ async function clickEditByWorkspaceName(page: Page, workspaceName: string): Prom
 }
 
 async function createWorkspaceFromCurrentWindow(page: Page, workspaceName: string): Promise<void> {
-    const addBtn = await page.waitForSelector("#addWorkspace");
-    expect(await addBtn?.isVisible()).toBe(true);
-    await addBtn?.click();
+    await page.bringToFront();
 
-    const newWorkspaceBtn = await page.waitForSelector("#modal-new-workspace-from-window");
+    let newWorkspaceBtn = await page.$("#modal-new-workspace-from-window");
+    for (let attempt = 0; attempt < 2 && !newWorkspaceBtn; attempt++) {
+        const addBtn = await page.waitForSelector("#addWorkspace");
+        expect(await addBtn?.isVisible()).toBe(true);
+        await addBtn?.click();
+
+        try {
+            newWorkspaceBtn = await page.waitForSelector("#modal-new-workspace-from-window", { timeout: 10000 });
+        }
+        catch {
+            newWorkspaceBtn = null;
+        }
+    }
+
     expect(await newWorkspaceBtn?.isVisible()).toBe(true);
     await newWorkspaceBtn?.click();
 
