@@ -5,6 +5,7 @@ import assert from "assert";
 export class E2ECommon {
     public browser!: Browser;
     public page!: Page;
+    private popupUrl!: string;
 
     /*
     // Use this to debug in the browser, with devtools: true:
@@ -30,17 +31,20 @@ export class E2ECommon {
             return;
         }
 
+        this.popupUrl = `chrome-extension://${E2EConstants.EXTENSION_ID}/popup.html`;
+
         this.page = await this.browser.newPage();
 
-        await this.page.goto(`chrome-extension://${ E2EConstants.EXTENSION_ID }/popup.html`);
+        await this.page.goto(this.popupUrl, { waitUntil: "domcontentloaded" });
 
         // Clear the local and sync storage before each test
-        await this.page.evaluate(() => {
-            chrome.storage.local.clear();
-            chrome.storage.sync.clear();
+        await this.page.evaluate(async () => {
+            await new Promise<void>((resolve) => chrome.storage.local.clear(() => resolve()));
+            await new Promise<void>((resolve) => chrome.storage.sync.clear(() => resolve()));
         });
 
-        await this.page.reload();
+        await this.page.reload({ waitUntil: "domcontentloaded" });
+        await this.page.waitForSelector("#workspaces-list", { timeout: 10000 });
 
         if (!this.page) {
             assert(this.page);
@@ -56,15 +60,19 @@ export class E2ECommon {
      * Get a promise that resolves to a new page when a new window is created.
      * @returns A promise that resolves to a new page when a new window is created.
      */
-    public getNewWindowPagePromise(): Promise<Page> {
-        return new Promise<Page>((resolve) => {
-            this.browser?.on("targetcreated", async (target) => {
-                const newPage = await target.page();
-                if (newPage) {
-                    resolve(newPage);
-                }
-            });
-        });
+    public async waitForNewWindowPage(timeout = 10000): Promise<Page> {
+        const target = await this.browser.waitForTarget((candidate) => {
+            if (candidate.type() !== "page") {
+                return false;
+            }
+
+            const targetUrl = candidate.url();
+            return targetUrl === "" || targetUrl === "about:blank" || !targetUrl.startsWith("chrome-extension://");
+        }, { timeout });
+
+        const newPage = await target.page();
+        assert(newPage);
+        return newPage;
     }
 }
 

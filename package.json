@@ -17,7 +17,7 @@
     "lint": "eslint -f unix \"src/**/*.{ts,tsx}\"",
     "test": "jest .",
     "test:unit": "jest --testMatch='**/unit/**/*.test.[tj]s'",
-    "test:e2e": "jest --testMatch='**/e2e/*.test.[tj]s'",
+    "test:e2e": "jest --runInBand --testMatch='**/e2e/*.test.[tj]s'",
     "jest:unit": "jest --testMatch='**/unit/**/*.test.[tj]s'"
   },
   "devDependencies": {

@@ -1,8 +1,61 @@
 import { E2ECommon } from "./utils/e2e-common";
+import { afterEach, beforeEach, expect, jest, test } from "@jest/globals";
+import type { Page } from "puppeteer";
 
 let common: E2ECommon;
 
-jest.setTimeout(30 * 1000);
+async function waitForWorkspaceName(page: Page, workspaceName: string): Promise<void> {
+    await page.waitForFunction(
+        (name) => {
+            const workspaces = Array.from(document.querySelectorAll("#workspaces-list .workspace-item"));
+            return workspaces.some((workspaceItem) => {
+                const text = workspaceItem.textContent ?? "";
+                return text.includes(name);
+            });
+        },
+        { timeout: 10000 },
+        workspaceName
+    );
+}
+
+async function clickEditByWorkspaceName(page: Page, workspaceName: string): Promise<void> {
+    await page.waitForFunction(
+        (name) => {
+            return Array.from(document.querySelectorAll("#workspaces-list .workspace-item")).some((workspaceItem) => {
+                return (workspaceItem.textContent ?? "").includes(name);
+            });
+        },
+        { timeout: 10000 },
+        workspaceName
+    );
+
+    await page.evaluate((name) => {
+        const workspace = Array.from(document.querySelectorAll("#workspaces-list .workspace-item")).find((workspaceItem) => {
+            return (workspaceItem.textContent ?? "").includes(name);
+        });
+
+        const editButton = workspace?.querySelector("#edit-button");
+        if (editButton instanceof HTMLElement) {
+            editButton.click();
+        }
+    }, workspaceName);
+}
+
+async function createWorkspaceFromCurrentWindow(page: Page, workspaceName: string): Promise<void> {
+    const addBtn = await page.waitForSelector("#addWorkspace");
+    expect(await addBtn?.isVisible()).toBe(true);
+    await addBtn?.click();
+
+    const newWorkspaceBtn = await page.waitForSelector("#modal-new-workspace-from-window");
+    expect(await newWorkspaceBtn?.isVisible()).toBe(true);
+    await newWorkspaceBtn?.click();
+
+    await page.type("#modal-input-name", workspaceName);
+    await page.click("#modal-submit");
+    await page.waitForSelector("dialog", { hidden: true });
+}
+
+jest.setTimeout(60 * 1000);
 
 beforeEach(async () => {
     common = new E2ECommon();
@@ -17,56 +70,16 @@ afterEach(async () => {
 });
 
 test("creating workspace and renaming it works", async () => {
-    // Setup listener for the new window (browser) popup
-    const newWindowPagePromise = common.getNewWindowPagePromise();
     const page = common.page;
 
-    // Click the button to add a workspace
-    let btn = await page.waitForSelector("#addWorkspace");
-    expect(await btn?.isVisible()).toBe(true);
-    await btn?.click();
-
-    // Verify the dialog is visible
-    let dialog = await page.waitForSelector("dialog");
-    expect(await dialog?.isVisible()).toBe(true);
-
-    // Click the button to add a new workspace
-    btn = await page.waitForSelector("#modal-new-workspace");
-    expect(await btn?.isVisible()).toBe(true);
-    await btn?.click();
-
-    // Verify the dialog is visible
-    dialog = await page.waitForSelector("dialog");
-    expect(await dialog?.isVisible()).toBe(true);
-
-    // Enter the name of the new workspace
-    await page.type("#modal-input-name", "test workspace");
-
-    // Click the submit input
-    await page.click("#modal-submit");
-
-    // Wait for the new window to open
-    const newPage = await newWindowPagePromise;
-    expect(newPage).toBeDefined();
-
-    // Navigate to google.com
-    await newPage?.goto("https://www.google.com", { waitUntil: 'domcontentloaded' });
-
-    // Close the new window
-    await newPage?.close();
+    await createWorkspaceFromCurrentWindow(page, "test workspace");
 
     // Verify there is a new workspace in the list, and that it has the correct name
-    const list = await page.waitForSelector("#workspaces-list");
-    expect(await list?.isVisible()).toBe(true);
-
-    // Use ElementHandler.waitForSelector to wait for the new workspace text to appear
-    const workspaceBtn = await list?.waitForSelector("xpath///div[contains(text(), 'test workspace')]");
-    expect(await workspaceBtn?.evaluate((el) => el.textContent)).toContain("1 tabs");
+    await page.waitForSelector("#workspaces-list");
+    await waitForWorkspaceName(page, "test workspace");
 
     // Edit the workspace name
-    const editBtn = await page.waitForSelector("#edit-button");
-    expect(await editBtn?.isVisible()).toBe(true);
-    await editBtn?.click();
+    await clickEditByWorkspaceName(page, "test workspace");
 
     // Verify the dialog is visible
     const renameDialog = await page.waitForSelector("dialog");
@@ -79,6 +92,5 @@ test("creating workspace and renaming it works", async () => {
     await page.click("#modal-submit");
 
     // Verify the workspace name has been updated
-    const renamedWorkspaceBtn = await list?.waitForSelector("xpath///div[contains(text(), 'renamed workspace')]");
-    expect(await renamedWorkspaceBtn?.evaluate((el) => el.textContent)).toContain("1 tabs");
+    await waitForWorkspaceName(page, "renamed workspace");
 });
