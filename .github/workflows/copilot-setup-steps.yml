@@ -1,0 +1,46 @@
+name: Copilot Setup Steps
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Available npm scripts
+      run: |
+        echo "=== Available npm Scripts ==="
+        echo ""
+        echo "Build Scripts:"
+        echo "  npm run prebuild       - Sync version before building"
+        echo "  npm run build          - Build both Chrome and Firefox versions"
+        echo "  npm run build-chrome   - Build Chrome extension only"
+        echo "  npm run build-firefox  - Build Firefox extension only"
+        echo "  npm run build-target   - Internal webpack build (used by variants)"
+        echo "  npm run build-copy     - Build and copy to test folder"
+        echo ""
+        echo "Watch/Development Scripts:"
+        echo "  npm run watch          - Watch and rebuild Chrome in dev mode"
+        echo "  npm run watch-firefox  - Watch and rebuild Firefox in dev mode"
+        echo ""
+        echo "Quality Scripts:"
+        echo "  npm run lint           - Run ESLint on TypeScript files"
+        echo ""
+        echo "Test Scripts:"
+        echo "  npm run test           - Run all tests (Jest)"
+        echo "  npm run test-unit      - Run unit tests only"
+        echo "  npm run test-e2e       - Run end-to-end tests only"
+        echo "  npm run jest-unit      - Alternative unit test command"
