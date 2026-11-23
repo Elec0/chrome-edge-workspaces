@@ -7,11 +7,12 @@ const PATHS = require('./paths');
 const webpack = require('webpack');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const path = require('path');
+const ChromeWatchReload = require('./chrome-watch-reload');
 
 const targetBrowser = process.env.TARGET_BROWSER || 'chrome';
 
 // Merge webpack configuration files
-const config = merge(common, {
+module.exports = (_env, argv) => merge(common, {
   entry: {
     popup: PATHS.src + '/popup.js',
     background: PATHS.src + '/background.ts',
@@ -21,6 +22,9 @@ const config = merge(common, {
     filename: '[name].js',
   },
   plugins: [
+    ...(targetBrowser === 'chrome' && argv.watch && argv.mode === 'development'
+      ? [new ChromeWatchReload()]
+      : []),
     new webpack.DefinePlugin({
       'process.env.TARGET_BROWSER': JSON.stringify(targetBrowser),
     }),
@@ -34,5 +38,3 @@ const config = merge(common, {
     }),
   ],
 });
-
-module.exports = config;
