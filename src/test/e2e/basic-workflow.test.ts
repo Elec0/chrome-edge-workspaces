@@ -167,11 +167,14 @@ test("deleting a workspace removes it from the list", async () => {
     await page.waitForSelector("#workspaces-list");
     await waitForWorkspaceName(page, "test workspace");
 
-    await page.evaluate(() => {
-        window.confirm = () => true;
-    });
-
+    // Dismiss any browser prompt so a regression fails at the in-popup dialog assertion.
+    page.on("dialog", (dialog) => void dialog.dismiss());
     await clickWorkspaceActionByName(page, "test workspace", "#delete-button");
+    const confirmation = await page.waitForSelector("dialog[open]", { timeout: 5000 });
+    expect(await confirmation?.evaluate((dialog) => dialog.textContent)).toContain("test workspace");
+    await waitForWorkspaceName(page, "test workspace");
+    await page.click("dialog[open] button[value='delete']");
+    await page.waitForSelector("dialog", { hidden: true });
 
     await page.waitForFunction((name) => {
         const items = Array.from(document.querySelectorAll("#workspaces-list .workspace-item"));
@@ -186,18 +189,23 @@ test("creating a new workspace with 'New workspace' opens a new browser window",
     expect(newWindowPage).toBeDefined();
 });
 
-test("deleting a workspace with cancel keeps it in the list", async () => {
+test.each(["Cancel", "Escape"])("dismissing workspace deletion with %s keeps it in the list", async (dismissal) => {
     const page = common.page;
 
     await createWorkspaceFromCurrentWindow(page, "cancel-delete workspace");
     await page.waitForSelector("#workspaces-list");
     await waitForWorkspaceName(page, "cancel-delete workspace");
 
-    await page.evaluate(() => {
-        window.confirm = () => false;
-    });
-
+    page.on("dialog", (dialog) => void dialog.dismiss());
     await clickWorkspaceActionByName(page, "cancel-delete workspace", "#delete-button");
+    await page.waitForSelector("dialog[open]", { timeout: 5000 });
+    if (dismissal === "Escape") {
+        await page.keyboard.press("Escape");
+    } else {
+        await page.click("dialog[open] button[value='cancel']");
+    }
+    await page.waitForSelector("dialog", { hidden: true });
+    await page.reload({ waitUntil: "domcontentloaded" });
     await waitForWorkspaceName(page, "cancel-delete workspace");
 });
 

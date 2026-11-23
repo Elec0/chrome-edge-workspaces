@@ -251,6 +251,13 @@ img#addIcon:hover {
     margin-top: 2px;
 }
 
+.delete-workspace-dialog {
+    inset: 0;
+    margin: auto;
+    transform: none;
+    overflow-wrap: anywhere;
+}
+
 .modal #modal-settings-close {
     width: 100%;
 }
