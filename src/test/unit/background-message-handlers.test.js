@@ -13,6 +13,7 @@ describe("BackgroundMessageHandlers", () => {
         jest.restoreAllMocks();
         jest.resetAllMocks();
         jest.clearAllMocks();
+        StorageHelper.runWorkspaceUpdate.mockImplementation(update => update());
 
         // Mock the listeners
         chrome.runtime.onMessage.addListener = jest.fn();
@@ -187,6 +188,14 @@ describe("BackgroundMessageHandlers", () => {
     });
 
     describe("processRenameWorkspace", () => {
+        it('returns the bookmark warning alongside rename success', async () => {
+            StorageHelper.renameWorkspace.mockResolvedValue({ renamed: true, bookmarkWarning: 'Read-only folder' });
+
+            const response = await BackgroundMessageHandlers.processRenameWorkspace({ payload: { uuid: '123', newName: 'test' } });
+
+            expect(response).toEqual({ ...MessageResponses.SUCCESS, bookmarkWarning: 'Read-only folder' });
+        });
+
         it('should return an error response if uuid or newName is not provided', async () => {
             const request = {
                 payload: {
@@ -195,6 +204,7 @@ describe("BackgroundMessageHandlers", () => {
                 }
             };
 
+            StorageHelper.renameWorkspace.mockResolvedValue({ renamed: false });
             const response = await BackgroundMessageHandlers.processRenameWorkspace(request);
             expect(response).toEqual(MessageResponses.ERROR);
         });
@@ -207,7 +217,7 @@ describe("BackgroundMessageHandlers", () => {
                 }
             };
 
-            (StorageHelper.renameWorkspace).mockResolvedValue(true);
+            StorageHelper.renameWorkspace.mockResolvedValue({ renamed: true });
 
             const response = await BackgroundMessageHandlers.processRenameWorkspace(request);
             expect(StorageHelper.renameWorkspace).toHaveBeenCalledWith('123', 'test');

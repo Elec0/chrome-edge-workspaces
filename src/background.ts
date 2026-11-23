@@ -102,10 +102,10 @@ export class Background {
             return; // Window is closing, not saving tabs; they've already been saved.
         }
         // Can't check if the URL is untrackable here, as there's no way to get the tab URL from removeInfo.
-        if (!await StorageHelper.isWindowWorkspace(removeInfo.windowId)) return;
+        const workspace = await StorageHelper.getWorkspaceFromWindow(removeInfo.windowId);
+        if (!workspace) return;
 
         console.debug(`Tab ${ tabId } removed`);
-        const workspace = await StorageHelper.getWorkspace(removeInfo.windowId);
         // If the tab is the last tab in the window, we don't want to save the tabs.
         if (workspace.getTabs().length > 1) {
             // Tab is being closed normally, update the workspace that the tab has closed.
@@ -191,10 +191,8 @@ export class Background {
      */
     public static async tabActivated(activeInfo: chrome.tabs.TabActiveInfo): Promise<void> {
         if (Background.isSavingDisabled()) return;
-        if (!await StorageHelper.isWindowWorkspace(activeInfo.windowId)) return;
-
-        const workspace = await StorageHelper.getWorkspace(activeInfo.windowId);
-        if (workspace.getTabs().length > 1) {
+        const workspace = await StorageHelper.getWorkspaceFromWindow(activeInfo.windowId);
+        if (workspace && workspace.getTabs().length > 1) {
             Background.debounceSave(activeInfo.windowId);
         }
     }
@@ -220,6 +218,10 @@ export class Background {
      * @param windowId - The ID of the window to save tabs from.
      */
     public static async saveWindowTabsToWorkspace(windowId: number): Promise<void> {
+        return StorageHelper.runWorkspaceUpdate(() => this.saveWindowTabs(windowId));
+    }
+
+    private static async saveWindowTabs(windowId: number): Promise<void> {
         const workspace = await StorageHelper.getWorkspace(windowId);
         const tabs = await Utils.getTabsFromWindow(windowId);
         let tabGroups;
@@ -240,10 +242,7 @@ export class Background {
         Utils.setBadgeForWindow(windowId, Background.getBadgeTextForWorkspace(workspace));
 
         // Ensure the workspace is saved to bookmarks
-        await BookmarkStorageHelper.saveWorkspace(workspace)
-
-        // Save the workspace to sync storage
-        // await StorageHelper.setWorkspace(workspace);
+        await BookmarkStorageHelper.saveWorkspace(workspace);
     }
 
     /**

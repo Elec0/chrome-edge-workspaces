@@ -72,8 +72,7 @@ describe('Background', () => {
             workspace.addTab(TabStub.fromTab(tab2));
 
             workspace.removeTab = jest.fn();
-            StorageHelper.getWorkspace.mockResolvedValue(workspace);
-            StorageHelper.isWindowWorkspace.mockResolvedValue(true);
+            StorageHelper.getWorkspaceFromWindow.mockResolvedValue(workspace);
             chrome.tabs.query.mockResolvedValue([tab2]);
 
             // This is our test condition
@@ -100,9 +99,8 @@ describe('Background', () => {
             workspace.removeTab = jest.fn();
             Background.windowRemoved = jest.fn();
 
-            StorageHelper.getWorkspace.mockResolvedValue(workspace);
+            StorageHelper.getWorkspaceFromWindow.mockResolvedValue(workspace);
             StorageHelper.setWorkspace.mockResolvedValue(true);
-            StorageHelper.isWindowWorkspace.mockResolvedValue(true);
 
             await Background.tabRemoved(1, { isWindowClosing: false, windowId: 1 });
 

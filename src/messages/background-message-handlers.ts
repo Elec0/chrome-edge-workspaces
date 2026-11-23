@@ -83,9 +83,12 @@ export class BackgroundMessageHandlers {
      * @param request - The request object containing the workspace UUID and the new name.
      */
     public static async processRenameWorkspace(request: IRequestRenameWorkspace): Promise<MessageResponse> {
-        const result = await StorageHelper.renameWorkspace(request.payload.uuid, request.payload.newName);
-        if (!result) {
+        const { renamed, bookmarkWarning } = await StorageHelper.renameWorkspace(request.payload.uuid, request.payload.newName);
+        if (!renamed) {
             return MessageResponses.ERROR;
+        }
+        if (bookmarkWarning) {
+            return { ...MessageResponses.SUCCESS, bookmarkWarning };
         }
         return MessageResponses.SUCCESS;
     }
@@ -96,7 +99,7 @@ export class BackgroundMessageHandlers {
      * @returns A promise that resolves to a MessageResponse containing the serialized workspaces data.
      */
     public static async processGetWorkspaces(_request: unknown): Promise<MessageResponse> {
-        const workspaces = await StorageHelper.getWorkspaces();
+        const workspaces = await StorageHelper.runWorkspaceUpdate(() => StorageHelper.getWorkspaces());
         return { "data": workspaces.serialize() };
     }
 
@@ -109,7 +112,7 @@ export class BackgroundMessageHandlers {
         if (!request?.payload?.uuid) {
             return MessageResponses.ERROR;
         }
-        const workspace = await StorageHelper.getWorkspace(request.payload.uuid);
+        const workspace = await StorageHelper.runWorkspaceUpdate(() => StorageHelper.getWorkspace(request.payload.uuid));
         return { "data": workspace.serialize() };
     }
 
