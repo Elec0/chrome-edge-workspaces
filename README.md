@@ -76,14 +76,23 @@ Suggestions and pull requests are welcomed!
 1. Clone the repository
 2. Run `npm install`
 3. Run `npm run build` to build the extension
-4. Load the extension in Chrome by following the manual install instructions
+4. Load the extension in Chrome using the steps below
 5. Run `npm run watch` to automatically rebuild the extension when changes are made
 
 ### Chrome
-Using VS Code, there are two tasks available for Chrome:
-* `Run npm watch` - Runs `npm run watch`
-* `Launch Chrome against localhost` - Launches a new Chrome window with the extension loaded
-  * You will need to update extension ID in the `url` in `launch.json` to match the ID of the extension loaded in Chrome
+In VS Code, start **Run npm watch** to rebuild `build/chrome` as you edit. Use **Launch Chrome with Edge Workspaces** to open the popup in a dedicated Chrome profile that keeps the extension installed between sessions.
+
+For a fresh dev profile, open `chrome://extensions` in the launched Chrome window, enable **Developer mode**, then click **Load unpacked** and select `build/chrome`. On later launches, Chrome loads the extension from that directory automatically.
+
+To reload automatically after successful watch builds, install [Extension Development – Auto Reloader](https://chromewebstore.google.com/detail/extension-development-aut/falghmjeljhgmccbpffloemnfnmikked) in that same profile. Start `npm run watch`, open Auto Reloader, and click **Run** with these values.
+
+| Field | Value |
+| --- | --- |
+| Extension ID | `feehlkcbifmladjmmpkghfokcngfkkkp` |
+| WebSocket server port | `3001` |
+| Testing tab URL | `http://localhost:3001/` |
+
+The testing URL fills the helper’s required field. Open the Edge Workspaces popup from the toolbar to try the rebuilt code. After restarting Chrome or the watcher, reconnect Auto Reloader. If it still displays **RUNNING**, click **Stop**, enter the values again, and click **Run**. For manifest changes, click **Reload** on the Edge Workspaces extension card.
 
 ### Firefox
 Using VS Code, there are two tasks available for Firefox:

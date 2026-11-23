@@ -19,15 +19,10 @@
         {
             "type": "chrome",
             "request": "launch",
-            "name": "Launch Chrome against localhost",
+            "name": "Launch Chrome with Edge Workspaces",
             "url": "chrome-extension://feehlkcbifmladjmmpkghfokcngfkkkp/popup.html",
-            //chrome://extensions/
             "webRoot": "${workspaceFolder}",
-            // "userDataDir": "${workspaceRoot}.vscode/chrome",
-            "runtimeArgs": [
-                "--disable-infobars --disable-session-crashed-bubble",
-                "--load-extension=${workspaceFolder}/build/chrome"
-            ],
+            "userDataDir": "${workspaceFolder}.vscode/chrome-dev-profile"
         },
         {
             "type": "firefox",

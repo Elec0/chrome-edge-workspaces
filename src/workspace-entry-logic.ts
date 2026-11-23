@@ -1,6 +1,7 @@
 import { Workspace } from "./obj/workspace";
 import { PopupActions } from "./popup-actions";
 import { Prompt } from "./utils/prompt";
+import DELETE_WORKSPACE_DIALOG_TEMPLATE from "./templates/deleteWorkspaceDialogTemplate.html";
 import WORKSPACE_TEMPLATE from "./templates/workspaceElemTemplate.html";
 import { Utils } from "./utils";
 import { WorkspaceStorage } from "./workspace-storage";
@@ -109,14 +110,23 @@ export class WorkspaceEntryLogic {
 
     /**
      * Called when a workspace's delete button is clicked.
-     * @param workspaceId -
+     * @param workspace - The workspace to delete if the user confirms.
      */
     public static workspaceDeleteClicked(workspace: Workspace) {
-        console.debug("workspaceDeleteClicked", workspace)
-        // Verify the user wants to delete the workspace.
-        if (!confirm(`Are you sure you want to delete the workspace "${ workspace.name }"?`)) {
-            return;
-        }
-        PopupActions.deleteWorkspace(workspace);
+        const template = document.createElement("template");
+        template.innerHTML = DELETE_WORKSPACE_DIALOG_TEMPLATE;
+        const dialog = template.content.querySelector("dialog")!;
+        dialog.querySelector("#delete-workspace-message")!.textContent =
+            `Are you sure you want to delete the workspace "${ workspace.name }"?`;
+
+        dialog.addEventListener("close", () => {
+            dialog.remove();
+            if (dialog.returnValue === "delete") {
+                PopupActions.deleteWorkspace(workspace);
+            }
+        }, { once: true });
+
+        document.body.appendChild(dialog);
+        dialog.showModal();
     }
 }
