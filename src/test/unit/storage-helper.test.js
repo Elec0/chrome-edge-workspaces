@@ -169,6 +169,7 @@ describe("clearWorkspaceData", () => {
 describe("renameWorkspace", () => {
     it("should rename the workspace", async () => {
         // Arrange
+        map.set(Constants.STORAGE_KEYS.settings.saveBookmarks, "false");
         let workspace = new Workspace(3, "toRename");
         await StorageHelper.setWorkspace(workspace);
 
@@ -179,8 +180,30 @@ describe("renameWorkspace", () => {
         expect(workspaces.get(workspace.uuid).name).toBe("newName");
     });
 
-    it("should return false if the workspace does not exist", async () => {
-        expect(await StorageHelper.renameWorkspace("notExist", "newName")).toBe(false);
+    it("reports failure if the workspace does not exist", async () => {
+        expect(await StorageHelper.renameWorkspace("notExist", "newName")).toEqual({ renamed: false });
+    });
+
+    it("renames the workspace and returns the reason if Chrome rejects the bookmark update", async () => {
+        const workspace = new Workspace(3, "old name");
+        await StorageHelper.setWorkspace(workspace);
+        const folder = { id: "workspace", title: workspace.name, children: [] };
+        const extensionFolder = { id: "extension", title: Constants.BOOKMARKS_FOLDER_NAME, children: [folder] };
+        const originalBookmarks = chrome.bookmarks;
+        chrome.bookmarks = {
+            getTree: async () => [{ children: [{ id: "bar" }, { id: "other", children: [extensionFolder] }] }],
+            update: async () => { throw new Error("Bookmarks unavailable"); },
+        };
+        try {
+            expect(await StorageHelper.renameWorkspace(workspace.uuid, "new name")).toEqual({
+                renamed: true,
+                bookmarkWarning: "Bookmarks unavailable",
+            });
+            expect((await StorageHelper.getWorkspace(workspace.uuid)).name).toBe("new name");
+            expect(folder.title).toBe("old name");
+        } finally {
+            chrome.bookmarks = originalBookmarks;
+        }
     });
 });
 

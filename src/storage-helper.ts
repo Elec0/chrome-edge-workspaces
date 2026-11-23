@@ -3,6 +3,7 @@ import { Constants } from "./constants/constants";
 import { MessageResponse } from "./constants/message-responses";
 import { VERSION } from "./globals";
 import { Workspace } from "./obj/workspace";
+import { BookmarkStorageHelper } from "./storage/bookmark-storage-helper";
 import { SyncWorkspaceStorage, SyncWorkspaceTombstone } from "./storage/sync-workspace-storage";
 import { WorkspaceStorage } from "./workspace-storage";
 import { WorkspaceUtils } from "./utils/workspace-utils";
@@ -10,6 +11,14 @@ import { WorkspaceUtils } from "./utils/workspace-utils";
 export class StorageHelper {
     private static logStorageChanges = false;
     private static _storage = chrome.storage.local;
+    private static pendingWorkspaceUpdate = Promise.resolve();
+
+    // Renames and tab saves both write workspace storage and its bookmark mirror.
+    public static runWorkspaceUpdate<T>(update: () => Promise<T>): Promise<T> {
+        const result = this.pendingWorkspaceUpdate.then(update);
+        this.pendingWorkspaceUpdate = result.then(() => undefined, () => undefined);
+        return result;
+    }
 
     public static async init() {
         this.saveVersionNumber();
@@ -193,13 +202,14 @@ export class StorageHelper {
      */
     public static async setWorkspace(workspace: Workspace): Promise<void> {
         const workspaces = await this.getWorkspaces();
+        const syncSavingEnabled = await SyncWorkspaceStorage.isSyncSavingEnabled();
         // We're setting the workspace, so we need to update the last updated time.
         workspace.updateLastUpdated();
         workspaces.set(workspace.uuid, workspace);
         await this.setWorkspaces(workspaces);
 
-        if (await SyncWorkspaceStorage.isSyncSavingEnabled()) {
-            await SyncWorkspaceStorage.debounceSaveWorkspaceToSync(workspace);
+        if (syncSavingEnabled) {
+            SyncWorkspaceStorage.debounceSaveWorkspaceToSync(workspace);
         }
     }
 
@@ -250,21 +260,33 @@ export class StorageHelper {
      * Rename a workspace in storage.
      * @param uuid - The UUID of the workspace to rename.
      * @param newName - The new name for the workspace.
-     * @returns A promise that resolves to true if the workspace was renamed successfully, or resolves to false if the workspace could not be renamed.
+     * @returns The workspace rename outcome and any bookmark update error.
      */
-    public static async renameWorkspace(uuid: string, newName: string): Promise<boolean> {
+    public static async renameWorkspace(uuid: string, newName: string): Promise<{ renamed: boolean; bookmarkWarning?: string }> {
         console.debug("renameWorkspace: ", uuid, newName);
-        try {
-            // Promise will reject if workspace does not exist
-            const workspace = await this.getWorkspace(uuid);
-            workspace.updateName(newName);
-            await this.setWorkspace(workspace);
+        return this.runWorkspaceUpdate(async () => {
+            let previousName: string;
+            try {
+                const workspace = await this.getWorkspace(uuid);
+                previousName = workspace.name;
+                workspace.updateName(newName);
+                await this.setWorkspace(workspace);
+            }
+            catch (error) {
+                console.warn("Could not rename the workspace", error);
+                return { renamed: false };
+            }
 
-            return Promise.resolve(true);
-        }
-        catch (error) {
-            return Promise.resolve(false);
-        }
+            try {
+                await BookmarkStorageHelper.renameWorkspace(uuid, previousName, newName);
+                return { renamed: true };
+            }
+            catch (error) {
+                console.warn("Could not rename the workspace bookmark folder", error);
+                const reason = error instanceof Error ? error.message : typeof error === "string" ? error : "";
+                return { renamed: true, bookmarkWarning: reason || "The browser did not provide a reason." };
+            }
+        });
     }
 
     /**
@@ -275,14 +297,13 @@ export class StorageHelper {
             return false;
         }
 
-        const workspaceStorage = await this.getWorkspaces();
-        return workspaceStorage.get(windowId) != undefined;
+        return (await this.getWorkspaceFromWindow(windowId)) !== undefined;
     }
 
     /** Get the workspace associated with a window. */
     public static async getWorkspaceFromWindow(windowId: number): Promise<Workspace | undefined> {
-        const workspaceStorage = await this.getWorkspaces();
-        return Promise.resolve(workspaceStorage.get(windowId));
+        const workspaceStorage = await this.getLocalWorkspaces();
+        return workspaceStorage.get(windowId);
     }
 
     /** Delete everything we have in storage. */

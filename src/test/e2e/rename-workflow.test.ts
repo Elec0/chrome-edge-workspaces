@@ -66,6 +66,27 @@ async function createWorkspaceFromCurrentWindow(page: Page, workspaceName: strin
     await page.waitForSelector("dialog", { hidden: true });
 }
 
+async function openTestTab(url: string): Promise<void> {
+    const tab = await common.browser.newPage();
+    await tab.setRequestInterception(true);
+    tab.on("request", request => void request.respond({ body: "Workspace test page" }));
+    await tab.goto(url);
+}
+
+async function waitForBookmark(page: Page, url: string): Promise<void> {
+    await page.waitForFunction(async (bookmarkUrl) => (await chrome.bookmarks.search({ url: bookmarkUrl })).length > 0,
+        { polling: 100, timeout: 10000 }, url);
+}
+
+async function renameWorkspace(page: Page, oldName: string, newName: string): Promise<void> {
+    await clickEditByWorkspaceName(page, oldName);
+    const renameDialog = await page.waitForSelector("dialog");
+    expect(await renameDialog?.isVisible()).toBe(true);
+    await page.type("#modal-input-name", newName);
+    await page.click("#modal-submit");
+    await waitForWorkspaceName(page, newName);
+}
+
 jest.setTimeout(60 * 1000);
 
 beforeEach(async () => {
@@ -80,28 +101,62 @@ afterEach(async () => {
     await common.afterEach();
 });
 
-test("creating workspace and renaming it works", async () => {
+test("renaming a workspace updates its bookmark folder immediately", async () => {
     const page = common.page;
+    const firstUrl = "https://example.test/first";
+    await openTestTab(firstUrl);
 
     await createWorkspaceFromCurrentWindow(page, "test workspace");
 
     // Verify there is a new workspace in the list, and that it has the correct name
     await page.waitForSelector("#workspaces-list");
     await waitForWorkspaceName(page, "test workspace");
+    await waitForBookmark(page, firstUrl);
 
-    // Edit the workspace name
-    await clickEditByWorkspaceName(page, "test workspace");
+    const getBookmarkFolders = () => page.evaluate(async () => {
+        const [root] = await chrome.bookmarks.getTree();
+        const extensionFolder = root.children?.flatMap(node => node.children ?? [])
+            .find(node => node.title === "Edge Workspaces (read-only)");
+        return extensionFolder?.children ?? [];
+    });
+    const [originalFolder] = await getBookmarkFolders();
+    expect(originalFolder.title).toBe("test workspace");
+    expect(originalFolder.children?.map(node => node.url)).toContain(firstUrl);
 
-    // Verify the dialog is visible
-    const renameDialog = await page.waitForSelector("dialog");
-    expect(await renameDialog?.isVisible()).toBe(true);
+    await renameWorkspace(page, "test workspace", "renamed workspace");
+    expect(await getBookmarkFolders()).toEqual([
+        expect.objectContaining({
+            id: originalFolder.id,
+            title: "renamed workspace",
+            children: originalFolder.children,
+        }),
+    ]);
 
-    // Enter the name of the new workspace
-    await page.type("#modal-input-name", "renamed workspace");
+    const nextUrl = "https://example.test/second";
+    await openTestTab(nextUrl);
+    await waitForBookmark(page, nextUrl);
+    expect((await getBookmarkFolders()).map(node => node.title)).toEqual(["renamed workspace"]);
+});
 
-    // Click the submit input
-    await page.click("#modal-submit");
+test("a rejected bookmark update shows a warning and keeps the new workspace name", async () => {
+    const page = common.page;
+    const url = "https://example.test/bookmark-warning";
+    await openTestTab(url);
+    await createWorkspaceFromCurrentWindow(page, "test workspace");
+    await waitForBookmark(page, url);
 
-    // Verify the workspace name has been updated
-    await waitForWorkspaceName(page, "renamed workspace");
+    const extensionHost = new URL(page.url()).host;
+    const target = await common.browser.waitForTarget(candidate => candidate.type() === "service_worker" &&
+        new URL(candidate.url()).host === extensionHost);
+    const worker = await target.worker();
+    expect(worker).not.toBeNull();
+    await worker!.evaluate(() => {
+        chrome.bookmarks.update = async () => { throw new Error("Cannot modify this bookmark folder."); };
+    });
+
+    await renameWorkspace(page, "test workspace", "renamed workspace");
+    const warning = await page.waitForSelector('[role="alert"]', { visible: true });
+    const warningText = await warning?.evaluate(element => element.textContent);
+    expect(warningText).toContain("Workspace renamed.");
+    expect(warningText).toContain("Cannot modify this bookmark folder.");
 });

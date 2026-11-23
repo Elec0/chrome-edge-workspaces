@@ -212,6 +212,12 @@ export class PopupActions {
      */
     public static renameWorkspace(workspace: Workspace, newName: string): void {
         PopupMessageHelper.sendRenameWorkspace(workspace.uuid, newName).then(async response => {
+            const warning = document.getElementById("workspace-rename-warning");
+            if (warning) {
+                warning.textContent = response.bookmarkWarning
+                    ? `Workspace renamed. The browser couldn't update its bookmark folder. ${ response.bookmarkWarning }`
+                    : "";
+            }
             if (response.message === MessageResponses.SUCCESS.message) {
                 console.log("Workspace renamed", workspace);
                 WorkspaceEntryLogic.listWorkspaces(await getWorkspaceStorage(), await Utils.getAllWindowIds());

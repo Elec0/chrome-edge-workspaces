@@ -4,18 +4,19 @@ import { StorageHelper } from "../storage-helper";
 
 export class BookmarkStorageHelper {
     /**
-     * Retrieves the extension bookmark folder. If the folder does not exist, it creates one.
+     * Retrieves the extension bookmark folder, creating it when requested.
      *
+     * @param createIfMissing - Whether to create the extension folder when it is absent.
      * @returns A promise that resolves to the bookmark folder node, or undefined if it cannot be found or created.
      */
-    public static async getExtensionBookmarkFolder(): Promise<chrome.bookmarks.BookmarkTreeNode | undefined> {
+    public static async getExtensionBookmarkFolder(createIfMissing = true): Promise<chrome.bookmarks.BookmarkTreeNode | undefined> {
         if (!await this.isBookmarkSaveEnabled()) {
             return undefined;
         }
 
         const otherBookmarksFolder = await this.getOtherBookmarksFolder();
-        const bookmarkFolder = otherBookmarksFolder?.children?.find((node) => node.title === Constants.BOOKMARKS_FOLDER_NAME);
-        if (bookmarkFolder === undefined) {
+        const bookmarkFolder = otherBookmarksFolder?.children?.find((node) => node.url === undefined && node.title === Constants.BOOKMARKS_FOLDER_NAME);
+        if (bookmarkFolder === undefined && createIfMissing) {
             return await this.createExtensionBookmarkFolder(otherBookmarksFolder);
         }
         return bookmarkFolder;
@@ -72,15 +73,15 @@ export class BookmarkStorageHelper {
             console.error("Could not find the bookmark folder, cannot save workspace to bookmarks.");
             return Promise.reject("Could not find the bookmark folder.");
         }
-        const workspaceFolders = resolvedBookmarkFolder.children?.filter((node) => node.title === workspace.name);
+        const workspaceFolders = resolvedBookmarkFolder.children?.filter((node) => node.url === undefined && node.title === workspace.name);
         // Delete the workspace folder and all children so we can recreate it with the new tabs
         if (workspaceFolders !== undefined) {
             if (workspaceFolders.length > 1) {
                 console.warn(`Found multiple workspace folders with the name '${ workspace.name }'. All will be removed!`);
             }
-            workspaceFolders.forEach(async (workspaceFolder) => {
+            for (const workspaceFolder of workspaceFolders) {
                 await chrome.bookmarks.removeTree(workspaceFolder.id);
-            });
+            }
         }
 
         // Create the workspace folder
@@ -90,6 +91,23 @@ export class BookmarkStorageHelper {
         for (const tab of workspace.getTabs()) {
             await chrome.bookmarks.create({ parentId: newWorkspaceFolder.id, title: tab.title, url: tab.url });
         }
+    }
+
+    public static async renameWorkspace(uuid: string, previousName: string, newName: string): Promise<void> {
+        if (previousName === newName) return;
+
+        const bookmarkFolder = await this.getExtensionBookmarkFolder(false);
+        const folders = bookmarkFolder?.children?.filter(node => node.url === undefined) ?? [];
+        const matches = folders.filter(node => node.title === previousName);
+        if (matches.length !== 1 || folders.some(node => node.title === newName)) return;
+
+        // Folder titles alone cannot identify which workspace owns a shared name.
+        const workspaces = await StorageHelper.getLocalWorkspaces();
+        const nameIsShared = Array.from(workspaces.values()).some(other => other.uuid !== uuid &&
+            (other.name === previousName || other.name === newName));
+        if (nameIsShared) return;
+
+        await chrome.bookmarks.update(matches[0].id, { title: newName });
     }
 
     /**
