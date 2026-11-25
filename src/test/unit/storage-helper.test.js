@@ -2,8 +2,22 @@ import { Constants } from "../../constants/constants";
 import { Workspace } from "../../obj/workspace";
 import { StorageHelper } from "../../storage-helper";
 import { SyncWorkspaceStorage } from "../../storage/sync-workspace-storage";
+import { WorkspaceStorage } from "../../workspace-storage";
+import { TabStub } from "../../obj/tab-stub";
+import { BackgroundMessageHandlers } from "../../messages/background-message-handlers";
+import { MessageResponses } from "../../constants/message-responses";
 
 const map = new Map();
+
+function sendMove(uuid, targetUuid, placement) {
+    return new Promise((resolve, reject) => {
+        const handled = BackgroundMessageHandlers.messageListener({
+            type: 'MOVE_WORKSPACE',
+            payload: { uuid, targetUuid, placement },
+        }, undefined, resolve);
+        if (!handled) reject(new Error('Move workspace message was not handled'));
+    });
+}
 
 beforeEach(() => {
     // Mock chrome.storage.local get and set to use our map local variable
@@ -32,6 +46,94 @@ afterEach(() => {
     jest.clearAllMocks();
 });
 
+describe('workspace order', () => {
+    let original;
+
+    beforeEach(async () => {
+        original = new WorkspaceStorage();
+        ['a', 'b', 'c'].forEach((uuid, index) => {
+            original.set(uuid, new Workspace(index + 1, uuid, [], undefined, uuid));
+        });
+        await StorageHelper.setWorkspaces(original);
+    });
+
+    test('serializes consecutive moves with a background tab save', async () => {
+        const tabSave = StorageHelper.runWorkspaceUpdate(async () => {
+            const workspace = await StorageHelper.getWorkspace('b');
+            workspace.addTab(new TabStub({ id: 4, index: 0, url: 'https://example.com' }));
+            await StorageHelper.setWorkspace(workspace);
+        });
+        const firstMove = sendMove('a', 'c', 'after');
+        const secondMove = sendMove('c', 'b', 'before');
+        const [, first, second] = await Promise.all([tabSave, firstMove, secondMove]);
+
+        expect(first.message).toBe(MessageResponses.SUCCESS.message);
+        expect(second.message).toBe(MessageResponses.SUCCESS.message);
+        const saved = await StorageHelper.getLocalWorkspaces();
+        expect(saved.listInOrder().map(({ uuid, order }) => [uuid, order]))
+            .toEqual([['c', 0], ['b', 1], ['a', 2]]);
+        expect(saved.get('b').getTab(4).url).toBe('https://example.com');
+        expect(saved.get('a').lastUpdated).toBe(original.get('a').lastUpdated);
+    });
+
+    test('returns the latest list when the destination no longer exists', async () => {
+        await StorageHelper.removeWorkspace('c');
+        const result = await sendMove('a', 'c', 'after');
+
+        expect(result.message).toBe(MessageResponses.ERROR.message);
+        expect(StorageHelper.workspacesFromJson(result).listInOrder().map(({ uuid }) => uuid))
+            .toEqual(['a', 'b']);
+    });
+
+    test('keeps a newly created workspace when creation overlaps a move', async () => {
+        const creation = BackgroundMessageHandlers.processNewWorkspace({ payload: { workspaceName: 'New', windowId: 4 } });
+        const move = sendMove('a', 'b', 'after');
+        await Promise.all([creation, move]);
+
+        const saved = await StorageHelper.getLocalWorkspaces();
+        expect(saved.listInOrder().map(({ name }) => name)).toEqual(['b', 'a', 'c', 'New']);
+    });
+
+    test('keeps order when workspace opening saves reassigned tab IDs', async () => {
+        const openedWorkspace = original.get('a');
+        openedWorkspace.addTab(new TabStub({ id: 5, index: 0, url: 'https://example.com' }));
+        const opening = BackgroundMessageHandlers.processOpenWorkspace({
+            payload: { uuid: 'a', windowId: 10, workspaceData: openedWorkspace.serialize() },
+        });
+        const moving = sendMove('a', 'b', 'after');
+        await Promise.all([opening, moving]);
+
+        const saved = await StorageHelper.getLocalWorkspaces();
+        expect(saved.listInOrder().map(({ uuid }) => uuid)).toEqual(['b', 'a', 'c']);
+        expect(saved.get(10).getTab(5).url).toBe('https://example.com');
+    });
+
+    test('preserves an explicit position when saving a workspace read before a move', async () => {
+        const staleWorkspace = await StorageHelper.getWorkspace('a');
+        await sendMove('a', 'c', 'after');
+        staleWorkspace.name = 'Renamed';
+        await StorageHelper.setWorkspace(staleWorkspace);
+        await StorageHelper.addWorkspace('New', 4);
+
+        const saved = await StorageHelper.getLocalWorkspaces();
+        expect(saved.listInOrder().map(({ name }) => name)).toEqual(['b', 'c', 'Renamed', 'New']);
+        expect(saved.get('a').order).toBe(2);
+    });
+
+    test('imports explicit positions from a workspace export', async () => {
+        const { data } = await sendMove('c', 'a', 'before');
+        map.clear();
+        const imported = await new Promise(resolve => BackgroundMessageHandlers.messageListener({
+            type: 'IMPORT_WORKSPACES',
+            payload: { data },
+        }, undefined, resolve));
+
+        expect(imported.message).toBe(MessageResponses.SUCCESS.message);
+        const saved = await StorageHelper.getLocalWorkspaces();
+        expect(saved.listInOrder().map(({ uuid, order }) => [uuid, order]))
+            .toEqual([['c', 0], ['a', 1], ['b', 2]]);
+    });
+});
 
 describe("addWorkspace", () => {
     it("should successfully add a workspace", async () => {

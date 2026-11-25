@@ -3,7 +3,6 @@ import { PopupMessageHelper } from "./messages/popup-message-helper";
 import { Workspace } from './obj/workspace';
 import { MessageResponse, MessageResponses } from "./constants/message-responses";
 import { WorkspaceEntryLogic } from "./workspace-entry-logic";
-import { StorageHelper } from "./storage-helper";
 import { TabUtils } from "./utils/tab-utils";
 import { getWorkspaceStorage } from "./popup";
 import { Utils } from "./utils";
@@ -38,14 +37,15 @@ export class PopupActions {
     }
 
     /**
-     * Open the provided workspace in a new window.
-     * 
-     * <ol>
-     * <li>Send a message to the background script requesting the workspace data</li>
-     * <li>Create a new window with workspace's tabs in the correct order</li>
-     * <li>Tell the background script to update the workspace with the new windowId</li>
-     * </ol>
-     * @param workspaceToOpen -
+     * Focus an open workspace or restore its tabs in a new window.
+     *
+     * @remarks
+     * Fetch the saved workspace from the background before checking for an existing window.
+     * When a new window is needed, open the URLs in saved tab order, then restore the tab
+     * properties and groups. Send the new window ID and, on browsers with tab group support,
+     * the restored tab and group IDs to the background for a single save.
+     *
+     * @param workspaceToOpen - The workspace selected in the popup.
      */
     public static async openWorkspace(workspaceToOpen: Workspace): Promise<void> {
         if (!workspaceToOpen) {
@@ -95,12 +95,14 @@ export class PopupActions {
             workspace.windowId = newWindow.id;
             await TabUtils.updateTabStubIdsFromTabs(workspace.getTabs(), newWindow.tabs as chrome.tabs.Tab[]);
             await TabUtils.updateNewWindowTabsFromTabStubs(workspace.getTabs());
-            if (FeatureDetect.supportsTabGroups()) {
+            const supportsTabGroups = FeatureDetect.supportsTabGroups();
+            if (supportsTabGroups) {
                 await this.groupTabs(workspace);
             }
 
-            // Update the workspace with the new windowId in storage
-            const response = await PopupMessageHelper.sendOpenWorkspace(workspace.uuid, newWindow.id);
+            const response = await PopupMessageHelper.sendOpenWorkspace(
+                workspace.uuid, newWindow.id, supportsTabGroups ? workspace.serialize() : undefined
+            );
 
             if (!response || response.message === MessageResponses.UNKNOWN_MSG.message) {
                 console.error("Response returned invalid!", "response:", response);
@@ -115,20 +117,18 @@ export class PopupActions {
     }
 
     /**
-     * Group the tabs in the workspace.
-     * 
-     * At this point the window is created with tabs in the correct order. 
-     * We need to create the tab groups with the correct names and colors, and ensure tabs are in their associated groups.
-     * But there is not a `tabGroups.create` method, so we need to create the tab groups with `chrome.tabs.group` initially, 
-     * then update the tab groups with the correct names and colors.
-     * 
-     * The Tab objects have a groupId property that is used to associate them with a group from `Workspace.tabGroups`.
-     * The groupId is the auto-generated ID from the last time the window was open, so we need to update the Tab objects with the new group IDs
-     *  once the new groups are created.
-     * 
-     * Following that, we need to update the tab groups with the new group IDs. We can probably just clear the tab groups and re-save them.
-     * 
-     * @param workspace - 
+     * Recreate the tab groups and update the in-memory tabs and groups with Chrome's new IDs.
+     *
+     * @remarks
+     * Each saved tab's group ID links it to its group from the previous session.
+     * Group creation goes through `chrome.tabs.group`. Once the group exists,
+     * `chrome.tabGroups.update` applies its title, color, and collapsed state.
+     * Store the reassigned ID on both the tab stubs and the group stub so those
+     * links survive the next save.
+     *
+     * The caller passes the restored state to the background through the open-workspace message.
+     *
+     * @param workspace - The workspace whose tabs have already been restored in the new window.
      */
     public static async groupTabs(workspace: Workspace): Promise<void> {
         const tabGroups = workspace.getTabGroups();
@@ -160,9 +160,7 @@ export class PopupActions {
                 tabGroupStub.id = groupId;
             }
         }
-        // Clear the existing tab groups and re-save them with the new group IDs
         workspace.setTabGroups(tabGroups);
-        await StorageHelper.setWorkspace(workspace);
     }
 
 

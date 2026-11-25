@@ -1,3 +1,4 @@
+import type { WorkspacePlacement } from "../workspace-storage";
 
 export interface IRequest {
     type: string;
@@ -10,6 +11,8 @@ export interface IRequestOpenWorkspace extends IRequest {
     payload: {
         uuid: string;
         windowId: number;
+        /** Serialized workspace carrying the tab and group IDs assigned during restore. */
+        workspaceData?: string;
     };
 }
 
@@ -31,4 +34,18 @@ export interface IRequestRenameWorkspace extends IRequest {
         uuid: string;
         newName: string;
     };
+}
+
+/** Move a workspace relative to another UUID so the background can resolve the current positions. */
+export interface IRequestMoveWorkspace extends IRequest {
+    payload: {
+        uuid: string;
+        targetUuid: string;
+        placement: WorkspacePlacement;
+    };
+}
+
+/** Replace local workspace data with the serialized workspace list from an export. */
+export interface IRequestImportWorkspaces extends IRequest {
+    payload: { data: string };
 }

@@ -1,5 +1,6 @@
 import { Constants } from "../constants/constants";
-import { MessageResponse } from "../constants/message-responses";
+import { MessageResponses } from "../constants/message-responses";
+import { PopupMessageHelper } from "../messages/popup-message-helper";
 import { BaseDialog } from "../dialogs/base-dialog";
 import { VERSION } from "../globals";
 import { LogHelper } from "../log-helper";
@@ -112,8 +113,9 @@ export class PageSettings extends BaseDialog {
     }
 
     /**
-     * Prompt the user to import settings from a JSON file.
-     * This method opens a file input dialog and reads the file contents.
+     * Open a file picker for a JSON workspace export and read the selected file.
+     * After parsing, ask for confirmation because importing replaces the local workspace list.
+     * The popup reloads after the background confirms the save.
      */
     private static async importSettings(): Promise<void> {
         const input = document.createElement("input");
@@ -142,8 +144,10 @@ export class PageSettings extends BaseDialog {
                         return;
                     }
 
-                    const parsed = await StorageHelper.workspacesFromJson(data as MessageResponse);
-                    await StorageHelper.setWorkspaces(parsed);
+                    const response = await PopupMessageHelper.sendImportWorkspaces(data.data);
+                    if (response.message !== MessageResponses.SUCCESS.message) {
+                        throw new Error("The workspace data could not be saved.");
+                    }
 
                     LogHelper.successAlert("Settings imported successfully, reloading...");
                     window.location.reload();

@@ -72,6 +72,8 @@ export class WorkspaceUtils {
                     syncStorage.set(key, localWorkspace);
                 }
                 else {
+                    // Content timestamps choose the synced record. Display position belongs to the local profile.
+                    syncWorkspace.order = localWorkspace.order;
                     localStorage.set(key, syncWorkspace);
                 }
             }

@@ -17,6 +17,8 @@ export class Workspace {
     /** The tab groups that exist in this workspace/window, mapped by their IDs */
     private tabGroups: Map<number, TabGroupStub>;
     public lastUpdated: number;
+    /** Local display position. Unranked workspaces follow explicitly ordered workspaces. */
+    public order?: number;
 
     constructor(windowId: number, name: string, tabs: chrome.tabs.Tab[] | undefined = undefined,
         tabStubs: TabStub[] | undefined = undefined, uuid: string | undefined = uuidv4(), 
@@ -175,6 +177,7 @@ export class Workspace {
         });
     }
 
+    /** Serialize workspace content and its local display position for storage or export. */
     public toJsonObject(): object {
         this.ensureTabIndexesOrdered();
         return {
@@ -182,13 +185,14 @@ export class Workspace {
             name: this.name,
             uuid: this.uuid,
             lastUpdated: this.lastUpdated,
+            order: this.order,
             tabs: this.getTabs().map((tab: TabStub) => tab.toJson()),
             tabGroups: this.getTabGroups().map((tabGroup: TabGroupStub) => tabGroup.toJson())
         };
     }
 
     /**
-     * Creates a Workspace object from a JSON representation.
+     * Restore a workspace from JSON. Missing or invalid display positions remain unranked.
      * @param json - The JSON object representing the Workspace.
      * @returns A new Workspace object.
      */
@@ -196,6 +200,9 @@ export class Workspace {
         const workspace = new Workspace(json.id, json.name, undefined, undefined, json.uuid);
         if (json.lastUpdated !== undefined) {
             workspace.lastUpdated = json.lastUpdated;
+        }
+        if (json.order !== undefined && Number.isSafeInteger(json.order) && json.order >= 0) {
+            workspace.order = json.order;
         }
 
         if (json.tabs != null && json.tabs instanceof Array) {

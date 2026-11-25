@@ -18,6 +18,18 @@ describe('WorkspaceUtils', () => {
     });
 
     describe('syncWorkspaces', () => {
+        it('keeps local order when the synced workspace content wins', () => {
+            localStorage.set('a', { uuid: 'a', order: 1, lastUpdated: 1 });
+            localStorage.set('b', { uuid: 'b', order: 0, lastUpdated: 1 });
+            syncStorage.set('a', { uuid: 'a', name: 'Synced name', lastUpdated: 2 });
+            syncStorage.set('c', { uuid: 'c', lastUpdated: 2 });
+
+            const [merged] = WorkspaceUtils.syncWorkspaces(localStorage, syncStorage, [], () => false);
+
+            expect(merged.get('a')).toMatchObject({ name: 'Synced name', order: 1 });
+            expect(merged.listInOrder().map(({ uuid }) => uuid)).toEqual(['b', 'a', 'c']);
+        });
+
         function defaultConflictResolver(_local, _sync) {
             return false;
         }
