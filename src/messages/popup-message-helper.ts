@@ -1,6 +1,6 @@
 import { MessageResponse, MessageResponses } from "../constants/message-responses";
 import { Messages } from "../constants/messages";
-import { IRequestWithUuid, IRequestWithNameId, IRequestOpenWorkspace, IRequest } from "../interfaces/messages";
+import { IRequestWithUuid, IRequestWithNameId, IRequestOpenWorkspace, IRequest, IRequestMoveWorkspace, IRequestImportWorkspaces } from "../interfaces/messages";
 import { LogHelper } from "../log-helper";
 
 export class PopupMessageHelper {
@@ -22,10 +22,14 @@ export class PopupMessageHelper {
         return PopupMessageHelper.doSendMessage(message);
     }
 
-    public static async sendOpenWorkspace(workspaceUuid: string, windowId: number): Promise<MessageResponse> {
+    /**
+     * Send the new window association and any restored tab data for a single background save.
+     * @param workspaceData - Optional serialized workspace with reassigned tab and group IDs.
+     */
+    public static async sendOpenWorkspace(workspaceUuid: string, windowId: number, workspaceData?: string): Promise<MessageResponse> {
         const message: IRequestOpenWorkspace = {
             type: Messages.MSG_OPEN_WORKSPACE,
-            payload: { uuid: workspaceUuid, windowId: windowId }
+            payload: { uuid: workspaceUuid, windowId, workspaceData }
         };
         
         return PopupMessageHelper.doSendMessage(message);
@@ -98,6 +102,18 @@ export class PopupMessageHelper {
         };
 
         return PopupMessageHelper.doSendMessage(message);
+    }
+
+    /** Request a move and receive the current workspace list when available. */
+    public static sendMoveWorkspace(payload: IRequestMoveWorkspace["payload"]): Promise<MessageResponse> {
+        const message: IRequestMoveWorkspace = { type: Messages.MSG_MOVE_WORKSPACE, payload };
+        return this.doSendMessage(message);
+    }
+
+    /** Send the serialized list from an export to the background for a queued import. */
+    public static sendImportWorkspaces(data: string): Promise<MessageResponse> {
+        const message: IRequestImportWorkspaces = { type: Messages.MSG_IMPORT_WORKSPACES, payload: { data } };
+        return this.doSendMessage(message);
     }
 
     /**

@@ -132,6 +132,34 @@ afterEach(async () => {
     await common.afterEach();
 });
 
+test("Material icon actions have accessible labels and open their dialogs from the keyboard", async () => {
+    const page = common.page;
+    await createWorkspaceFromCurrentWindow(page, "Keyboard workspace");
+    await waitForWorkspaceName(page, "Keyboard workspace");
+
+    const actions = [
+        ["#addWorkspace", "Add workspace", "Enter", "#modal-new-workspace-from-window"],
+        ["#settings-button", "Settings", "Space", "#modal-settings-debug"],
+        ["#edit-button", "Rename Keyboard workspace", "Enter", "#modal-input-name"],
+        ["#delete-button", "Delete Keyboard workspace", "Space", "#delete-workspace-message"],
+    ] as const;
+
+    for (const [selector, label, key, dialogControl] of actions) {
+        const icon = await page.$eval(selector, element => ({
+            role: element.getAttribute("role"),
+            tabIndex: element.getAttribute("tabindex"),
+            label: element.getAttribute("aria-label"),
+            title: element.getAttribute("title"),
+        }));
+        expect(icon).toEqual({ role: "button", tabIndex: "0", label, title: label });
+        await page.focus(selector);
+        await page.keyboard.press(key);
+        await page.waitForSelector(`dialog[open] ${dialogControl}`, { visible: true, timeout: 5000 });
+        await page.keyboard.press("Escape");
+        await page.waitForSelector("dialog[open]", { hidden: true, timeout: 5000 });
+    }
+});
+
 test("creating a new workspace from the current window adds it to the list", async () => {
     const page = common.page;
 

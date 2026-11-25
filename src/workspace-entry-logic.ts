@@ -5,12 +5,31 @@ import DELETE_WORKSPACE_DIALOG_TEMPLATE from "./templates/deleteWorkspaceDialogT
 import WORKSPACE_TEMPLATE from "./templates/workspaceElemTemplate.html";
 import { Utils } from "./utils";
 import { WorkspaceStorage } from "./workspace-storage";
+import { PopupMessageHelper } from "./messages/popup-message-helper";
+import { MessageResponses } from "./constants/message-responses";
+import { StorageHelper } from "./storage-helper";
+import type { IRequestMoveWorkspace } from "./interfaces/messages";
 
 /**
  * Logic for the workspace entry in the popup.
  */
 export class WorkspaceEntryLogic {
+    private static draggedUuid?: string;
+    private static savingOrder = false;
 
+    /** Switch reorder mode, update the pressed state, and clear feedback from the last move. */
+    public static toggleReorder() {
+        const list = document.getElementById("workspaces-list")!;
+        const toggle = document.getElementById("workspace-reorder-toggle")!;
+        const reordering = list.toggleAttribute("data-reordering");
+        toggle.setAttribute("aria-pressed", String(reordering));
+        document.getElementById("workspace-reorder-status")!.textContent = "";
+    }
+
+    /**
+     * Render the saved order, identify open workspaces, and label each row action.
+     * Exit reorder mode when the refreshed list has fewer than two workspaces.
+     */
     public static listWorkspaces(workspaces: WorkspaceStorage, allWindowIds: (number | undefined)[]) {
         console.debug("listWorkspaces", workspaces)
 
@@ -20,21 +39,34 @@ export class WorkspaceEntryLogic {
             return;
         }
         workspaceDiv.innerHTML = "";
-        
-        // Add each workspace to the list, and add event listeners to the buttons.
-        for (const workspace of Array.from(workspaces.values())) {
-            const workspaceElement = this.addWorkspace(workspaceDiv, workspace);
-            const openWorkspace = workspaceElement.querySelector('.workspace-item-interior');
-            // const settingsWorkspace = workspaceElement.querySelector('#settings-button');
-            const editWorkspace = workspaceElement.querySelector('#edit-button');
-            const deleteWorkspace = workspaceElement.querySelector('#delete-button');
 
-            // Add a class to the workspace if it is open in a window.
+        const ordered = workspaces.listInOrder();
+        const toggle = document.getElementById("workspace-reorder-toggle")!;
+        toggle.hidden = ordered.length < 2;
+        if (toggle.hidden && workspaceDiv.hasAttribute("data-reordering")) {
+            this.toggleReorder();
+        }
+
+        ordered.forEach((workspace, index) => {
+            const workspaceElement = this.addWorkspace(workspaceDiv, workspace);
+            workspaceElement.dataset.workspaceUuid = workspace.uuid;
+            const openWorkspace = workspaceElement.querySelector('.workspace-item-interior');
+            const editWorkspace = workspaceElement.querySelector<HTMLElement>('#edit-button');
+            const deleteWorkspace = workspaceElement.querySelector<HTMLElement>('#delete-button');
+
+            for (const [icon, action] of [[editWorkspace, "Rename"], [deleteWorkspace, "Delete"]] as const) {
+                if (!icon) continue;
+                icon.title = `${ action } ${ workspace.name }`;
+                icon.setAttribute("aria-label", icon.title);
+            }
+
             if (allWindowIds.includes(workspace.windowId)) {
                 workspaceElement.classList.add('workspace-open');
             }
             openWorkspace?.addEventListener('click', () => {
-                this.workspaceClicked(workspace);
+                if (!workspaceDiv.hasAttribute("data-reordering")) {
+                    this.workspaceClicked(workspace);
+                }
             });
 
             editWorkspace?.addEventListener('click', (event) => {
@@ -46,17 +78,126 @@ export class WorkspaceEntryLogic {
                 event.stopPropagation();
                 this.workspaceDeleteClicked(workspace);
             });
-        }
+
+            this.bindMoveButton(workspaceElement, workspace, ordered[index - 1], "before", allWindowIds);
+            this.bindMoveButton(workspaceElement, workspace, ordered[index + 1], "after", allWindowIds);
+            this.bindDrag(workspaceElement, workspace, allWindowIds);
+        });
+    }
+
+    /** Bind an adjacent move by UUID and disable the control at the edge of the list. */
+    private static bindMoveButton(
+        row: HTMLElement, workspace: Workspace, neighbor: Workspace | undefined,
+        placement: "before" | "after", allWindowIds: (number | undefined)[]
+    ) {
+        const direction = placement === "before" ? "up" : "down";
+        const button = row.querySelector<HTMLButtonElement>(`.workspace-move-${ direction }`)!;
+        const label = `Move ${ workspace.name } ${ direction }`;
+        button.setAttribute("aria-label", label);
+        button.title = label;
+        button.disabled = !neighbor;
+        button.addEventListener("click", () => {
+            if (neighbor) {
+                void this.moveWorkspace({ uuid: workspace.uuid, targetUuid: neighbor.uuid, placement }, allWindowIds, button);
+            }
+        });
+    }
+
+    /** Track drags that start at a row handle and use the destination row's midpoint to indicate placement. */
+    private static bindDrag(row: HTMLElement, workspace: Workspace, allWindowIds: (number | undefined)[]) {
+        const handle = row.querySelector<HTMLElement>(".workspace-drag-handle")!;
+        handle.title = `Drag ${ workspace.name } to reorder`;
+        handle.addEventListener("dragstart", event => {
+            if (this.savingOrder || !event.dataTransfer) {
+                event.preventDefault();
+                return;
+            }
+            this.draggedUuid = workspace.uuid;
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", workspace.uuid);
+        });
+        handle.addEventListener("dragend", () => {
+            this.draggedUuid = undefined;
+            row.parentElement?.querySelector("[data-drop-placement]")?.removeAttribute("data-drop-placement");
+        });
+        row.addEventListener("dragover", event => {
+            if (!this.draggedUuid || this.draggedUuid === workspace.uuid || !event.dataTransfer) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+            const bounds = row.getBoundingClientRect();
+            row.dataset.dropPlacement = event.clientY < bounds.top + bounds.height / 2 ? "before" : "after";
+        });
+        row.addEventListener("dragleave", event => {
+            // Moving between a row's children keeps the drop indicator on that row.
+            if (!(event.relatedTarget instanceof Node) || !row.contains(event.relatedTarget)) {
+                delete row.dataset.dropPlacement;
+            }
+        });
+        row.addEventListener("drop", event => {
+            const uuid = this.draggedUuid;
+            const placement = row.dataset.dropPlacement;
+            if (!uuid || !placement) return;
+            event.preventDefault();
+            this.draggedUuid = undefined;
+            delete row.dataset.dropPlacement;
+            void this.moveWorkspace({ uuid, targetUuid: workspace.uuid, placement: placement === "before" ? "before" : "after" }, allWindowIds);
+        });
     }
 
     /**
-    * Adds a workspace list item to the parent node.
-    * @param parentNode - The parent node to which the workspace will be added.
-    * @param workspace - The workspace object.
-    */
+     * Save one move at a time so each gesture uses the latest rendered neighbors.
+     * Rebuild from the background response and restore keyboard focus when the moved control still owns it.
+     */
+    private static async moveWorkspace(
+        payload: IRequestMoveWorkspace["payload"], allWindowIds: (number | undefined)[], button?: HTMLButtonElement
+    ) {
+        if (this.savingOrder) return;
+        this.savingOrder = true;
+        const status = document.getElementById("workspace-reorder-status")!;
+        status.removeAttribute("data-move-succeeded");
+        status.textContent = "";
+        try {
+            const response = await PopupMessageHelper.sendMoveWorkspace(payload);
+            // A stale move can still return the latest list, for example if the destination was deleted.
+            if (response.data) {
+                const restoreFocus = button && document.activeElement === button;
+                const workspaces = StorageHelper.workspacesFromJson(response);
+                this.listWorkspaces(workspaces, allWindowIds);
+                const list = document.getElementById("workspaces-list")!;
+                if (restoreFocus) {
+                    const row = list.hasAttribute("data-reordering")
+                        ? Array.from(list.children).find(element => (element as HTMLElement).dataset.workspaceUuid === payload.uuid)
+                        : undefined;
+                    const preferred = payload.placement === "before" ? "up" : "down";
+                    const nextFocus = row?.querySelector<HTMLButtonElement>(`.workspace-move-${ preferred }:enabled`)
+                        ?? row?.querySelector<HTMLButtonElement>(".workspace-move-buttons button:enabled")
+                        ?? document.querySelector<HTMLElement>("#workspace-reorder-toggle:not([hidden])")
+                        ?? document.querySelector<HTMLElement>(".header-bar h1");
+                    nextFocus?.focus();
+                }
+                if (response.message === MessageResponses.SUCCESS.message) {
+                    const ordered = workspaces.listInOrder();
+                    const index = ordered.findIndex(workspace => workspace.uuid === payload.uuid);
+                    status.textContent = `${ ordered[index].name } is at position ${ index + 1 } of ${ ordered.length }.`;
+                    status.setAttribute("data-move-succeeded", "");
+                    return;
+                }
+            }
+            status.textContent = "Could not move the workspace.";
+        }
+        catch (error) {
+            console.error("Could not move the workspace", error);
+            status.textContent = "Could not move the workspace.";
+        }
+        finally {
+            this.savingOrder = false;
+        }
+    }
+
+    /** Render a row with the workspace name as literal text so names cannot alter its controls. */
     private static addWorkspace(parentNode: HTMLElement, workspace: Workspace): HTMLElement {
         const res = Utils.interpolateTemplate(WORKSPACE_TEMPLATE, {
-            workspaceName: workspace.name, workspaceId: workspace.windowId,
+            workspaceId: workspace.windowId,
             tabsCount: workspace.getTabs().length
         });
         const tempDiv = document.createElement('div');
@@ -64,6 +205,7 @@ export class WorkspaceEntryLogic {
         const workspaceElement = tempDiv.firstElementChild as HTMLElement;
 
         if (parentNode instanceof Node && workspaceElement != null) {
+            workspaceElement.querySelector(".workspace-name")!.textContent = workspace.name;
             parentNode.appendChild(workspaceElement);
             return workspaceElement;
         }

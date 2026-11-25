@@ -1,10 +1,14 @@
 <div id="${workspaceId}" class="workspace-item">
     <div class="workspace-item-interior">
-        <div class="workspace-button">${workspaceName}<span class="workspace-button-tabs">${tabsCount} tabs</span></div>
+        <span class="workspace-drag-handle" draggable="true" aria-hidden="true">⠿</span>
+        <div class="workspace-button"><span class="workspace-name"></span><span class="workspace-button-tabs">${tabsCount} tabs</span></div>
         <div class="workspace-item-right">
-            <!-- <span alt="More" id="settings-button" class="material-icons icon-button">more_horiz</span> -->
-            <span alt="Edit" id="edit-button" class="material-icons icon-button">edit</span>
-            <span alt="Delete" id="delete-button" class="material-icons icon-button">delete</span>
+            <span id="edit-button" class="material-icons icon-button" role="button" tabindex="0" aria-haspopup="dialog">edit</span>
+            <span id="delete-button" class="material-icons icon-button" role="button" tabindex="0" aria-haspopup="dialog">delete</span>
+        </div>
+        <div class="workspace-move-buttons">
+            <button type="button" class="workspace-move-up">↑</button>
+            <button type="button" class="workspace-move-down">↓</button>
         </div>
     </div>
 </div>

@@ -1,5 +1,5 @@
 import { Messages } from "../constants/messages";
-import { IRequest, IRequestWithUuid, IRequestWithNameId, IRequestOpenWorkspace, IRequestRenameWorkspace } from "../interfaces/messages";
+import { IRequest, IRequestWithUuid, IRequestWithNameId, IRequestOpenWorkspace, IRequestRenameWorkspace, IRequestMoveWorkspace, IRequestImportWorkspaces } from "../interfaces/messages";
 import { StorageHelper } from "../storage-helper";
 import { Background } from "../background";
 import { MessageResponse, MessageResponses } from "../constants/message-responses";
@@ -14,24 +14,27 @@ import { BookmarkStorageHelper } from "../storage/bookmark-storage-helper";
 
 export class BackgroundMessageHandlers {
     /**
-     * We're being informed that a workspace is being opened in a new window.
-     * @param request - The request object containing the workspace data.
+     * Queue the new window association and any restored tab data as one workspace update.
+     * @param request - The workspace UUID, new window ID, and optional restored workspace data.
      */
     public static async processOpenWorkspace(request: IRequestOpenWorkspace): Promise<MessageResponse> {
         if (!request?.payload?.uuid || !request?.payload?.windowId) {
             return MessageResponses.ERROR;
         }
 
-        return await Background.updateWorkspaceWindowId(request.payload.uuid, request.payload.windowId);
+        const { uuid, windowId, workspaceData } = request.payload;
+        return StorageHelper.runWorkspaceUpdate(() => Background.updateWorkspaceWindowId(uuid, windowId, workspaceData));
     }
 
     /**
-     * Processes a new workspace request.
+     * Queue workspace creation so it appends to the current workspace list.
      * @param request - The request object containing the workspace name and window ID.
      * @returns A promise that resolves to a MessageResponse indicating the success or failure of the operation.
      */
     public static async processNewWorkspace(request: IRequestWithNameId): Promise<MessageResponse> {
-        const result = await StorageHelper.addWorkspace(request.payload.workspaceName, request.payload.windowId);
+        const result = await StorageHelper.runWorkspaceUpdate(() =>
+            StorageHelper.addWorkspace(request.payload.workspaceName, request.payload.windowId)
+        );
         if (!result) {
             return MessageResponses.ERROR;
         }
@@ -56,26 +59,20 @@ export class BackgroundMessageHandlers {
     }
 
     /**
-     * Processes a request to delete a workspace.
+     * Queue deletion together with removal of the workspace badge and bookmark mirror.
      * @param request - The request object containing the workspace UUID to delete.
      */
     public static async processDeleteWorkspace(request: IRequestWithUuid): Promise<MessageResponse> {
-        // Get the windowId from the workspace before we delete it, so we can clear the badge
-        // just in case the workspace is open when it's deleted.
-        const workspace = await StorageHelper.getWorkspace(request.payload.uuid);
-        if (workspace) {
-            Utils.clearBadgeForWindow(workspace.windowId);
-        }
+        return StorageHelper.runWorkspaceUpdate(async () => {
+            const workspace = await StorageHelper.getWorkspace(request.payload.uuid);
+            if (workspace) {
+                Utils.clearBadgeForWindow(workspace.windowId);
+            }
 
-        const result = await StorageHelper.removeWorkspace(request.payload.uuid);
-
-        // Remove the workspace from bookmarks
-        await BookmarkStorageHelper.removeWorkspace(workspace);
-        
-        if (!result) {
-            return MessageResponses.ERROR;
-        }
-        return MessageResponses.SUCCESS;
+            const result = await StorageHelper.removeWorkspace(request.payload.uuid);
+            await BookmarkStorageHelper.removeWorkspace(workspace);
+            return result ? MessageResponses.SUCCESS : MessageResponses.ERROR;
+        });
     }
 
     /**
@@ -91,6 +88,41 @@ export class BackgroundMessageHandlers {
             return { ...MessageResponses.SUCCESS, bookmarkWarning };
         }
         return MessageResponses.SUCCESS;
+    }
+
+    /**
+     * Validate and save a move relative to another workspace.
+     * @returns An error for an invalid request or failed save. A stale move
+     * can include the current list for the popup to render.
+     */
+    public static async processMoveWorkspace(request: IRequestMoveWorkspace): Promise<MessageResponse> {
+        const { uuid, targetUuid, placement } = request.payload ?? {};
+        if (!uuid || !targetUuid || (placement !== "before" && placement !== "after")) {
+            return MessageResponses.ERROR;
+        }
+        try {
+            return await StorageHelper.moveWorkspace(uuid, targetUuid, placement);
+        }
+        catch (error) {
+            console.error("Could not save workspace order", error);
+            return MessageResponses.ERROR;
+        }
+    }
+
+    /**
+     * Deserialize an export and queue the replacement of local workspaces.
+     * @returns A success response after the save or an error if parsing or saving fails.
+     */
+    public static async processImportWorkspaces(request: IRequestImportWorkspaces): Promise<MessageResponse> {
+        try {
+            const workspaces = StorageHelper.workspacesFromJson(request.payload);
+            await StorageHelper.runWorkspaceUpdate(() => StorageHelper.setWorkspaces(workspaces));
+            return MessageResponses.SUCCESS;
+        }
+        catch (error) {
+            console.error("Could not import workspaces", error);
+            return MessageResponses.ERROR;
+        }
     }
 
     /**
@@ -116,8 +148,9 @@ export class BackgroundMessageHandlers {
         return { "data": workspace.serialize() };
     }
 
+    /** Queue the local clear behind any workspace updates already in progress. */
     public static async processClearWorkspaces(_request: unknown): Promise<MessageResponse> {
-        await StorageHelper.clearWorkspaces();
+        await StorageHelper.runWorkspaceUpdate(() => StorageHelper.clearWorkspaces());
         return MessageResponses.SUCCESS;
     }
 
@@ -157,6 +190,14 @@ export class BackgroundMessageHandlers {
 
             case Messages.MSG_RENAME_WORKSPACE:
                 BackgroundMessageHandlers.processRenameWorkspace(request as IRequestRenameWorkspace).then(sendResponse);
+                return true;
+
+            case Messages.MSG_MOVE_WORKSPACE:
+                BackgroundMessageHandlers.processMoveWorkspace(request as IRequestMoveWorkspace).then(sendResponse);
+                return true;
+
+            case Messages.MSG_IMPORT_WORKSPACES:
+                BackgroundMessageHandlers.processImportWorkspaces(request as IRequestImportWorkspaces).then(sendResponse);
                 return true;
 
             case Messages.MSG_CLEAR_WORKSPACES:

@@ -38,6 +38,15 @@
 
 - Click the trashcan icon to delete a workspace.
 - Click the pencil icon to rename a workspace.
+- Use Tab to focus a toolbar or row action, then press Enter or Space to activate it.
+
+### Reordering Workspaces
+
+1. Select the **Reorder workspaces** icon in the Chrome popup or Firefox sidebar.
+2. Drag a workspace by its handle, or focus its **Move up** or **Move down** control and press Enter or Space.
+3. Select the reorder icon again to exit reorder mode. Each move saves immediately.
+
+Custom order is saved per browser profile and travels with workspace exports. New workspaces appear at the end. Turn on **Enable debug tools** in Settings to show the position confirmation after each move.
 
 ### Saving Workspaces as Bookmarks
 

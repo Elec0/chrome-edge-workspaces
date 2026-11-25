@@ -254,23 +254,38 @@ export class Background {
     }
 
     /**
-     * This method is called after the client has opened a new window with the workspace's tabs.
-     * 
-     * We need to update the workspace with the new window ID.
-     * Also clear the workspace's tabs, since more are about to be opened in a new window.
-     * 
-     * 
-     * @param uuid - The UUID of the workspace to open.
-     * @param windowId - The ID of the window that the workspace is being opened in.
-     * @returns 
+     * Associate a reopened workspace with its new window and save any reassigned tab and group IDs.
+     *
+     * @remarks
+     * The popup calls this after opening the new window with the workspace's tabs.
+     * Pause automatic tab saves during restoration and schedule a fresh snapshot
+     * once the delay ends so tab events do not save a partially restored window.
+     *
+     * Call within {@link StorageHelper.runWorkspaceUpdate}, as
+     * {@link BackgroundMessageHandlers.processOpenWorkspace} does. A popup-side save
+     * can read the workspace list before a reorder and write that stale list after
+     * the reorder completes. The shared queue keeps both read-modify-write operations
+     * in order. Copy only the tabs and groups from the popup payload to preserve the
+     * saved workspace name and order.
+     *
+     * @param uuid - The UUID of the reopened workspace.
+     * @param windowId - The ID of the new browser window.
+     * @param workspaceData - Optional serialized workspace with the restored tab and
+     * group IDs. When omitted, only the window association is updated.
+     * @returns The success or error response for the save.
      */
-    public static async updateWorkspaceWindowId(uuid: string, windowId: number): Promise<MessageResponse> {
+    public static async updateWorkspaceWindowId(uuid: string, windowId: number, workspaceData?: string): Promise<MessageResponse> {
         // Disable saving for 5 seconds
         Background.disableSavingFor(Constants.WORKSPACE_OPEN_SAVE_DELAY, windowId);
 
         try {
             const workspace = await StorageHelper.getWorkspace(uuid);
             workspace.windowId = windowId;
+            if (workspaceData) {
+                const openedWorkspace = Workspace.deserialize(workspaceData);
+                workspace.setTabs(openedWorkspace.getTabs());
+                workspace.setTabGroups(openedWorkspace.getTabGroups());
+            }
             await StorageHelper.setWorkspace(workspace);
             return MessageResponses.SUCCESS;
 

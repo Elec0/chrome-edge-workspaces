@@ -130,4 +130,33 @@ describe('WorkspaceStorage', () => {
 
         expect(newWorkspaceStorage.size).toBe(0);
     });
+
+    test('uses explicit positions first and serialized sequence for ties and legacy entries', () => {
+        const entries = [
+            ['legacy', {}],
+            ['tied-first', { order: 3 }],
+            ['invalid', { order: -1 }],
+            ['first', { order: 0 }],
+            ['tied-second', { order: 3 }],
+        ];
+        workspaceStorage.deserialize(JSON.stringify({
+            workspaces: entries.map(([uuid, fields]) => [uuid, { uuid, ...fields }]),
+        }));
+
+        expect(workspaceStorage.listInOrder().map(({ uuid }) => uuid)).toEqual([
+            'first', 'tied-first', 'tied-second', 'legacy', 'invalid',
+        ]);
+        expect(workspaceStorage.get('invalid').order).toBeUndefined();
+    });
+
+    test('keeps window lookup stable when reordered workspaces share a window ID', () => {
+        workspaceStorage.set('first', new Workspace(12, 'First', [], undefined, 'first'));
+        workspaceStorage.set('second', new Workspace(12, 'Second', [], undefined, 'second'));
+        workspaceStorage.moveWorkspace('second', 'first', 'before');
+
+        const reloaded = new WorkspaceStorage();
+        reloaded.deserialize(workspaceStorage.serialize());
+        expect(reloaded.listInOrder().map(({ uuid }) => uuid)).toEqual(['second', 'first']);
+        expect(reloaded.get(12).uuid).toBe('second');
+    });
 });

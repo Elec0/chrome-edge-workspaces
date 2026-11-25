@@ -253,7 +253,7 @@ test("exporting settings creates a downloadable JSON payload", async () => {
     expect(exportCapture.href).toBe("blob:e2e-export");
 
     const exportedJson = JSON.parse(exportCapture.text) as { version: string; data: string; };
-    expect(exportedJson.version).toBe("1.2.1");
+    expect(exportedJson.version).toBe(await page.evaluate(() => chrome.runtime.getManifest().version));
     expect(exportedJson.data).toContain("export workspace");
 
     await closeSettingsDialog(page);

@@ -1,11 +1,11 @@
 import { assert } from "console";
 import { Constants } from "./constants/constants";
-import { MessageResponse } from "./constants/message-responses";
+import { MessageResponse, MessageResponses } from "./constants/message-responses";
 import { VERSION } from "./globals";
 import { Workspace } from "./obj/workspace";
 import { BookmarkStorageHelper } from "./storage/bookmark-storage-helper";
 import { SyncWorkspaceStorage, SyncWorkspaceTombstone } from "./storage/sync-workspace-storage";
-import { WorkspaceStorage } from "./workspace-storage";
+import { WorkspacePlacement, WorkspaceStorage } from "./workspace-storage";
 import { WorkspaceUtils } from "./utils/workspace-utils";
 
 export class StorageHelper {
@@ -13,7 +13,13 @@ export class StorageHelper {
     private static _storage = chrome.storage.local;
     private static pendingWorkspaceUpdate = Promise.resolve();
 
-    // Renames and tab saves both write workspace storage and its bookmark mirror.
+    /**
+     * Run a workspace read-modify-write operation in the background queue.
+     *
+     * @remarks
+     * Start the read inside the callback so it sees the preceding operation's write.
+     * A rejected update propagates to its caller and leaves the queue usable.
+     */
     public static runWorkspaceUpdate<T>(update: () => Promise<T>): Promise<T> {
         const result = this.pendingWorkspaceUpdate.then(update);
         this.pendingWorkspaceUpdate = result.then(() => undefined, () => undefined);
@@ -135,6 +141,25 @@ export class StorageHelper {
         await this.setValue(Constants.KEY_STORAGE_WORKSPACES, workspaces.serialize());
     }
 
+    /**
+     * Apply a display-order change to the latest local list. Content timestamps and
+     * sync storage are reserved for workspace content updates.
+     *
+     * @returns The move result and current serialized list. A stale destination
+     * returns an error with the list so the popup can refresh.
+     */
+    public static moveWorkspace(uuid: string, targetUuid: string, placement: WorkspacePlacement): Promise<MessageResponse> {
+        return this.runWorkspaceUpdate(async () => {
+            const workspaces = await this.getLocalWorkspaces();
+            const moved = workspaces.moveWorkspace(uuid, targetUuid, placement);
+            if (moved === "moved") {
+                await this.setWorkspaces(workspaces);
+            }
+            const response = moved === "missing" ? MessageResponses.ERROR : MessageResponses.SUCCESS;
+            return { ...response, data: workspaces.serialize() };
+        });
+    }
+
     public static async setWorkspacesSync(workspaces: WorkspaceStorage): Promise<void> {
         await this.setSyncValue(Constants.KEY_STORAGE_WORKSPACES, workspaces.serialize());
     }
@@ -196,13 +221,15 @@ export class StorageHelper {
     }
 
     /**
-     * Set a single workspace in the `workspaces` map.
-     * Will overwrite the workspace if it already exists, and add it if it does not.
+     * Save workspace content and preserve the position from the current local list.
+     * Existing workspaces retain their position even when the supplied snapshot predates a move.
+     * A new workspace is added to the end of the list.
      * @param workspace - The workspace to set.
      */
     public static async setWorkspace(workspace: Workspace): Promise<void> {
         const workspaces = await this.getWorkspaces();
         const syncSavingEnabled = await SyncWorkspaceStorage.isSyncSavingEnabled();
+        workspace.order = workspaces.get(workspace.uuid)?.order;
         // We're setting the workspace, so we need to update the last updated time.
         workspace.updateLastUpdated();
         workspaces.set(workspace.uuid, workspace);

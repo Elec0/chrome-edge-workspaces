@@ -238,6 +238,72 @@ img#addIcon:hover {
     cursor: default;
 }
 
+#workspace-reorder-toggle[hidden] {
+    display: none;
+}
+
+#workspace-reorder-toggle[aria-pressed="true"] {
+    background-color: var(--surface-container-color);
+}
+
+#workspace-reorder-status {
+    font-size: 12px;
+}
+
+/* Keep routine confirmations in the live region for screen readers. Errors remain visible. */
+body:not([data-debug-tools]) #workspace-reorder-status[data-move-succeeded] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+}
+
+.workspace-drag-handle,
+.workspace-move-buttons,
+[data-reordering] .workspace-item-right {
+    display: none;
+}
+
+[data-reordering] .workspace-item-interior,
+[data-reordering] .workspace-button {
+    cursor: default;
+}
+
+[data-reordering] .workspace-drag-handle {
+    display: block;
+    flex: none;
+    cursor: grab;
+    padding: 4px 8px;
+    font-size: 18px;
+    user-select: none;
+}
+
+[data-reordering] .workspace-move-buttons {
+    display: flex;
+    gap: 4px;
+    margin-left: 8px;
+}
+
+.workspace-move-buttons button {
+    margin: 0;
+    min-width: 26px;
+    padding: 4px;
+}
+
+.workspace-move-buttons button:disabled {
+    opacity: .4;
+    cursor: default;
+}
+
+.workspace-item[data-drop-placement="before"] {
+    box-shadow: inset 0 2px var(--on-surface-color);
+}
+
+.workspace-item[data-drop-placement="after"] {
+    box-shadow: inset 0 -2px var(--on-surface-color);
+}
+
 .modal {
     top: 50%;
     left: 50%;
