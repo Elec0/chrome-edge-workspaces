@@ -111,12 +111,16 @@ Using VS Code, there are two tasks available for Firefox:
 
 ## Manual Chrome Web Store Deploy
 
-The GitHub Actions workflow at `.github/workflows/deploy-chrome-web-store.yml` is manual-only and publishes the Chrome build to the Chrome Web Store. It creates an archive named `v<package.json version>.zip` with the extension files under a top-level `build/` directory.
+Run **Deploy Chrome Extension** from GitHub Actions to submit an update to the existing Chrome Web Store listing for review. Set a version in `package.json` higher than the last uploaded version. The workflow syncs the manifest version and creates `v<package.json version>.zip` with `manifest.json` at the archive root.
 
-Required GitHub Actions secrets:
+In the repository's **Settings → Secrets and variables → Actions**, add these **variables**.
+
 - `CHROME_EXTENSION_ID` - The Chrome Web Store extension ID.
 - `CHROME_PUBLISHER_ID` - The publisher ID from the Chrome Web Store developer dashboard.
 - `CHROME_CLIENT_ID` - OAuth client ID for the Chrome Web Store API.
+
+Add these **secrets** in the same settings area.
+
 - `CHROME_CLIENT_SECRET` - OAuth client secret for the Chrome Web Store API.
 - `CHROME_REFRESH_TOKEN` - OAuth refresh token with the `https://www.googleapis.com/auth/chromewebstore` scope.
 

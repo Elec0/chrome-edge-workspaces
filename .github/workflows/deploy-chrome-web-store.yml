@@ -16,6 +16,24 @@ jobs:
     timeout-minutes: 20
 
     steps:
+      - name: Validate Chrome Web Store configuration
+        env:
+          CHROME_EXTENSION_ID: ${{ vars.CHROME_EXTENSION_ID }}
+          CHROME_PUBLISHER_ID: ${{ vars.CHROME_PUBLISHER_ID }}
+          CHROME_CLIENT_ID: ${{ vars.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+        run: |
+          missing=0
+          for setting in CHROME_EXTENSION_ID CHROME_PUBLISHER_ID CHROME_CLIENT_ID CHROME_CLIENT_SECRET CHROME_REFRESH_TOKEN; do
+            value=${!setting}
+            if [[ -z "${value//[[:space:]]/}" ]]; then
+              echo "::error::Missing Chrome Web Store setting: $setting"
+              missing=1
+            fi
+          done
+          exit "$missing"
+
       - name: Checkout repository
         uses: actions/checkout@v6
 
@@ -32,7 +50,9 @@ jobs:
 
       - name: Read package version
         id: version
-        run: echo "value=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
+        run: |
+          version=$(node -p "require('./package.json').version")
+          echo "value=$version" >> "$GITHUB_OUTPUT"
 
       - name: Sync manifest versions
         run: npm run prebuild
@@ -42,21 +62,29 @@ jobs:
 
       - name: Create Chrome Web Store archive
         id: archive
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.value }}
         run: |
-          archive_name="v${{ steps.version.outputs.value }}.zip"
-          mkdir -p release/build
-          cp -R build/chrome/. release/build/
+          archive_name="v${PACKAGE_VERSION}.zip"
           (
-            cd release
-            zip -r "../${archive_name}" build
+            cd build/chrome
+            zip -r "../../$archive_name" .
           )
-          echo "path=${archive_name}" >> "$GITHUB_OUTPUT"
+          echo "path=$archive_name" >> "$GITHUB_OUTPUT"
 
       - name: Verify archive structure
-        run: unzip -l "${{ steps.archive.outputs.path }}"
+        env:
+          ARCHIVE_PATH: ${{ steps.archive.outputs.path }}
+        run: |
+          unzip -l "$ARCHIVE_PATH"
+          if ! unzip -p "$ARCHIVE_PATH" manifest.json > /dev/null; then
+            echo "::error::Chrome Web Store requires manifest.json at the archive root."
+            exit 1
+          fi
 
       - name: Upload and publish to Chrome Web Store
-        uses: ShahafShavit/chrome-extension-upload@v1
+        # API v2 uploads can finish asynchronously. This action waits for success before publishing.
+        uses: mnao305/chrome-extension-upload@f549d5d654694a7722d6abfa64c97409ad5e64c1 # v7.0.0
         with:
           file-path: ${{ steps.archive.outputs.path }}
           extension-id: ${{ vars.CHROME_EXTENSION_ID }}
@@ -64,3 +92,4 @@ jobs:
           client-id: ${{ vars.CHROME_CLIENT_ID }}
           client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
           refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          publish: 'true'
